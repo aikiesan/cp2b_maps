@@ -468,31 +468,37 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
         # ------------------------------------
         
         # --- CAMADA MAPBIOMAS COM FEATUREGROUP (VERSÃO ROBUSTA) ---
+        # TEMPORARIAMENTE DESABILITADA para não quebrar o mapa principal
         if show_mapbiomas_layer:
-            try:
-                # Criar um FeatureGroup para a camada MapBiomas
-                mapbiomas_group = folium.FeatureGroup(name="MapBiomas - Uso do Solo", show=True)
-                
-                layer_info = RASTER_LAYERS["Cobertura do Solo (MapBiomas)"]
-                
-                # Adicionar WmsTileLayer ao FeatureGroup sem parâmetros control
-                folium.WmsTileLayer(
-                    url=layer_info["url"],
-                    layers=layer_info["layer"],
-                    attr=layer_info["attr"],
-                    transparent=True,
-                    fmt="image/png",
-                    version="1.3.0"
-                ).add_to(mapbiomas_group)
-                
-                # Adicionar o FeatureGroup ao mapa
-                mapbiomas_group.add_to(m)
-                
-                print("[SUCESSO] Camada WMS do MapBiomas (FeatureGroup) adicionada.")
-
-            except Exception as e:
-                st.warning(f"⚠️ Não foi possível carregar a camada MapBiomas.")
-                print(f"[ERRO] Erro ao adicionar camada WMS: {e}")
+            st.info("🚧 Camada MapBiomas temporariamente desabilitada para manutenção")
+            print("[INFO] Camada MapBiomas desabilitada temporariamente")
+            # try:
+            #     # Criar um FeatureGroup para a camada MapBiomas
+            #     mapbiomas_group = folium.FeatureGroup(name="MapBiomas - Uso do Solo", show=True)
+            #     
+            #     layer_info = RASTER_LAYERS["Cobertura do Solo (MapBiomas)"]
+            #     
+            #     # Adicionar WmsTileLayer ao FeatureGroup sem parâmetros control
+            #     folium.WmsTileLayer(
+            #         url=layer_info["url"],
+            #         layers=layer_info["layer"],
+            #         name="MapBiomas - Uso do Solo",
+            #         attr=layer_info["attr"],
+            #         transparent=True,
+            #         overlay=True,
+            #         control=True,
+            #         fmt="image/png",
+            #         version="1.3.0"
+            #     ).add_to(mapbiomas_group)
+            #     
+            #     # Adicionar o FeatureGroup ao mapa
+            #     mapbiomas_group.add_to(m)
+            #     
+            #     print("[SUCESSO] Camada WMS do MapBiomas (FeatureGroup) adicionada.")
+            # 
+            # except Exception as e:
+            #     st.warning(f"⚠️ Não foi possível carregar a camada MapBiomas.")
+            #     print(f"[ERRO] Erro ao adicionar camada WMS: {e}")
         
         if df.empty:
             # Layer Control removed - now using Streamlit checkboxes
@@ -1430,7 +1436,7 @@ def page_main():
         show_rodovias = st.checkbox("Rodovias Estaduais", value=False, help="Mostra as principais rodovias estaduais")
 
         st.write("**Camadas de Imagem:**")
-        show_mapbiomas = st.checkbox("MapBiomas - Uso do Solo", value=False, help="Sobrepõe o mapa de cobertura e uso do solo da Coleção 10 (2022) do MapBiomas")
+        show_mapbiomas = st.checkbox("MapBiomas - Uso do Solo (BETA)", value=False, help="[EM TESTE] Sobrepõe o mapa de cobertura e uso do solo - pode causar problemas no mapa")
         
         # Selected municipalities (if any)
         if st.session_state.selected_municipalities:
