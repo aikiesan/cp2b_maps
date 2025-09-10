@@ -461,9 +461,17 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
             tiles='CartoDB positron'  # Clean light basemap
         )
         
-        # Add only clean, professional basemap options (NO DARK MODE)
-        folium.TileLayer('OpenStreetMap', name='OpenStreetMap').add_to(m)
-        folium.TileLayer('Stamen Terrain', name='Terreno').add_to(m)
+        # Add only clean, professional basemap options with proper attribution
+        folium.TileLayer(
+            tiles='OpenStreetMap',
+            name='OpenStreetMap',
+            attr='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        ).add_to(m)
+        folium.TileLayer(
+            tiles='Stamen Terrain',
+            name='Terreno', 
+            attr='Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.'
+        ).add_to(m)
         # Dark mode basemap removed completely
         # ------------------------------------
         
