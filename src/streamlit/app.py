@@ -3604,7 +3604,9 @@ def page_analysis():
             "🏆 Comparar Tipos de Resíduos",
             "🌍 Analisar por Região",
             "🔍 Encontrar Padrões e Correlações",
-            "📈 Análise de Portfólio Municipal"
+            "📈 Análise de Portfólio Municipal",
+            "🚀 Análise Avançada de Oportunidades",
+            "💡 Insights Inteligentes e Recomendações"
         ],
         help="Cada tipo de análise oferece insights diferentes sobre os dados"
     )
@@ -4006,20 +4008,45 @@ def page_analysis():
                     
                     st.markdown(f"**{interpretation}**")
                     
-                    # Scatter plot
-                    fig_scatter = px.scatter(
-                        df_corr,
-                        x=col_a_name,
-                        y=col_b_name,
-                        hover_name='nome_municipio',
-                        title=f"Correlação: {residue_a} vs {residue_b}",
-                        labels={
-                            col_a_name: f"{residue_a} (Nm³/ano)",
-                            col_b_name: f"{residue_b} (Nm³/ano)"
-                        },
-                        trendline="ols"
+                    # Scatter plot with error handling
+                    try:
+                        fig_scatter = px.scatter(
+                            df_corr,
+                            x=col_a_name,
+                            y=col_b_name,
+                            hover_name='nome_municipio',
+                            title=f"Correlação: {residue_a} vs {residue_b}",
+                            labels={
+                                col_a_name: f"{residue_a} (Nm³/ano)",
+                                col_b_name: f"{residue_b} (Nm³/ano)"
+                            },
+                            trendline="ols"
+                        )
+                    except ImportError:
+                        # Fallback without trendline if statsmodels is not available
+                        st.warning("⚠️ Linha de tendência não disponível (instale statsmodels)")
+                        fig_scatter = px.scatter(
+                            df_corr,
+                            x=col_a_name,
+                            y=col_b_name,
+                            hover_name='nome_municipio',
+                            title=f"Correlação: {residue_a} vs {residue_b}",
+                            labels={
+                                col_a_name: f"{residue_a} (Nm³/ano)",
+                                col_b_name: f"{residue_b} (Nm³/ano)"
+                            }
+                        )
+                    
+                    # Enhanced styling
+                    fig_scatter.update_traces(
+                        marker=dict(size=8, opacity=0.6, line=dict(width=1, color='white'))
                     )
-                    fig_scatter.update_layout(height=500)
+                    fig_scatter.update_layout(
+                        height=500,
+                        showlegend=True,
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        paper_bgcolor='rgba(0,0,0,0)'
+                    )
                     st.plotly_chart(fig_scatter, use_container_width=True)
                     
                     # Show municipalities with both high values
@@ -4078,23 +4105,45 @@ def page_analysis():
                     else:
                         st.warning("🤷 **Pouca correlação** - O potencial não depende muito do tamanho da população.")
                     
-                    # Scatter plot
-                    fig_pop = px.scatter(
-                        df_pop,
-                        x='populacao_2022',
-                        y=residue_col_pop,
-                        hover_name='nome_municipio',
-                        title=f"População vs {selected_residue_pop}",
-                        labels={
-                            'populacao_2022': 'População (2022)',
-                            residue_col_pop: f'{selected_residue_pop} (Nm³/ano)'
-                        },
-                        trendline="ols",
-                        size=residue_col_pop,
-                        color=residue_col_pop,
-                        color_continuous_scale='Viridis'
+                    # Scatter plot with enhanced styling
+                    try:
+                        fig_pop = px.scatter(
+                            df_pop,
+                            x='populacao_2022',
+                            y=residue_col_pop,
+                            hover_name='nome_municipio',
+                            title=f"População vs {selected_residue_pop}",
+                            labels={
+                                'populacao_2022': 'População (2022)',
+                                residue_col_pop: f'{selected_residue_pop} (Nm³/ano)'
+                            },
+                            trendline="ols",
+                            size=residue_col_pop,
+                            color=residue_col_pop,
+                            color_continuous_scale='Viridis'
+                        )
+                    except ImportError:
+                        # Fallback without trendline if statsmodels is not available
+                        fig_pop = px.scatter(
+                            df_pop,
+                            x='populacao_2022',
+                            y=residue_col_pop,
+                            hover_name='nome_municipio',
+                            title=f"População vs {selected_residue_pop}",
+                            labels={
+                                'populacao_2022': 'População (2022)',
+                                residue_col_pop: f'{selected_residue_pop} (Nm³/ano)'
+                            },
+                            size=residue_col_pop,
+                            color=residue_col_pop,
+                            color_continuous_scale='Viridis'
+                        )
+                    
+                    fig_pop.update_layout(
+                        height=500,
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        paper_bgcolor='rgba(0,0,0,0)'
                     )
-                    fig_pop.update_layout(height=500)
                     st.plotly_chart(fig_pop, use_container_width=True)
         
         elif correlation_type == "🏆 Municípios Multiespecializados":
@@ -4302,20 +4351,41 @@ def page_analysis():
                 ]['potencial_total_real'].mean()
                 st.metric("📊 Pot. Médio (Alta Div.)", format_number(avg_potential_high_div))
             
-            # Scatter plot
-            fig_div_pot = px.scatter(
-                df_portfolio,
-                x='diversidade_score',
-                y='potencial_total_real',
-                hover_name='nome_municipio',
-                title="Diversificação vs Potencial Total",
-                labels={
-                    'diversidade_score': 'Score de Diversificação',
-                    'potencial_total_real': 'Potencial Total (Nm³/ano)'
-                },
-                trendline="ols",
-                color='tipos_com_dados',
-                color_continuous_scale='Plasma'
+            # Scatter plot with error handling
+            try:
+                fig_div_pot = px.scatter(
+                    df_portfolio,
+                    x='diversidade_score',
+                    y='potencial_total_real',
+                    hover_name='nome_municipio',
+                    title="Diversificação vs Potencial Total",
+                    labels={
+                        'diversidade_score': 'Score de Diversificação',
+                        'potencial_total_real': 'Potencial Total (Nm³/ano)'
+                    },
+                    trendline="ols",
+                    color='tipos_com_dados',
+                    color_continuous_scale='Plasma'
+                )
+            except ImportError:
+                # Fallback without trendline if statsmodels is not available
+                fig_div_pot = px.scatter(
+                    df_portfolio,
+                    x='diversidade_score',
+                    y='potencial_total_real',
+                    hover_name='nome_municipio',
+                    title="Diversificação vs Potencial Total",
+                    labels={
+                        'diversidade_score': 'Score de Diversificação',
+                        'potencial_total_real': 'Potencial Total (Nm³/ano)'
+                    },
+                    color='tipos_com_dados',
+                    color_continuous_scale='Plasma'
+                )
+            
+            fig_div_pot.update_layout(
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)'
             )
             st.plotly_chart(fig_div_pot, use_container_width=True)
             
@@ -4326,6 +4396,257 @@ def page_analysis():
                 st.info("📊 **Correlação fraca** - Há alguma relação entre diversificação e potencial.")
             else:
                 st.warning("🤷 **Pouca correlação** - Diversificação e potencial total são independentes.")
+
+    # Analysis Type 5: Advanced Opportunities
+    elif analysis_type == "🚀 Análise Avançada de Oportunidades":
+        st.markdown("### 🚀 Passo 2: Identificação de Oportunidades Estratégicas")
+        st.markdown("*Descubra oportunidades de negócio e investimento baseadas em dados avançados*")
+        
+        opportunity_type = st.selectbox(
+            "Que tipo de oportunidade você quer investigar?",
+            [
+                "💰 Municípios Subutilizados (Alto Potencial + Baixo Desenvolvimento)",
+                "🎯 Clusters de Sinergia Regional",
+                "📊 Análise de Viabilidade Econômica",
+                "🔮 Projeções de Crescimento"
+            ]
+        )
+        
+        if opportunity_type == "💰 Municípios Subutilizados (Alto Potencial + Baixo Desenvolvimento)":
+            st.markdown("#### 💎 Joias Escondidas: Municípios com Grande Potencial Inexplorado")
+            
+            # Calculate development index (population + economic indicators proxy)
+            df_opp = df.copy()
+            df_opp = df_opp[df_opp['total_final_nm_ano'] > 0].copy()
+            
+            # Normalize metrics for comparison
+            df_opp['potencial_normalizado'] = (df_opp['total_final_nm_ano'] - df_opp['total_final_nm_ano'].min()) / (df_opp['total_final_nm_ano'].max() - df_opp['total_final_nm_ano'].min())
+            df_opp['desenvolvimento_normalizado'] = (df_opp['populacao_2022'] - df_opp['populacao_2022'].min()) / (df_opp['populacao_2022'].max() - df_opp['populacao_2022'].min())
+            
+            # Calculate opportunity score (high potential, low development)
+            df_opp['opportunity_score'] = df_opp['potencial_normalizado'] - df_opp['desenvolvimento_normalizado']
+            
+            # Find top opportunities
+            top_opportunities = df_opp.nlargest(15, 'opportunity_score')
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                avg_potential = top_opportunities['total_final_nm_ano'].mean()
+                st.metric("💎 Potencial Médio (Oportunidades)", format_number(avg_potential))
+            with col2:
+                total_unexplored = top_opportunities['total_final_nm_ano'].sum()
+                st.metric("🚀 Potencial Total Subutilizado", format_number(total_unexplored))
+            with col3:
+                best_score = top_opportunities['opportunity_score'].max()
+                st.metric("⭐ Melhor Score de Oportunidade", f"{best_score:.3f}")
+            
+            # Show ranking
+            opportunities_ranking = []
+            for i, (_, row) in enumerate(top_opportunities.iterrows(), 1):
+                opportunities_ranking.append({
+                    "🏅 Rank": f"{i}º",
+                    "💎 Município": row['nome_municipio'],
+                    "🚀 Potencial": format_number(row['total_final_nm_ano']),
+                    "👥 População": f"{row['populacao_2022']:,.0f}",
+                    "⭐ Score": f"{row['opportunity_score']:.3f}",
+                    "🌟 Região": row.get('regiao_imediata', 'N/A')
+                })
+            
+            st.markdown("#### 🏆 Top 15 Oportunidades de Investimento")
+            ranking_opp_df = pd.DataFrame(opportunities_ranking)
+            st.dataframe(ranking_opp_df, use_container_width=True, hide_index=True)
+            
+            # Opportunity matrix visualization
+            fig_matrix = px.scatter(
+                df_opp,
+                x='desenvolvimento_normalizado',
+                y='potencial_normalizado',
+                hover_name='nome_municipio',
+                title="Matriz de Oportunidades: Desenvolvimento vs Potencial",
+                labels={
+                    'desenvolvimento_normalizado': 'Nível de Desenvolvimento (População Normalizada)',
+                    'potencial_normalizado': 'Potencial de Biogás (Normalizado)'
+                },
+                color='opportunity_score',
+                color_continuous_scale='RdYlGn',
+                size='total_final_nm_ano'
+            )
+            
+            # Add quadrant lines
+            fig_matrix.add_hline(y=0.5, line_dash="dash", line_color="gray")
+            fig_matrix.add_vline(x=0.5, line_dash="dash", line_color="gray")
+            
+            # Add annotations for quadrants
+            fig_matrix.add_annotation(x=0.25, y=0.75, text="OPORTUNIDADES<br>PRIME", 
+                                    showarrow=False, font=dict(size=12, color="green"))
+            fig_matrix.add_annotation(x=0.75, y=0.75, text="DESENVOLVIDAS<br>CONSOLIDADAS", 
+                                    showarrow=False, font=dict(size=12, color="blue"))
+            fig_matrix.add_annotation(x=0.25, y=0.25, text="BAIXO POTENCIAL<br>EM DESENVOLVIMENTO", 
+                                    showarrow=False, font=dict(size=12, color="orange"))
+            fig_matrix.add_annotation(x=0.75, y=0.25, text="DESENVOLVIDAS<br>BAIXO POTENCIAL", 
+                                    showarrow=False, font=dict(size=12, color="red"))
+            
+            fig_matrix.update_layout(height=600)
+            st.plotly_chart(fig_matrix, use_container_width=True)
+            
+        elif opportunity_type == "🎯 Clusters de Sinergia Regional":
+            st.markdown("#### 🌍 Análise de Clusters Regionais para Sinergia")
+            
+            if 'regiao_imediata' in df.columns:
+                regional_analysis = df.groupby('regiao_imediata').agg({
+                    'total_final_nm_ano': ['sum', 'mean', 'count'],
+                    'populacao_2022': 'sum',
+                    'total_agricola_nm_ano': 'sum',
+                    'total_pecuaria_nm_ano': 'sum'
+                }).round(0)
+                
+                regional_analysis.columns = ['Total_Potencial', 'Media_Potencial', 'Num_Municipios', 'Pop_Total', 'Potencial_Agri', 'Potencial_Pec']
+                regional_analysis = regional_analysis.sort_values('Total_Potencial', ascending=False).head(10)
+                
+                st.markdown("#### 🏆 Top 10 Regiões para Desenvolvimento de Clusters")
+                
+                cluster_ranking = []
+                for i, (regiao, row) in enumerate(regional_analysis.iterrows(), 1):
+                    cluster_ranking.append({
+                        "🏅 Rank": f"{i}º",
+                        "🌍 Região": regiao,
+                        "🚀 Potencial Total": format_number(row['Total_Potencial']),
+                        "🏘️ Municípios": f"{int(row['Num_Municipios'])}",
+                        "👥 População": f"{int(row['Pop_Total']):,}",
+                        "🌾 % Agrícola": f"{(row['Potencial_Agri']/row['Total_Potencial']*100):.0f}%",
+                        "🐄 % Pecuária": f"{(row['Potencial_Pec']/row['Total_Potencial']*100):.0f}%"
+                    })
+                
+                cluster_df = pd.DataFrame(cluster_ranking)
+                st.dataframe(cluster_df, use_container_width=True, hide_index=True)
+                
+                # Regional potential visualization
+                fig_regional = px.bar(
+                    regional_analysis.reset_index(),
+                    x='regiao_imediata',
+                    y='Total_Potencial',
+                    title="Potencial Total por Região (Top 10)",
+                    labels={'Total_Potencial': 'Potencial Total (Nm³/ano)', 'regiao_imediata': 'Região'},
+                    color='Media_Potencial',
+                    color_continuous_scale='Viridis'
+                )
+                fig_regional.update_xaxes(tickangle=45)
+                fig_regional.update_layout(height=500)
+                st.plotly_chart(fig_regional, use_container_width=True)
+
+    # Analysis Type 6: Intelligent Insights
+    elif analysis_type == "💡 Insights Inteligentes e Recomendações":
+        st.markdown("### 💡 Passo 2: Geração de Insights Automatizados")
+        st.markdown("*Sistema inteligente analisa os dados e fornece recomendações personalizadas*")
+        
+        insight_type = st.selectbox(
+            "Que tipo de insight você precisa?",
+            [
+                "🎯 Recomendações Personalizadas por Perfil",
+                "📊 Análise SWOT Automática",
+                "🔍 Detecção de Padrões Ocultos",
+                "📈 Cenários de Desenvolvimento"
+            ]
+        )
+        
+        if insight_type == "🎯 Recomendações Personalizadas por Perfil":
+            st.markdown("#### 🎯 Sistema de Recomendações Inteligente")
+            
+            user_profile = st.selectbox(
+                "Qual é o seu perfil/interesse?",
+                [
+                    "🏛️ Gestor Público Municipal",
+                    "💼 Investidor/Empresário",
+                    "🎓 Pesquisador Acadêmico",
+                    "🌱 Consultor em Sustentabilidade",
+                    "🏭 Desenvolvedor de Projetos"
+                ]
+            )
+            
+            region_filter = st.selectbox(
+                "Região de interesse:",
+                ["📍 Todo o Estado"] + (df['regiao_imediata'].dropna().unique().tolist() if 'regiao_imediata' in df.columns else [])
+            )
+            
+            # Filter data based on region
+            df_filtered = df.copy()
+            if region_filter != "📍 Todo o Estado":
+                df_filtered = df_filtered[df_filtered['regiao_imediata'] == region_filter]
+            
+            # Generate personalized recommendations
+            if user_profile == "🏛️ Gestor Público Municipal":
+                st.markdown("#### 🏛️ Recomendações para Gestores Públicos")
+                
+                # Priority municipalities for public policy
+                high_potential = df_filtered[df_filtered['total_final_nm_ano'] > df_filtered['total_final_nm_ano'].quantile(0.8)]
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.markdown("**🎯 Municípios Prioritários para Políticas Públicas:**")
+                    for _, mun in high_potential.head(5).iterrows():
+                        st.markdown(f"• **{mun['nome_municipio']}**: {format_number(mun['total_final_nm_ano'])} Nm³/ano")
+                
+                with col2:
+                    st.markdown("**📋 Ações Recomendadas:**")
+                    st.markdown("""
+                    • **Criar incentivos fiscais** para projetos de biogás
+                    • **Estabelecer parcerias público-privadas**
+                    • **Desenvolver regulamentação local** específica
+                    • **Promover capacitação técnica** para produtores
+                    • **Criar centrais de tratamento** regionais
+                    """)
+                
+                # Economic impact calculation
+                total_potential_region = df_filtered['total_final_nm_ano'].sum()
+                estimated_jobs = total_potential_region / 1000000 * 2.5  # Rough estimate: 2.5 jobs per million Nm³/year
+                estimated_revenue = total_potential_region * 0.45  # Rough estimate: R$ 0.45 per Nm³
+                
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("💼 Empregos Potenciais", f"{estimated_jobs:,.0f}")
+                with col2:
+                    st.metric("💰 Receita Anual Estimada", f"R$ {estimated_revenue/1000000:,.1f}M")
+                with col3:
+                    investment_needed = total_potential_region * 8.5  # Rough estimate: R$ 8.5 per Nm³/year capacity
+                    st.metric("📊 Investimento Estimado", f"R$ {investment_needed/1000000:,.0f}M")
+            
+            elif user_profile == "💼 Investidor/Empresário":
+                st.markdown("#### 💼 Análise de Oportunidades de Investimento")
+                
+                # ROI analysis
+                df_investment = df_filtered[df_filtered['total_final_nm_ano'] > 100000].copy()  # Minimum viable scale
+                df_investment['roi_score'] = df_investment['total_final_nm_ano'] / df_investment['populacao_2022']  # Potential per capita
+                
+                top_investments = df_investment.nlargest(8, 'roi_score')
+                
+                st.markdown("**🎯 Melhores Oportunidades de ROI:**")
+                investment_table = []
+                for _, inv in top_investments.iterrows():
+                    investment_table.append({
+                        "🏘️ Município": inv['nome_municipio'],
+                        "🚀 Potencial": format_number(inv['total_final_nm_ano']),
+                        "📊 ROI Score": f"{inv['roi_score']:.1f}",
+                        "🎯 Tipo Principal": "Agrícola" if inv['total_agricola_nm_ano'] > inv['total_pecuaria_nm_ano'] else "Pecuário"
+                    })
+                
+                st.dataframe(pd.DataFrame(investment_table), use_container_width=True, hide_index=True)
+                
+                st.markdown("**💡 Recomendações Estratégicas:**")
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.markdown("""
+                    **Estratégia de Entrada:**
+                    • Focar em **municípios médios** (50k-200k hab)
+                    • Priorizar **regiões agropecuárias** consolidadas
+                    • Buscar **parcerias locais** estabelecidas
+                    """)
+                with col2:
+                    st.markdown("""
+                    **Modelo de Negócio:**
+                    • **BOT (Build-Operate-Transfer)** para prefeituras
+                    • **Contratos de longo prazo** (15-20 anos)
+                    • **Múltiplas receitas**: energia + biofertilizante
+                    """)
 
     # Help section
     st.markdown("---")
@@ -4478,9 +4799,9 @@ def page_about():
         with col1:
             st.markdown("""
             **📊 Dados Analisados**:
-    - **Agrícolas**: Cana, soja, milho, café, citros
-    - **Pecuários**: Bovinos, suínos, aves, piscicultura
-    - **Urbanos**: RSU e resíduos de poda
+            - **Agrícolas**: Cana, soja, milho, café, citros
+            - **Pecuários**: Bovinos, suínos, aves, piscicultura
+            - **Urbanos**: RSU e resíduos de poda
             - **Silvicultura**: Eucalipto e resíduos florestais
             """)
             
