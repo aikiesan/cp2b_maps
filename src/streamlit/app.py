@@ -47,6 +47,16 @@ RESIDUE_OPTIONS = {
     'Resíduos Poda': 'rpo_potencial_nm_habitante_ano'
 }
 
+# --- CONSTANTE PARA A CAMADA RASTER (USANDO A CAMADA MAIS ESTÁVEL DO GEOSERVER) ---
+RASTER_LAYERS = {
+    "Cobertura do Solo (MapBiomas)": {
+        "url": "https://brasil.mapbiomas.org/geoserver/wms",
+        # Usando a camada de integração da Coleção 8. É a mais confiável para testes.
+        "layer": "mapbiomas:mapbiomas_brazil_collection_80_integration_v1", 
+        "attr": "MapBiomas Project - Collection 8.0"
+    }
+}
+
 # Database functions
 @st.cache_data
 def get_database_path():
@@ -437,7 +447,7 @@ def load_optimized_geometries(detail_level="medium_detail"):
     
     return None
 
-def create_centroid_map(df, display_col, filters=None, get_legend_only=False, search_term="", viz_type="Círculos Proporcionais"):
+def create_centroid_map(df, display_col, filters=None, get_legend_only=False, search_term="", viz_type="Círculos Proporcionais", show_mapbiomas_layer=False, show_rios=False, show_rodovias=False):
     """Create folium map with weighted centroids and floating controls"""
     import geopandas as gpd
     from pathlib import Path
@@ -457,9 +467,35 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
         # Dark mode basemap removed completely
         # ------------------------------------
         
+        # --- CAMADA MAPBIOMAS COM FEATUREGROUP (VERSÃO ROBUSTA) ---
+        if show_mapbiomas_layer:
+            try:
+                # Criar um FeatureGroup para a camada MapBiomas
+                mapbiomas_group = folium.FeatureGroup(name="MapBiomas - Uso do Solo", show=True)
+                
+                layer_info = RASTER_LAYERS["Cobertura do Solo (MapBiomas)"]
+                
+                # Adicionar WmsTileLayer ao FeatureGroup sem parâmetros control
+                folium.WmsTileLayer(
+                    url=layer_info["url"],
+                    layers=layer_info["layer"],
+                    attr=layer_info["attr"],
+                    transparent=True,
+                    fmt="image/png",
+                    version="1.3.0"
+                ).add_to(mapbiomas_group)
+                
+                # Adicionar o FeatureGroup ao mapa
+                mapbiomas_group.add_to(m)
+                
+                print("[SUCESSO] Camada WMS do MapBiomas (FeatureGroup) adicionada.")
+
+            except Exception as e:
+                st.warning(f"⚠️ Não foi possível carregar a camada MapBiomas.")
+                print(f"[ERRO] Erro ao adicionar camada WMS: {e}")
+        
         if df.empty:
-            # Add Layer Control even if map is empty, for consistency
-            folium.LayerControl().add_to(m)
+            # Layer Control removed - now using Streamlit checkboxes
             return m, ""  # Return map and empty legend string
         
         # Add São Paulo state borders first (background)
@@ -480,10 +516,63 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                         'fillOpacity': 0.1,
                         'dashArray': '5, 5'
                     },
-                    tooltip='Estado de São Paulo'
+                    tooltip='Estado de São Paulo',
+                    interactive=False  # Make state border non-interactive
                 ).add_to(m)
         except Exception as e:
             st.warning(f"⚠️ Bordas do estado: {e}")
+        
+        # --- CAMADAS DE REFERÊNCIA COM FEATUREGROUP ---
+        # Camada de rodovias estaduais
+        if show_rodovias:
+            try:
+                rodovias_group = folium.FeatureGroup(name="Rodovias Estaduais", show=True)
+                rodovias_path = Path(__file__).parent.parent.parent / "shapefile" / "Rodovias_Estaduais_SP.shp"
+                if rodovias_path.exists():
+                    rodovias_gdf = gpd.read_file(rodovias_path)
+                    folium.GeoJson(
+                        rodovias_gdf,
+                        style_function=lambda feature: {
+                            'fillColor': 'transparent',
+                            'color': '#FF4500',
+                            'weight': 2,
+                            'opacity': 0.8,
+                            'fillOpacity': 0
+                        },
+                        tooltip="Rodovia Estadual",
+                        popup="Rodovias Estaduais de São Paulo"
+                    ).add_to(rodovias_group)
+                    rodovias_group.add_to(m)
+                    print("[SUCESSO] Camada de rodovias (FeatureGroup) adicionada.")
+            except Exception as e:
+                print(f"[ERRO] Erro ao carregar rodovias: {e}")
+        
+        # Camada de rios principais (estrutura preparada para futuro)
+        if show_rios:
+            try:
+                rios_group = folium.FeatureGroup(name="Rios Principais", show=True)
+                rios_path = Path(__file__).parent.parent.parent / "shapefile" / "Rios_Principais_SP.shp"
+                if rios_path.exists():
+                    rios_gdf = gpd.read_file(rios_path)
+                    folium.GeoJson(
+                        rios_gdf,
+                        style_function=lambda feature: {
+                            'fillColor': 'transparent',
+                            'color': '#4169E1',
+                            'weight': 2,
+                            'opacity': 0.8,
+                            'fillOpacity': 0
+                        },
+                        tooltip="Rio Principal",
+                        popup="Rios Principais de São Paulo"
+                    ).add_to(rios_group)
+                    rios_group.add_to(m)
+                    print("[SUCESSO] Camada de rios (FeatureGroup) adicionada.")
+                else:
+                    print("[INFO] Shapefile de rios não encontrado - funcionalidade preparada para futuro.")
+            except Exception as e:
+                print(f"[ERRO] Erro ao carregar rios: {e}")
+        # ------------------------------------------
         
         # Load municipality centroids
         try:
@@ -586,7 +675,7 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                         location=[lat, lon],
                         radius=row['circle_size'] * 1.5 if is_searched else row['circle_size'],
                         popup=popup_text,
-                        tooltip=f"{'🔍 ' if is_searched else ''}{tooltip_text}",
+                        tooltip=f"{'[BUSCA] ' if is_searched else ''}{tooltip_text}",
                         color='red' if is_searched else 'black',
                         weight=3 if is_searched else 1,
                         fillColor='red' if is_searched else get_color(row[display_col]),
@@ -741,7 +830,7 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                     folium.Marker(
                         location=[lat, lon],
                         popup=popup_text,
-                        tooltip=f"{'🔍 ' if is_searched else ''}{row['nome_municipio']}: {row[display_col]:,.0f}",
+                        tooltip=f"{'[BUSCA] ' if is_searched else ''}{row['nome_municipio']}: {row[display_col]:,.0f}",
                         icon=icon
                     ).add_to(marker_cluster)
 
@@ -836,8 +925,7 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
             minimap = MiniMap(toggle_display=True, position='bottomright')
             minimap.add_to(m)
             
-            # 2. Add Layer Control at the end to ensure it's on top
-            folium.LayerControl().add_to(m)
+            # 2. Layer Control removed - now using Streamlit checkboxes
             # -----------------------------------------
             
             # --- SIMPLIFIED LEGEND HTML for the Sidebar ---
@@ -1186,8 +1274,9 @@ def page_main():
         return
     total_municipality_count = len(df)
 
-    # --- 2. Ultra-minimal sidebar ---
+    # --- 2. Ultra-minimal sidebar reorganized ---
     with st.sidebar:
+        # 1. FILTERS
         st.markdown("## 🎛️ Filtros")
         
         # Selection mode
@@ -1214,61 +1303,24 @@ def page_main():
             display_name = f"Soma de {len(residues)} tipos" if len(residues) > 1 else (selected_list[0] if selected_list else "Nenhum")
         
         # Quick search
-        search_term = st.text_input("🔍 Buscar:", placeholder="Município...", key="search")
+        search_term = st.text_input("Buscar:", placeholder="Município...", key="search")
         
         st.markdown("---")
-        st.markdown("### 📊 Normalização de Dados")
-        
-        normalization = st.selectbox(
-            "Métrica:",
-            options=[
-                "Potencial Absoluto (Nm³/ano)",
-                "Potencial per Capita (Nm³/hab/ano)", 
-                "Potencial por Área (Nm³/km²/ano)",
-                "Densidade Populacional (hab/km²)"
-            ],
-            key="normalization",
-            help="Escolha como normalizar os dados para comparação mais justa entre municípios"
-        )
-        
-        st.markdown("---")
-        st.markdown("### 📈 Classificação dos Dados")
-        
-        classification = st.selectbox(
-            "Método de Classificação:",
-            options=[
-                "Linear (Intervalo Uniforme)",
-                "Quantiles (Contagem Igual)", 
-                "Quebras Naturais (Jenks)",
-                "Desvio Padrão"
-            ],
-            key="classification",
-            help="Escolha como agrupar os valores para visualização em classes"
-        )
-        
-        num_classes = st.slider(
-            "Número de Classes:",
-            min_value=3,
-            max_value=8,
-            value=5,
-            key="num_classes",
-            help="Quantidade de grupos/cores para classificar os dados"
-        )
-        
-        st.markdown("---")
-        st.markdown("### 🗺️ Estilo de Visualização")
+        # 2. VIEW STYLES
+        st.markdown("## 🗺️ Estilos de Visualização")
 
         viz_type = st.radio(
-            "Selecione o tipo de mapa:",
+            "Tipo de mapa:",
             options=["Círculos Proporcionais", "Mapa de Calor (Heatmap)", "Agrupamentos (Clusters)", "Mapa de Preenchimento (Coroplético)"],
             horizontal=False,
-            label_visibility="collapsed",
+            label_visibility="visible",
             help="Mude a forma como os dados são exibidos no mapa.",
             key="viz_type"
         )
         
         st.markdown("---")
-        st.markdown("### 🎯 Análise de Proximidade")
+        # 3. PROXIMITY ANALYSIS
+        st.markdown("## 🎯 Análise de Proximidade")
         
         # Initialize proximity analysis session state
         if 'catchment_center' not in st.session_state:
@@ -1279,7 +1331,7 @@ def page_main():
         # Proximity analysis controls
         enable_proximity = st.checkbox(
             "Ativar Análise de Raio de Captação",
-            help="Clique no mapa para definir centro e calcular potencial total na área"
+            help="Clique em área vazia do mapa (não em municípios) para definir centro e calcular potencial total na área"
         )
         
         if enable_proximity:
@@ -1323,9 +1375,62 @@ def page_main():
                     st.session_state.catchment_center = None
                     st.rerun()
             else:
-                st.info("👆 Clique no mapa para definir o centro de captação")
+                st.info("👆 Clique em área vazia do mapa para definir centro")
         else:
             st.session_state.catchment_center = None
+        
+        st.markdown("---")
+        # 4. DATA CLASSIFICATION 
+        st.markdown("## 📈 Classificação de Dados")
+        
+        classification = st.selectbox(
+            "Método de Classificação:",
+            options=[
+                "Linear (Intervalo Uniforme)",
+                "Quantiles (Contagem Igual)", 
+                "Quebras Naturais (Jenks)",
+                "Desvio Padrão"
+            ],
+            key="classification",
+            help="Escolha como agrupar os valores para visualização em classes"
+        )
+        
+        num_classes = st.slider(
+            "Número de Classes:",
+            min_value=3,
+            max_value=8,
+            value=5,
+            key="num_classes",
+            help="Quantidade de grupos/cores para classificar os dados"
+        )
+        
+        st.markdown("---")
+        # 5. DATA NORMALIZATION
+        st.markdown("## 📊 Normalização de Dados")
+        
+        normalization = st.selectbox(
+            "Métrica:",
+            options=[
+                "Potencial Absoluto (Nm³/ano)",
+                "Potencial per Capita (Nm³/hab/ano)", 
+                "Potencial por Área (Nm³/km²/ano)",
+                "Densidade Populacional (hab/km²)"
+            ],
+            key="normalization",
+            help="Escolha como normalizar os dados para comparação mais justa entre municípios"
+        )
+        
+        st.markdown("---")
+        # 6. LAYER CONTROLS
+        st.markdown("## 🗺️ Camadas Visíveis")
+
+        # --- NOVOS CONTROLES DE CAMADA USANDO CHECKBOXES ---
+        st.write("**Camadas de Referência:**")
+        show_rios = st.checkbox("Rios Principais", value=False, help="Mostra os principais rios do estado de São Paulo")
+        show_rodovias = st.checkbox("Rodovias Estaduais", value=False, help="Mostra as principais rodovias estaduais")
+
+        st.write("**Camadas de Imagem:**")
+        show_mapbiomas = st.checkbox("MapBiomas - Uso do Solo", value=False, help="Sobrepõe o mapa de cobertura e uso do solo da Coleção 10 (2022) do MapBiomas")
         
         # Selected municipalities (if any)
         if st.session_state.selected_municipalities:
@@ -1349,20 +1454,13 @@ def page_main():
     })
     
     # Map
-    map_object, _ = create_centroid_map(df_to_display, display_col, search_term=search_term, viz_type=viz_type)
+    map_object, _ = create_centroid_map(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, show_rios=show_rios, show_rodovias=show_rodovias)
     map_data = st_folium(map_object, key="main_map", width=None, height=650)
 
     # Process map clicks
     if map_data:
-        # Handle proximity analysis clicks (clicks on empty map areas)
-        if map_data.get("last_clicked") and enable_proximity:
-            clicked_lat = map_data["last_clicked"]["lat"]
-            clicked_lng = map_data["last_clicked"]["lng"]
-            st.session_state.catchment_center = (clicked_lat, clicked_lng)
-            st.rerun()
-        
-        # Handle municipality selection clicks (clicks on popups)
-        elif map_data.get("last_object_clicked_popup"):
+        # Handle municipality selection clicks (clicks on popups) - PRIORITY
+        if map_data.get("last_object_clicked_popup"):
             popup_html = map_data["last_object_clicked_popup"]
             match = re.search(r"<!-- id:(\d+) -->", popup_html)
             if match:
@@ -1371,6 +1469,15 @@ def page_main():
                     st.session_state.selected_municipalities.remove(clicked_id)
                 else:
                     st.session_state.selected_municipalities.append(clicked_id)
+                st.rerun()
+        
+        # Handle proximity analysis clicks (clicks on empty map areas only)
+        elif map_data.get("last_clicked") and enable_proximity:
+            # Only process if no object was clicked and proximity mode is enabled
+            if not map_data.get("last_object_clicked") and not map_data.get("last_object_clicked_popup"):
+                clicked_lat = map_data["last_clicked"]["lat"]
+                clicked_lng = map_data["last_clicked"]["lng"]
+                st.session_state.catchment_center = (clicked_lat, clicked_lng)
                 st.rerun()
     
     # --- 4. COMPREHENSIVE ANALYSIS TOOLS BELOW MAP ---
