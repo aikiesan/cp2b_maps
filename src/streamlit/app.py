@@ -24,10 +24,490 @@ import logging
 from folium.plugins import MiniMap, HeatMap, MarkerCluster
 import re  # We need this for parsing the popup
 import streamlit.components.v1 as components
+import geopandas as gpd
+import pickle
+import os
+from functools import lru_cache
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# ============================================================================
+# SISTEMA DE CACHE OTIMIZADO PARA SHAPEFILES
+# ============================================================================
+
+@st.cache_data(ttl=3600)  # Cache por 1 hora
+def load_shapefile_cached(shapefile_path, simplify_tolerance=0.001):
+    """Carrega shapefile com cache e simplificação opcional"""
+    try:
+        if not os.path.exists(shapefile_path):
+            return None
+            
+        gdf = gpd.read_file(shapefile_path)
+        
+        # Converter para WGS84 se necessário
+        if gdf.crs and gdf.crs != 'EPSG:4326':
+            gdf = gdf.to_crs('EPSG:4326')
+        
+        # CORREÇÃO: Converter colunas problemáticas para string para evitar erro de serialização
+        for col in gdf.columns:
+            if col != 'geometry':
+                if gdf[col].dtype == 'datetime64[ns]' or str(gdf[col].dtype).startswith('datetime'):
+                    gdf[col] = gdf[col].astype(str)
+                elif gdf[col].dtype == 'object':
+                    # Converter objetos complexos para string também
+                    gdf[col] = gdf[col].astype(str)
+        
+        # Simplificar geometrias complexas para melhor performance
+        if simplify_tolerance > 0:
+            gdf['geometry'] = gdf['geometry'].simplify(simplify_tolerance, preserve_topology=True)
+        
+        return gdf
+    except Exception as e:
+        logger.error(f"Erro ao carregar {shapefile_path}: {e}")
+        return None
+
+@st.cache_data(ttl=3600)
+def prepare_layer_data():
+    """Pré-carrega todos os dados das camadas uma vez"""
+    base_path = Path(__file__).parent.parent.parent / "shapefile"
+    geoparquet_path = Path(__file__).parent.parent.parent / "geoparquet"
+    
+    layers = {}
+    
+    # Plantas de Biogás (pontos - sem simplificação)
+    plantas_path = base_path / "Plantas_Biogas_SP.shp" 
+    layers['plantas'] = load_shapefile_cached(str(plantas_path), simplify_tolerance=0)
+    
+    # Gasodutos (linhas - simplificação leve)
+    gasodutos_dist = base_path / "Gasodutos_Distribuicao_SP.shp"
+    gasodutos_transp = base_path / "Gasodutos_Transporte_SP.shp"
+    layers['gasodutos_dist'] = load_shapefile_cached(str(gasodutos_dist), simplify_tolerance=0.0001)
+    layers['gasodutos_transp'] = load_shapefile_cached(str(gasodutos_transp), simplify_tolerance=0.0001)
+    
+    # Rodovias (linhas - simplificação leve)
+    rodovias_path = base_path / "Rodovias_Estaduais_SP.shp"
+    layers['rodovias'] = load_shapefile_cached(str(rodovias_path), simplify_tolerance=0.0001)
+    
+    # Rios (linhas - simplificação média)
+    rios_path = base_path / "Rios_SP.shp" 
+    layers['rios'] = load_shapefile_cached(str(rios_path), simplify_tolerance=0.001)
+    
+    # Áreas Urbanas (polígonos otimizados via GeoParquet) - LIMITADO para evitar problemas
+    areas_path = geoparquet_path / "Areas_Urbanas_SP.parquet"
+    if areas_path.exists():
+        try:
+            areas_gdf = gpd.read_parquet(areas_path)
+            if areas_gdf.crs and areas_gdf.crs != 'EPSG:4326':
+                areas_gdf = areas_gdf.to_crs('EPSG:4326')
+            
+            # LIMITAR drasticamente para evitar travamento - apenas 1000 polígonos máximo
+            if len(areas_gdf) > 1000:
+                areas_gdf = areas_gdf.sample(n=1000, random_state=42)
+            
+            # Simplificação muito agressiva para polígonos complexos
+            areas_gdf['geometry'] = areas_gdf['geometry'].simplify(0.005, preserve_topology=True)
+            layers['areas_urbanas'] = areas_gdf
+        except Exception as e:
+            logger.error(f"Erro ao carregar áreas urbanas: {e}")
+            layers['areas_urbanas'] = None
+    else:
+        layers['areas_urbanas'] = None
+    
+    # Regiões Administrativas (polígonos - simplificação leve)
+    regioes_path = base_path / "Regiao_Adm_SP.shp"
+    layers['regioes_admin'] = load_shapefile_cached(str(regioes_path), simplify_tolerance=0.001)
+    
+    return layers
+
+# ============================================================================
+# FUNÇÕES OTIMIZADAS DE RENDERIZAÇÃO DE CAMADAS
+# ============================================================================
+
+def add_plantas_layer_fast(m, plantas_gdf):
+    """Adiciona camada de plantas de forma otimizada"""
+    if plantas_gdf is None or len(plantas_gdf) == 0:
+        return
+    
+    # Usar MarkerCluster para performance com muitos pontos
+    marker_cluster = MarkerCluster(name="🏭 Plantas de Biogás").add_to(m)
+    
+    color_map = {
+        'Biogás': '#32CD32',
+        'Aterro': '#8B4513', 
+        'Tratamento': '#4169E1',
+        'Outros': '#9370DB'
+    }
+    
+    for _, row in plantas_gdf.iterrows():
+        tipo = row.get('TIPO_PLANT', 'Outros')
+        color = color_map.get(tipo, '#666666')
+        
+        folium.CircleMarker(
+            location=[row.geometry.y, row.geometry.x],
+            radius=6,
+            popup=f"<b>{tipo}</b><br>{row.get('SUBTIPO', 'N/A')}",
+            tooltip=f"Planta: {tipo}",
+            color=color,
+            fillColor=color,
+            fillOpacity=0.8,
+            weight=1
+        ).add_to(marker_cluster)
+
+def add_lines_layer_fast(m, gdf, name, color, weight=2):
+    """Adiciona camadas de linhas de forma otimizada"""
+    if gdf is None or len(gdf) == 0:
+        return
+    
+    # Usar uma única operação GeoJson para melhor performance
+    folium.GeoJson(
+        gdf,
+        name=name,
+        style_function=lambda feature: {
+            'color': color,
+            'weight': weight,
+            'opacity': 0.8
+        },
+        tooltip=folium.GeoJsonTooltip(fields=gdf.columns[:3].tolist() if len(gdf.columns) > 0 else []),
+        popup=False  # Desabilitar popup para performance
+    ).add_to(m)
+
+def add_polygons_layer_fast(m, gdf, name, color, fill_opacity=0.3):
+    """Adiciona camadas de polígonos de forma otimizada"""
+    if gdf is None or len(gdf) == 0:
+        return
+    
+    folium.GeoJson(
+        gdf,
+        name=name,
+        style_function=lambda feature: {
+            'color': color,
+            'weight': 1,
+            'opacity': 0.8,
+            'fillColor': color,
+            'fillOpacity': fill_opacity
+        },
+        tooltip=False,  # Desabilitar tooltip para performance
+        popup=False     # Desabilitar popup para performance
+    ).add_to(m)
+
+def add_regioes_layer_fast(m, regioes_gdf):
+    """Adiciona regiões administrativas com cores diferentes"""
+    if regioes_gdf is None or len(regioes_gdf) == 0:
+        return
+    
+    colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', 
+             '#FF9FF3', '#54A0FF', '#5F27CD', '#00D2D3', '#FF9F43']
+    
+    for idx, row in regioes_gdf.iterrows():
+        color = colors[idx % len(colors)]
+        folium.GeoJson(
+            row.geometry,
+            style_function=lambda feature, color=color: {
+                'color': color,
+                'weight': 2,
+                'opacity': 0.8,
+                'fillColor': color,
+                'fillOpacity': 0.2
+            },
+            tooltip=f"Região: {row.get('Nome', 'N/A')}",
+            popup=False
+        ).add_to(m)
+
+def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only=False, search_term="", viz_type="Círculos Proporcionais", show_mapbiomas_layer=False, show_rios=False, show_rodovias=False, show_plantas_biogas=False, show_gasodutos_dist=False, show_gasodutos_transp=False, show_areas_urbanas=False, show_regioes_admin=False, show_municipios_biogas=True):
+    """VERSÃO ULTRA-OTIMIZADA - Cria mapa folium de forma muito mais rápida"""
+    
+    try:
+        # 1. SETUP BÁSICO DO MAPA - MINIMAL
+        m = folium.Map(
+            location=[-22.5, -48.5], 
+            zoom_start=7,
+            tiles='CartoDB positron',
+            prefer_canvas=True  # Melhora performance de renderização
+        )
+        
+        # Remover todos os debug prints/writes para melhor performance
+        if df.empty:
+            return m, ""
+        
+        # 2. PRÉ-CARREGAR TODAS AS CAMADAS DE UMA VEZ (CACHE)
+        with st.spinner("⚡ Carregando dados das camadas..."):
+            layer_data = prepare_layer_data()
+        
+        # 3. ADICIONAR CAMADAS SELECIONADAS - OTIMIZADO
+        layers_added = []
+        
+        if show_plantas_biogas and layer_data['plantas'] is not None:
+            add_plantas_layer_fast(m, layer_data['plantas'])
+            layers_added.append("Plantas de Biogás")
+        
+        if show_gasodutos_dist and layer_data['gasodutos_dist'] is not None:
+            add_lines_layer_fast(m, layer_data['gasodutos_dist'], "Gasodutos Distribuição", "#0066CC")
+            layers_added.append("Gasodutos Distribuição")
+            
+        if show_gasodutos_transp and layer_data['gasodutos_transp'] is not None:
+            add_lines_layer_fast(m, layer_data['gasodutos_transp'], "Gasodutos Transporte", "#CC0000", weight=4)
+            layers_added.append("Gasodutos Transporte")
+        
+        if show_rodovias and layer_data['rodovias'] is not None:
+            add_lines_layer_fast(m, layer_data['rodovias'], "Rodovias Estaduais", "#FF4500", weight=2)
+            layers_added.append("Rodovias")
+            
+        if show_rios and layer_data['rios'] is not None:
+            add_lines_layer_fast(m, layer_data['rios'], "Rios Principais", "#1E90FF", weight=2)
+            layers_added.append("Rios")
+        
+        if show_areas_urbanas and layer_data['areas_urbanas'] is not None:
+            # Usar amostragem para áreas urbanas se houver muitos polígonos
+            areas_sample = layer_data['areas_urbanas']
+            if len(areas_sample) > 5000:  # Limitar para performance
+                areas_sample = areas_sample.sample(n=5000)
+            add_polygons_layer_fast(m, areas_sample, "Áreas Urbanas", "#DEB887", fill_opacity=0.3)
+            layers_added.append("Áreas Urbanas")
+        
+        if show_regioes_admin and layer_data['regioes_admin'] is not None:
+            add_regioes_layer_fast(m, layer_data['regioes_admin'])
+            layers_added.append("Regiões Administrativas")
+        
+        # 4. CARREGAR DADOS DOS MUNICÍPIOS - SEMPRE ATIVADO
+        df_merged = None
+        if show_municipios_biogas and not df.empty:
+            try:
+                centroid_path = Path(__file__).parent.parent.parent / "shapefile" / "municipality_centroids.parquet"
+                if centroid_path.exists():
+                    centroids_df = pd.read_parquet(centroid_path)
+                    
+                    # O arquivo tem lat/lon em vez de geometry - vamos criar geometry a partir dessas colunas
+                    if 'lat' in centroids_df.columns and 'lon' in centroids_df.columns:
+                        # Converter apenas colunas numéricas específicas para tipos nativos do Python
+                        numeric_cols = ['lat', 'lon', 'cd_mun']
+                        for col in numeric_cols:
+                            if col in centroids_df.columns and centroids_df[col].dtype in ['int32', 'int64', 'float32', 'float64']:
+                                centroids_df[col] = centroids_df[col].astype(float)
+                        
+                        # Criar geometrias Point a partir de lat/lon
+                        from shapely.geometry import Point
+                        centroids_df['geometry'] = centroids_df.apply(lambda row: Point(float(row['lon']), float(row['lat'])), axis=1)
+                        centroids_gdf = gpd.GeoDataFrame(centroids_df, crs='EPSG:4326')
+                        
+                        df_merged = centroids_gdf.merge(df, on='cd_mun', how='inner')
+                        
+                        # CORREÇÃO: Após o merge, as colunas de nome ficam como nome_municipio_x e nome_municipio_y
+                        # Vamos criar uma coluna única 'nome_municipio' usando os dados do main data (y)
+                        if 'nome_municipio_y' in df_merged.columns:
+                            df_merged['nome_municipio'] = df_merged['nome_municipio_y']
+                        elif 'nome_municipio_x' in df_merged.columns:
+                            df_merged['nome_municipio'] = df_merged['nome_municipio_x']
+                        
+                        # Converter apenas colunas numéricas específicas (não textuais) para tipos nativos do Python
+                        numeric_cols_to_convert = ['lat', 'lon', 'cd_mun', 'populacao_2022', 'total_final_nm_ano', 'total_agricola_nm_ano', 'total_pecuaria_nm_ano', 'total_urbano_nm_ano']
+                        for col in df_merged.columns:
+                            if col != 'geometry' and col != 'nome_municipio' and col != 'nome_municipio_x' and col != 'nome_municipio_y' and df_merged[col].dtype in ['int32', 'int64', 'float32', 'float64']:
+                                try:
+                                    df_merged[col] = df_merged[col].astype(float)
+                                except:
+                                    pass  # Pular se não conseguir converter
+                        
+                        if not df_merged.empty and display_col in df_merged.columns:
+                            # Adicionar círculos dos municípios de forma otimizada
+                            add_municipality_circles_fast(m, df_merged, display_col, viz_type)
+                            layers_added.append("Potencial de Biogás dos Municípios")
+                        else:
+                            # Debugging para entender o problema
+                            st.warning(f"⚠️ Debug: df_merged empty={df_merged.empty if df_merged is not None else 'None'}, display_col='{display_col}' in columns={display_col in df_merged.columns if df_merged is not None else 'No df_merged'}")
+                    else:
+                        st.warning("⚠️ Colunas 'lat' e 'lon' não encontradas nos centroids")
+                else:
+                    st.warning("⚠️ Arquivo municipality_centroids.parquet não encontrado")
+            except Exception as e:
+                # Debug em vez de falha silenciosa
+                st.error(f"❌ Erro ao carregar círculos dos municípios: {e}")
+                import traceback
+                st.code(traceback.format_exc())
+        
+        # 5. REMOVER CONTROLES DO FOLIUM - USAMOS SIDEBAR AGORA
+        # LayerControl removido para deixar espaço para a legenda bonita
+        
+        # 6. CRIAR LEGENDA BONITA (RESTAURADA DO ORIGINAL)
+        legend_html = ""
+        if show_municipios_biogas and df_merged is not None and not df_merged.empty:
+            legend_html = f'''
+            <div style="font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 13px;">
+                <h4 style="margin-top: 0; margin-bottom: 12px; color: #2E8B57; text-align: center;">
+                    🗺️ Legenda do Mapa
+                </h4>
+                <div style="margin-bottom: 10px;">
+                    <strong>📊 Dados:</strong> {display_col.replace('_', ' ').title()}
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <strong>📈 Faixa de Potencial:</strong><br>
+                    Min: {df_merged[display_col].min():,.0f} Nm³/ano<br>
+                    Max: {df_merged[display_col].max():,.0f} Nm³/ano
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <strong>🎨 Escala de Cores:</strong><br>
+                    <div style="display: flex; align-items: center; margin: 2px 0;">
+                        <div style="width: 15px; height: 15px; background-color: #ffffcc; border: 1px solid #ccc; margin-right: 5px;"></div>
+                        <span>Muito Baixo</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 2px 0;">
+                        <div style="width: 15px; height: 15px; background-color: #c7e9b4; border: 1px solid #ccc; margin-right: 5px;"></div>
+                        <span>Baixo</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 2px 0;">
+                        <div style="width: 15px; height: 15px; background-color: #7fcdbb; border: 1px solid #ccc; margin-right: 5px;"></div>
+                        <span>Médio</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 2px 0;">
+                        <div style="width: 15px; height: 15px; background-color: #41b6c4; border: 1px solid #ccc; margin-right: 5px;"></div>
+                        <span>Alto</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 2px 0;">
+                        <div style="width: 15px; height: 15px; background-color: #253494; border: 1px solid #ccc; margin-right: 5px;"></div>
+                        <span>Muito Alto</span>
+                    </div>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <strong>📏 Tamanho do Círculo:</strong><br>
+                    <small>Proporcional ao potencial de biogás</small>
+                </div>
+                {f"<div><strong>🗺️ Camadas Ativas:</strong><br><small>{', '.join(layers_added)}</small></div>" if layers_added else ""}
+            </div>
+            '''
+        elif layers_added:
+            legend_html = f"<div style='background: white; padding: 10px; border: 2px solid #333; border-radius: 5px;'><p><strong>Camadas ativas:</strong> {', '.join(layers_added)}</p></div>"
+        
+        # 7. ADICIONAR LEGENDA FLUTUANTE NO MAPA (CANTO SUPERIOR DIREITO)
+        if show_municipios_biogas and df_merged is not None and not df_merged.empty:
+            floating_legend_html = f'''
+        <div style="position: fixed; 
+                    top: 10px; right: 10px; width: 250px; height: auto; 
+                    background-color: rgba(255, 255, 255, 0.95); 
+                    border: 2px solid #2E8B57;
+                    z-index:9999; font-size:12px; border-radius: 8px; padding: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                    font-family: 'Segoe UI', Tahoma, sans-serif;">
+            <h4 style="margin-top: 0; margin-bottom: 8px; color: #2E8B57; text-align: center; font-size: 14px;">
+                🗺️ Legenda
+            </h4>
+            <div style="margin-bottom: 8px; font-size: 11px;">
+                <strong>📊 Dados:</strong> {display_col.replace('_', ' ').title()}
+            </div>
+            <div style="margin-bottom: 8px; font-size: 11px;">
+                <strong>📈 Faixa:</strong><br>
+                Min: {df_merged[display_col].min():,.0f}<br>
+                Max: {df_merged[display_col].max():,.0f}
+            </div>
+            <div style="margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; margin: 1px 0;">
+                    <div style="width: 12px; height: 12px; background-color: #ffffcc; border: 1px solid #ccc; margin-right: 4px;"></div>
+                    <span style="font-size: 10px;">Muito Baixo</span>
+                </div>
+                <div style="display: flex; align-items: center; margin: 1px 0;">
+                    <div style="width: 12px; height: 12px; background-color: #c7e9b4; border: 1px solid #ccc; margin-right: 4px;"></div>
+                    <span style="font-size: 10px;">Baixo</span>
+                </div>
+                <div style="display: flex; align-items: center; margin: 1px 0;">
+                    <div style="width: 12px; height: 12px; background-color: #7fcdbb; border: 1px solid #ccc; margin-right: 4px;"></div>
+                    <span style="font-size: 10px;">Médio</span>
+                </div>
+                <div style="display: flex; align-items: center; margin: 1px 0;">
+                    <div style="width: 12px; height: 12px; background-color: #41b6c4; border: 1px solid #ccc; margin-right: 4px;"></div>
+                    <span style="font-size: 10px;">Alto</span>
+                </div>
+                <div style="display: flex; align-items: center; margin: 1px 0;">
+                    <div style="width: 12px; height: 12px; background-color: #253494; border: 1px solid #ccc; margin-right: 4px;"></div>
+                    <span style="font-size: 10px;">Muito Alto</span>
+                </div>
+            </div>
+            <div style="font-size: 10px;">
+                <strong>📏 Tamanho:</strong> Proporcional ao potencial
+            </div>
+        </div>
+        '''
+            # Adicionar a legenda flutuante ao mapa
+            m.get_root().html.add_child(folium.Element(floating_legend_html))
+        
+        return m, legend_html
+        
+    except Exception as e:
+        st.error(f"❌ Erro ao criar mapa: {e}")
+        # Retornar mapa básico em caso de erro
+        basic_map = folium.Map(location=[-22.5, -48.5], zoom_start=7)
+        return basic_map, ""
+
+def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
+    """Adiciona círculos dos municípios de forma ultra-otimizada com cores da legenda"""
+    if df_merged.empty or display_col not in df_merged.columns:
+        return
+    
+    # Usar apenas uma amostra se houver muitos municípios para melhor performance
+    if len(df_merged) > 500:
+        df_sample = df_merged.nlargest(500, display_col)  # Top 500 maiores valores
+    else:
+        df_sample = df_merged
+    
+    # Normalizar valores para tamanho dos círculos
+    values = df_sample[display_col].fillna(0)
+    if values.max() > 0:
+        sizes = ((values / values.max()) * 15 + 3).astype(float)  # Usar float em vez de int
+    else:
+        sizes = pd.Series([5.0] * len(df_sample))
+    
+    # Cores da legenda para os diferentes níveis
+    color_scale = ['#ffffcc', '#c7e9b4', '#7fcdbb', '#41b6c4', '#253494']
+    
+    # Definir cores baseadas nos valores normalizados
+    def get_color_for_value(value, max_val):
+        if max_val == 0:
+            return color_scale[0]
+        normalized = value / max_val
+        if normalized <= 0.2:
+            return color_scale[0]  # Muito Baixo
+        elif normalized <= 0.4:
+            return color_scale[1]  # Baixo
+        elif normalized <= 0.6:
+            return color_scale[2]  # Médio
+        elif normalized <= 0.8:
+            return color_scale[3]  # Alto
+        else:
+            return color_scale[4]  # Muito Alto
+    
+    max_val = float(values.max())
+    
+    # Adicionar círculos de forma batch com cores correspondentes à legenda
+    for idx, row in df_sample.iterrows():
+        try:
+            if hasattr(row, 'geometry') and row.geometry:
+                lat, lon = float(row.geometry.y), float(row.geometry.x)
+                size = float(sizes.loc[idx])
+                value = float(values.loc[idx])
+                
+                # Cor baseada no valor
+                color = get_color_for_value(value, max_val)
+                
+                # Obter nome do município (usando diferentes formas de acesso)
+                municipio_nome = 'N/A'
+                if 'nome_municipio' in row.index:
+                    municipio_nome = str(row['nome_municipio'])
+                elif hasattr(row, 'nome_municipio'):
+                    municipio_nome = str(row.nome_municipio)
+                
+                # Popup mínimo para performance
+                popup = f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano"
+                
+                folium.CircleMarker(
+                    location=[lat, lon],
+                    radius=size,
+                    popup=popup,
+                    tooltip=municipio_nome,
+                    color='#333333',  # Borda escura
+                    fillColor=color,  # Cor baseada no valor
+                    fillOpacity=0.8,
+                    weight=1
+                ).add_to(m)
+        except Exception as e:
+            continue  # Pular erros silenciosamente
 
 
 # Constants
@@ -35,6 +515,7 @@ RESIDUE_OPTIONS = {
     'Potencial Total': 'total_final_nm_ano',
     'Total Agrícola': 'total_agricola_nm_ano',
     'Total Pecuária': 'total_pecuaria_nm_ano',
+    'Total Urbano': 'total_urbano_nm_ano',
     'Cana-de-açúcar': 'biogas_cana_nm_ano',
     'Soja': 'biogas_soja_nm_ano',
     'Milho': 'biogas_milho_nm_ano',
@@ -44,8 +525,8 @@ RESIDUE_OPTIONS = {
     'Suínos': 'biogas_suino_nm_ano',
     'Aves': 'biogas_aves_nm_ano',
     'Piscicultura': 'biogas_piscicultura_nm_ano',
-    'Resíduos Urbanos': 'rsu_potencial_nm_habitante_ano',
-    'Resíduos Poda': 'rpo_potencial_nm_habitante_ano'
+    'Resíduos Urbanos': 'rsu_total_nm_ano',
+    'Resíduos Poda': 'rpo_total_nm_ano'
 }
 
 def get_residue_label(column_name):
@@ -83,6 +564,16 @@ def load_municipalities():
         with sqlite3.connect(db_path) as conn:
             query = "SELECT * FROM municipalities ORDER BY total_final_nm_ano DESC"
             df = pd.read_sql_query(query, conn)
+            
+            # Convert per capita values to total values by multiplying by population
+            if 'rsu_potencial_nm_habitante_ano' in df.columns and 'populacao_2022' in df.columns:
+                df['rsu_potencial_nm_ano'] = df['rsu_potencial_nm_habitante_ano'] * df['populacao_2022']
+                df['rsu_potencial_nm_ano'] = df['rsu_potencial_nm_ano'].fillna(0)
+            
+            if 'rpo_potencial_nm_habitante_ano' in df.columns and 'populacao_2022' in df.columns:
+                df['rpo_potencial_nm_ano'] = df['rpo_potencial_nm_habitante_ano'] * df['populacao_2022']
+                df['rpo_potencial_nm_ano'] = df['rpo_potencial_nm_ano'].fillna(0)
+            
             logger.info(f"Loaded {len(df)} municipalities")
             return df
             
@@ -454,7 +945,7 @@ def load_optimized_geometries(detail_level="medium_detail"):
     
     return None
 
-def create_centroid_map(df, display_col, filters=None, get_legend_only=False, search_term="", viz_type="Círculos Proporcionais", show_mapbiomas_layer=False, show_rios=False, show_rodovias=False):
+def create_centroid_map(df, display_col, filters=None, get_legend_only=False, search_term="", viz_type="Círculos Proporcionais", show_mapbiomas_layer=False, show_rios=False, show_rodovias=False, show_plantas_biogas=False, show_gasodutos_dist=False, show_gasodutos_transp=False, show_areas_urbanas=False, show_regioes_admin=False):
     """Create folium map with weighted centroids and floating controls"""
     import geopandas as gpd
     from pathlib import Path
@@ -515,11 +1006,7 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
             #     st.warning(f"⚠️ Não foi possível carregar a camada MapBiomas.")
             #     print(f"[ERRO] Erro ao adicionar camada WMS: {e}")
         
-        if df.empty:
-            # Layer Control removed - now using Streamlit checkboxes
-            return m, ""  # Return map and empty legend string
-        
-        # Add São Paulo state borders first (background)
+        # Add São Paulo state borders first (background) - ALWAYS SHOW
         try:
             sp_border_path = Path(__file__).parent.parent.parent / "shapefile" / "Limite_SP.shp"
             if sp_border_path.exists():
@@ -542,6 +1029,10 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                 ).add_to(m)
         except Exception as e:
             st.warning(f"⚠️ Bordas do estado: {e}")
+        
+        if df.empty:
+            # Layer Control removed - now using Streamlit checkboxes
+            return m, ""  # Return map and empty legend string
         
         # --- CAMADAS DE REFERÊNCIA COM FEATUREGROUP ---
         # Camada de rodovias estaduais
@@ -593,6 +1084,203 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                     print("[INFO] Shapefile de rios não encontrado - funcionalidade preparada para futuro.")
             except Exception as e:
                 print(f"[ERRO] Erro ao carregar rios: {e}")
+        
+        # --- CAMADAS DE INFRAESTRUTURA DE BIOGÁS ---
+        # Camada de plantas de biogás
+        if show_plantas_biogas:
+            try:
+                st.write("🔍 **PROCESSANDO:** Plantas de Biogás...")
+                plantas_group = folium.FeatureGroup(name="🏭 Plantas de Biogás", show=True)
+                plantas_path = Path(__file__).parent.parent.parent / "shapefile" / "Plantas_Biogas_SP.shp"
+                st.write(f"📁 Caminho: {plantas_path}")
+                st.write(f"✅ Arquivo existe: {plantas_path.exists()}")
+                if plantas_path.exists():
+                    plantas_gdf = gpd.read_file(plantas_path)
+                    st.write(f"📊 Registros carregados: {len(plantas_gdf)}")
+                    
+                    # Converter para WGS84 se necessário
+                    if plantas_gdf.crs and plantas_gdf.crs != 'EPSG:4326':
+                        st.write(f"🔄 Convertendo CRS de {plantas_gdf.crs} para EPSG:4326...")
+                        plantas_gdf = plantas_gdf.to_crs('EPSG:4326')
+                        st.write("✅ Conversão de CRS concluída")
+                    
+                    # Definir cores por tipo de planta
+                    def get_plant_color(tipo_plant):
+                        color_map = {
+                            'Biogás': '#32CD32',
+                            'Aterro Sanitário': '#8B4513',
+                            'Estação de Tratamento': '#4169E1',
+                            'Suinocultura': '#FF69B4',
+                            'Agropecuária': '#228B22',
+                            'Industrial': '#FF4500',
+                            'Outros': '#9370DB'
+                        }
+                        return color_map.get(tipo_plant, '#666666')
+                    
+                    st.write("🎯 Adicionando pontos ao mapa...")
+                    pontos_adicionados = 0
+                    
+                    for idx, row in plantas_gdf.iterrows():
+                        try:
+                            tipo_plant = row.get('TIPO_PLANT', 'Não informado')
+                            subtipo = row.get('SUBTIPO', 'Não informado')
+                            status = row.get('STATUS', 'Não informado')
+                            
+                            # Extrair coordenadas
+                            lat = row.geometry.y
+                            lon = row.geometry.x
+                            
+                            # Verificar se as coordenadas são válidas (dentro do Brasil/SP)
+                            if not (-35 <= lat <= -19 and -55 <= lon <= -44):
+                                st.write(f"⚠️ Coordenadas inválidas no ponto {idx}: lat={lat:.6f}, lon={lon:.6f}")
+                                continue
+                            
+                            popup_text = f"""
+                            <b>🏭 Planta de Biogás</b><br>
+                            <b>Tipo:</b> {tipo_plant}<br>
+                            <b>Subtipo:</b> {subtipo}<br>
+                            <b>Status:</b> {status}<br>
+                            <b>Coords:</b> {lat:.6f}, {lon:.6f}
+                            """
+                            
+                            folium.CircleMarker(
+                                location=[lat, lon],
+                                radius=8,
+                                popup=folium.Popup(popup_text, max_width=250),
+                                tooltip=f"Planta: {tipo_plant} - {subtipo}",
+                                color='#000000',
+                                fillColor=get_plant_color(tipo_plant),
+                                fillOpacity=0.8,
+                                weight=2
+                            ).add_to(plantas_group)
+                            pontos_adicionados += 1
+                            
+                        except Exception as e:
+                            st.write(f"❌ Erro no ponto {idx}: {e}")
+                            continue
+                    
+                    st.write(f"✅ {pontos_adicionados} pontos adicionados de {len(plantas_gdf)} totais")
+                    
+                    plantas_group.add_to(m)
+                    st.success(f"✅ **SUCESSO:** Camada de plantas de biogás adicionada: {len(plantas_gdf)} plantas.")
+                    print(f"[SUCESSO] Camada de plantas de biogás adicionada: {len(plantas_gdf)} plantas.")
+                else:
+                    print("[ERRO] Shapefile de plantas de biogás não encontrado.")
+            except Exception as e:
+                print(f"[ERRO] Erro ao carregar plantas de biogás: {e}")
+        
+        # Camada de gasodutos - distribuição
+        if show_gasodutos_dist:
+            try:
+                gasodutos_dist_group = folium.FeatureGroup(name="⛽ Gasodutos - Distribuição", show=True)
+                gasodutos_path = Path(__file__).parent.parent.parent / "shapefile" / "Gasodutos_Distribuicao_SP.shp"
+                if gasodutos_path.exists():
+                    gasodutos_gdf = gpd.read_file(gasodutos_path)
+                    folium.GeoJson(
+                        gasodutos_gdf,
+                        style_function=lambda feature: {
+                            'color': '#FF6600',
+                            'weight': 3,
+                            'opacity': 0.8,
+                            'dashArray': '5, 5'
+                        },
+                        tooltip="Gasoduto de Distribuição",
+                        popup="Rede de Distribuição de Gás Natural"
+                    ).add_to(gasodutos_dist_group)
+                    gasodutos_dist_group.add_to(m)
+                    print(f"[SUCESSO] Camada de gasodutos de distribuição adicionada: {len(gasodutos_gdf)} trechos.")
+                else:
+                    print("[ERRO] Shapefile de gasodutos de distribuição não encontrado.")
+            except Exception as e:
+                print(f"[ERRO] Erro ao carregar gasodutos de distribuição: {e}")
+        
+        # Camada de gasodutos - transporte
+        if show_gasodutos_transp:
+            try:
+                gasodutos_transp_group = folium.FeatureGroup(name="⛽ Gasodutos - Transporte", show=True)
+                gasodutos_path = Path(__file__).parent.parent.parent / "shapefile" / "Gasodutos_Transporte_SP.shp"
+                if gasodutos_path.exists():
+                    gasodutos_gdf = gpd.read_file(gasodutos_path)
+                    folium.GeoJson(
+                        gasodutos_gdf,
+                        style_function=lambda feature: {
+                            'color': '#CC0000',
+                            'weight': 4,
+                            'opacity': 0.9,
+                            'dashArray': '10, 5'
+                        },
+                        tooltip="Gasoduto de Transporte",
+                        popup=folium.GeoJsonPopup(fields=['Nome_Dut_1', 'MUNIC_ORIG', 'MUNIC_DEST'], 
+                                                labels=['Nome:', 'Origem:', 'Destino:'])
+                    ).add_to(gasodutos_transp_group)
+                    gasodutos_transp_group.add_to(m)
+                    print(f"[SUCESSO] Camada de gasodutos de transporte adicionada: {len(gasodutos_gdf)} trechos.")
+                else:
+                    print("[ERRO] Shapefile de gasodutos de transporte não encontrado.")
+            except Exception as e:
+                print(f"[ERRO] Erro ao carregar gasodutos de transporte: {e}")
+        
+        # --- ÁREAS URBANAS LAYER (FROM GEOPARQUET) ---
+        if show_areas_urbanas:
+            try:
+                areas_group = folium.FeatureGroup(name="🏘️ Áreas Urbanas", show=True)
+                areas_path = Path(__file__).parent.parent.parent / "geoparquet" / "Areas_Urbanas_SP.parquet"
+                if areas_path.exists():
+                    areas_gdf = gpd.read_parquet(areas_path)
+                    folium.GeoJson(
+                        areas_gdf,
+                        style_function=lambda feature: {
+                            'color': '#8B4513',
+                            'weight': 1,
+                            'opacity': 0.7,
+                            'fillColor': '#DEB887',
+                            'fillOpacity': 0.3
+                        },
+                        tooltip="Área Urbana",
+                        popup=folium.GeoJsonPopup(fields=['QAREA'], 
+                                                labels=['Área (ha):'])
+                    ).add_to(areas_group)
+                    areas_group.add_to(m)
+                    print(f"[SUCESSO] Camada de áreas urbanas adicionada: {len(areas_gdf)} polígonos.")
+                else:
+                    print("[ERRO] Arquivo GeoParquet de áreas urbanas não encontrado.")
+            except Exception as e:
+                print(f"[ERRO] Erro ao carregar áreas urbanas: {e}")
+        
+        # --- REGIÕES ADMINISTRATIVAS LAYER ---
+        if show_regioes_admin:
+            try:
+                regioes_group = folium.FeatureGroup(name="🏛️ Regiões Administrativas", show=True)
+                regioes_path = Path(__file__).parent.parent.parent / "shapefile" / "Regiao_Adm_SP.shp"
+                if regioes_path.exists():
+                    regioes_gdf = gpd.read_file(regioes_path)
+                    # Define colors for different regions
+                    colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', 
+                             '#FF9FF3', '#54A0FF', '#5F27CD', '#00D2D3', '#FF9F43',
+                             '#10AC84', '#EE5A24', '#0984E3', '#A29BFE', '#FD79A8', '#E84393']
+                    
+                    for idx, row in regioes_gdf.iterrows():
+                        color = colors[idx % len(colors)]
+                        folium.GeoJson(
+                            row.geometry,
+                            style_function=lambda feature, color=color: {
+                                'color': color,
+                                'weight': 2,
+                                'opacity': 0.8,
+                                'fillColor': color,
+                                'fillOpacity': 0.2
+                            },
+                            tooltip=f"Região: {row['Nome']}",
+                            popup=folium.GeoJsonPopup(fields=[row['Nome']], 
+                                                    labels=['Região:'])
+                        ).add_to(regioes_group)
+                    
+                    regioes_group.add_to(m)
+                    print(f"[SUCESSO] Camada de regiões administrativas adicionada: {len(regioes_gdf)} regiões.")
+                else:
+                    print("[ERRO] Shapefile de regiões administrativas não encontrado.")
+            except Exception as e:
+                print(f"[ERRO] Erro ao carregar regiões administrativas: {e}")
         # ------------------------------------------
         
         # Load municipality centroids
@@ -1063,7 +1751,7 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
         st.error(f"❌ Map creation error: {e}")
         return folium.Map(location=[-22.5, -48.5], zoom_start=7), ""  # Return empty map/legend
 
-def create_map(df, display_col):
+def create_map(df, display_col, show_plantas_biogas=False, show_gasodutos_dist=False, show_gasodutos_transp=False, show_rios=False, show_rodovias=False, show_mapbiomas=False):
     """Create optimized folium map with municipality boundaries"""
     import geopandas as gpd
     from pathlib import Path
@@ -1270,6 +1958,149 @@ def create_correlation_chart(df, display_col, title):
     return fig
 
 # Page functions
+def show_municipality_details_horizontal(df, municipality_id, selected_residues):
+    """Show optimized horizontal layout for municipality details"""
+    
+    # Convert municipality_id and get data
+    try:
+        if municipality_id in df['cd_mun'].astype(str).values:
+            mun_data = df[df['cd_mun'].astype(str) == str(municipality_id)].iloc[0]
+        elif int(municipality_id) in df['cd_mun'].values:
+            mun_data = df[df['cd_mun'] == int(municipality_id)].iloc[0]
+        else:
+            st.error(f"Município com ID {municipality_id} não encontrado.")
+            return
+    except (ValueError, IndexError) as e:
+        st.error(f"Erro ao encontrar município: {e}")
+        return
+    
+    # Compact header
+    st.markdown(f"""
+    <div style='background: linear-gradient(135deg, #2E8B57 0%, #32CD32 100%); 
+                color: white; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem;'>
+        <div style='margin: 0; color: white; font-size: 1.1em; font-weight: bold;'>
+            📍 {mun_data.get('regiao_imediata', 'N/A')}
+        </div>
+        <div style='margin: 2px 0 0 0; opacity: 0.9; font-size: 0.85em;'>
+            👥 {mun_data.get('populacao_2022', 0):,.0f} hab | 📐 {mun_data.get('area_km2', 0):.1f} km²
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Key metrics in 2x2 grid
+    total_potential = mun_data.get('total_final_nm_ano', 0)
+    agri_potential = mun_data.get('total_agricola_nm_ano', 0)
+    livestock_potential = mun_data.get('total_pecuaria_nm_ano', 0)
+    urban_potential = mun_data.get('total_urbano_nm_ano', 0) if 'total_urbano_nm_ano' in mun_data else 0
+    
+    # Compact metrics grid
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("🎯 Total", f"{total_potential/1000000:.1f}M Nm³/ano")
+        st.metric("🌾 Agrícola", f"{agri_potential/1000000:.1f}M Nm³/ano")
+    with col2:
+        st.metric("🐄 Pecuária", f"{livestock_potential/1000000:.1f}M Nm³/ano")
+        st.metric("🏘️ Urbano", f"{urban_potential/1000000:.1f}M Nm³/ano")
+    
+    # Compact visualization
+    if total_potential > 0:
+        st.markdown("**🏆 Composição do Potencial:**")
+        
+        # Pie chart data
+        main_categories = {
+            'Agrícola': agri_potential,
+            'Pecuária': livestock_potential,
+            'Urbano': urban_potential
+        }
+        
+        # Filter non-zero values
+        main_categories = {k: v for k, v in main_categories.items() if v > 0}
+        
+        if main_categories:
+            # Create compact pie chart
+            fig = px.pie(
+                values=list(main_categories.values()),
+                names=list(main_categories.keys()),
+                color_discrete_map={'Agrícola': '#228B22', 'Pecuária': '#8B4513', 'Urbano': '#4169E1'},
+                height=250  # Compact height
+            )
+            fig.update_traces(textposition='inside', textinfo='percent+label')
+            fig.update_layout(
+                margin=dict(t=20, b=20, l=20, r=20),
+                showlegend=False,
+                font=dict(size=10)
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        
+        # Top residue sources - compact list
+        st.markdown("**📋 Principais Fontes:**")
+        
+        residue_sources = []
+        for col in df.columns:
+            if col.endswith('_nm_ano') and col not in ['total_final_nm_ano', 'total_agricola_nm_ano', 'total_pecuaria_nm_ano', 'total_urbano_nm_ano']:
+                value = mun_data.get(col, 0)
+                if value > 0:
+                    clean_name = col.replace('_nm_ano', '').replace('_', ' ').title()
+                    residue_sources.append((clean_name, value))
+        
+        # Sort and show top 5
+        residue_sources.sort(key=lambda x: x[1], reverse=True)
+        for i, (name, value) in enumerate(residue_sources[:5]):
+            percentage = (value / total_potential) * 100
+            st.markdown(f"**{i+1}.** {name}: {value/1000000:.2f}M Nm³ ({percentage:.1f}%)")
+        
+        # Neighboring municipalities comparison chart
+        if 'regiao_imediata' in mun_data.index and mun_data['regiao_imediata'] != 'N/A':
+            st.markdown("---")
+            st.markdown("**🏘️ Comparação Regional:**")
+            
+            # Get municipalities in the same immediate region
+            same_region = df[df['regiao_imediata'] == mun_data['regiao_imediata']].copy()
+            
+            if len(same_region) > 1:
+                # Sort by total potential and get top 5 + current municipality
+                same_region_sorted = same_region.nlargest(8, 'total_final_nm_ano')
+                
+                # Ensure current municipality is included
+                if municipality_id not in same_region_sorted['cd_mun'].astype(str).values:
+                    current_mun_row = same_region[same_region['cd_mun'].astype(str) == str(municipality_id)]
+                    if not current_mun_row.empty:
+                        same_region_sorted = pd.concat([same_region_sorted.head(7), current_mun_row])
+                
+                # Create comparison bar chart
+                comparison_data = []
+                for _, row in same_region_sorted.iterrows():
+                    is_current = str(row['cd_mun']) == str(municipality_id)
+                    comparison_data.append({
+                        'Município': row['nome_municipio'][:15] + ('...' if len(row['nome_municipio']) > 15 else ''),
+                        'Potencial': row['total_final_nm_ano'] / 1000000,
+                        'Atual': is_current
+                    })
+                
+                comparison_df = pd.DataFrame(comparison_data)
+                
+                # Create bar chart
+                fig = px.bar(
+                    comparison_df, 
+                    x='Potencial', 
+                    y='Município',
+                    orientation='h',
+                    color='Atual',
+                    color_discrete_map={True: '#32CD32', False: '#87CEEB'},
+                    height=250,
+                    labels={'Potencial': 'Potencial (M Nm³/ano)'}
+                )
+                fig.update_layout(
+                    margin=dict(t=20, b=20, l=20, r=20),
+                    showlegend=False,
+                    font=dict(size=9),
+                    yaxis=dict(tickfont=dict(size=8))
+                )
+                fig.update_traces(texttemplate='%{x:.1f}M', textposition='outside')
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("Único município na região")
+
 def show_municipality_details_compact(df, municipality_id, selected_residues):
     """Show compact detailed analysis panel for clicked municipality"""
     
@@ -1291,12 +2122,18 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
     header_col1, header_col2 = st.columns([3, 1])
     
     with header_col1:
+        # Enhanced header with styling
         st.markdown(f"""
-        ### 🏙️ **{mun_data['nome_municipio']}**
-        **Região:** {mun_data.get('regiao_administrativa', 'N/A')} | 
-        **População:** {mun_data.get('populacao_2022', 0):,.0f} hab. |
-        **Área:** {mun_data.get('area_km2', 0):.1f} km²
-        """)
+        <div style='background: linear-gradient(135deg, #2E8B57 0%, #32CD32 100%); 
+                    color: white; padding: 1rem; border-radius: 10px; margin-bottom: 1rem;'>
+            <h2 style='margin: 0; color: white;'>🏙️ {mun_data['nome_municipio']}</h2>
+            <p style='margin: 5px 0 0 0; opacity: 0.9;'>
+                📍 <strong>Região:</strong> {mun_data.get('regiao_imediata', 'N/A')} | 
+                👥 <strong>População:</strong> {mun_data.get('populacao_2022', 0):,.0f} hab. | 
+                📐 <strong>Área:</strong> {mun_data.get('area_km2', 0):.1f} km²
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
     
     with header_col2:
         # Action buttons        
@@ -1306,75 +2143,119 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
                 st.success("✅ Adicionado!")
                 st.rerun()
     
-    # Key metrics in a compact format
+    # Enhanced key metrics with better visualization
     st.markdown("#### 📊 Indicadores Principais")
+    
+    # Calculate percentages for better context
+    total_potential = mun_data.get('total_final_nm_ano', 0)
+    agri_potential = mun_data.get('total_agricola_nm_ano', 0)
+    livestock_potential = mun_data.get('total_pecuaria_nm_ano', 0)
+    urban_potential = mun_data.get('total_urbano_nm_ano', 0) if 'total_urbano_nm_ano' in mun_data else 0
+    
+    # Calculate percentile rankings
+    total_percentile = (df['total_final_nm_ano'] < total_potential).mean() * 100 if total_potential > 0 else 0
+    agri_percentile = (df['total_agricola_nm_ano'] < agri_potential).mean() * 100 if agri_potential > 0 else 0
+    livestock_percentile = (df['total_pecuaria_nm_ano'] < livestock_potential).mean() * 100 if livestock_potential > 0 else 0
+    
     metric_cols = st.columns(4)
     
     with metric_cols[0]:
-        total_potential = mun_data.get('total_final_nm_ano', 0)
-        st.metric("Potencial Total", f"{total_potential:,.0f} Nm³/ano")
+        st.metric(
+            "🎯 Potencial Total", 
+            f"{total_potential/1000000:.1f}M Nm³/ano",
+            delta=f"Top {100-total_percentile:.0f}%" if total_percentile > 50 else f"P{total_percentile:.0f}"
+        )
     
     with metric_cols[1]:
-        agri_potential = mun_data.get('total_agricola_nm_ano', 0)
-        st.metric("Agrícola", f"{agri_potential:,.0f} Nm³/ano")
+        st.metric(
+            "🌾 Agrícola", 
+            f"{agri_potential/1000000:.1f}M Nm³/ano",
+            delta=f"Top {100-agri_percentile:.0f}%" if agri_percentile > 50 else f"P{agri_percentile:.0f}"
+        )
     
     with metric_cols[2]:
-        livestock_potential = mun_data.get('total_pecuaria_nm_ano', 0)
-        st.metric("Pecuária", f"{livestock_potential:,.0f} Nm³/ano")
+        st.metric(
+            "🐄 Pecuária", 
+            f"{livestock_potential/1000000:.1f}M Nm³/ano",
+            delta=f"Top {100-livestock_percentile:.0f}%" if livestock_percentile > 50 else f"P{livestock_percentile:.0f}"
+        )
     
     with metric_cols[3]:
-        urban_potential = mun_data.get('total_urbano_nm_ano', 0) if 'total_urbano_nm_ano' in mun_data else 0
-        st.metric("Urbano", f"{urban_potential:,.0f} Nm³/ano")
+        st.metric(
+            "🏘️ Urbano", 
+            f"{urban_potential/1000000:.1f}M Nm³/ano",
+            delta="Estimativa" if urban_potential > 0 else "N/D"
+        )
     
     # Compact tabs for detailed analysis
     compact_tabs = st.tabs(["📋 Resumo", "🏘️ Vizinhos", "📈 Ranking"])
     
     with compact_tabs[0]:  # Summary
-        # Top residue types with visual representation
-        st.markdown("**🏆 Principais Tipos de Resíduo:**")
-        residue_data = []
-        for residue_name, column_name in RESIDUE_OPTIONS.items():
-            if column_name in df.columns and 'Total' not in residue_name:
-                value = mun_data.get(column_name, 0)
-                if value > 0:
-                    residue_data.append((residue_name, value))
+        # Enhanced residue sources visualization
+        st.markdown("**🏆 Composição do Potencial de Biogás:**")
         
-        if residue_data:
-            # Sort by value and get top 5
-            residue_data.sort(key=lambda x: x[1], reverse=True)
-            top_residues = residue_data[:5]
+        # Create two columns: pie chart and detailed breakdown
+        chart_col, detail_col = st.columns([1.5, 1])
+        
+        with chart_col:
+            # Get the main categories data
+            main_categories = {
+                '🌾 Agrícola': agri_potential,
+                '🐄 Pecuária': livestock_potential, 
+                '🏘️ Urbano': urban_potential
+            }
             
-            # Create a horizontal bar chart
-            import plotly.express as px
-            import pandas as pd
+            # Filter out zero values
+            filtered_categories = {k: v for k, v in main_categories.items() if v > 0}
             
-            chart_df = pd.DataFrame(top_residues, columns=['Tipo', 'Potencial'])
-            fig = px.bar(chart_df, 
-                        x='Potencial', 
-                        y='Tipo', 
-                        orientation='h',
-                        title='Top 5 Tipos de Resíduo',
-                        labels={'Potencial': 'Potencial (Nm³/ano)', 'Tipo': 'Tipo de Resíduo'},
-                        color='Potencial',
-                        color_continuous_scale='viridis')
-            fig.update_layout(height=300, showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
+            if filtered_categories:
+                import plotly.express as px
+                import pandas as pd
+                
+                # Create pie chart for main categories
+                pie_df = pd.DataFrame(list(filtered_categories.items()), columns=['Categoria', 'Potencial'])
+                fig_pie = px.pie(pie_df, 
+                               values='Potencial', 
+                               names='Categoria',
+                               title='Distribuição por Categoria',
+                               color_discrete_sequence=px.colors.qualitative.Set3)
+                fig_pie.update_traces(textposition='inside', textinfo='percent+label')
+                fig_pie.update_layout(height=300, showlegend=True)
+                st.plotly_chart(fig_pie, use_container_width=True)
+            else:
+                st.info("Sem dados disponíveis para visualização.")
+        
+        with detail_col:
+            st.markdown("**📊 Detalhamento por Fonte:**")
             
-            # Also show percentile information in a compact way
-            st.markdown("**📊 Posições Relativas:**")
-            percentile_cols = st.columns(len(top_residues))
-            for i, (name, value) in enumerate(top_residues):
-                try:
-                    if RESIDUE_OPTIONS[name] in df.columns:
-                        percentile = (df[RESIDUE_OPTIONS[name]] <= value).mean() * 100
-                        with percentile_cols[i]:
-                            st.metric(label=name[:10] + "..." if len(name) > 10 else name, 
-                                    value=f"P{percentile:.0f}", 
-                                    delta=f"{value/1000000:.1f}M")
-                except Exception:
-                    pass
-        else:
-            st.info("Nenhum dado de resíduo disponível.")
+            # Detailed residue breakdown
+            residue_data = []
+            residue_icons = {
+                'Biogás de Cana': '🌾', 'Biogás de Soja': '🌱', 'Biogás de Milho': '🌽',
+                'Biogás de Café': '☕', 'Biogás de Citros': '🍊', 'Biogás de Bovinos': '🐄',
+                'Biogás de Suínos': '🐷', 'Biogás de Aves': '🐔', 'RSU': '🗑️', 'RPO': '🛢️'
+            }
+            
+            for residue_name, column_name in RESIDUE_OPTIONS.items():
+                if column_name in df.columns and 'Total' not in residue_name:
+                    value = mun_data.get(column_name, 0)
+                    if value > 0:
+                        icon = residue_icons.get(residue_name, '📊')
+                        residue_data.append((f"{icon} {residue_name}", value))
+            
+            if residue_data:
+                # Sort by value and get top sources
+                residue_data.sort(key=lambda x: x[1], reverse=True)
+                top_residues = residue_data[:8]  # Show top 8
+                
+                for name, value in top_residues:
+                    percentage = (value / total_potential * 100) if total_potential > 0 else 0
+                    st.markdown(f"**{name}**")
+                    st.markdown(f"└ {value/1000000:.2f}M Nm³/ano ({percentage:.1f}%)")
+                    st.progress(percentage/100)
+                    st.markdown("")
+            else:
+                st.info("Nenhum dado detalhado disponível.")
     
     with compact_tabs[1]:  # Neighbors
         st.markdown("**🏘️ Comparação com Vizinhos (50km):**")
@@ -1441,9 +2322,9 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
             # Regional ranking
             regional_rank = None
             regional_total = 0
-            if 'regiao_administrativa' in df.columns:
-                region = mun_data.get('regiao_administrativa', 'N/A')
-                regional_df = df[df['regiao_administrativa'] == region]
+            if 'regiao_imediata' in df.columns and mun_data.get('regiao_imediata'):
+                regiao_imediata = mun_data.get('regiao_imediata')
+                regional_df = df[df['regiao_imediata'] == regiao_imediata]
                 regional_rank = (regional_df['total_final_nm_ano'] >= total_potential).sum()
                 regional_total = len(regional_df)
             
@@ -1454,8 +2335,9 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
             
             if regional_rank:
                 regional_percentile = ((regional_total - regional_rank + 1) / regional_total) * 100
+                regiao_nome = mun_data.get('regiao_imediata', 'Regional')
                 ranking_data.append({
-                    'Categoria': f'Região {region}', 
+                    'Categoria': f'Região {regiao_nome}', 
                     'Posição': regional_rank, 
                     'Total': regional_total,
                     'Percentil': regional_percentile
@@ -1530,7 +2412,7 @@ def show_municipality_details(df, municipality_id, selected_residues):
     with col1:
         st.markdown(f"""
         ### 🏙️ **{mun_data['nome_municipio']}**
-        **Região:** {mun_data.get('regiao_administrativa', 'N/A')} | 
+        **Região:** {mun_data.get('regiao_imediata', 'N/A')} | 
         **População:** {mun_data.get('populacao_2022', 0):,.0f} hab. |
         **Área:** {mun_data.get('area_km2', 0):.1f} km²
         """)
@@ -1712,15 +2594,19 @@ def show_municipality_details(df, municipality_id, selected_residues):
     with detail_tabs[3]:  # Regional Context
         st.subheader("🗺️ Contexto Regional")
         
-        # Regional statistics
-        if 'regiao_administrativa' in df.columns:
-            region = mun_data.get('regiao_administrativa', 'N/A')
-            regional_df = df[df['regiao_administrativa'] == region]
+        # Regional statistics with real data
+        if 'regiao_imediata' in df.columns and mun_data.get('regiao_imediata'):
+            regiao_imediata = mun_data.get('regiao_imediata', 'N/A')
+            regiao_intermediaria = mun_data.get('regiao_intermediaria', 'N/A')
+            
+            # Filter municipalities in the same immediate region
+            regional_df = df[df['regiao_imediata'] == regiao_imediata]
             
             col1, col2 = st.columns(2)
             
             with col1:
-                st.markdown(f"**Região Administrativa:** {region}")
+                st.markdown(f"**Região Imediata:** {regiao_imediata}")
+                st.markdown(f"**Região Intermediária:** {regiao_intermediaria}")
                 st.metric(
                     "Municípios na Região", 
                     len(regional_df)
@@ -1734,7 +2620,7 @@ def show_municipality_details(df, municipality_id, selected_residues):
                     "Posição na Região",
                     f"{regional_rank}º de {len(regional_df)}"
                 )
-            
+                
             with col2:
                 # Regional averages
                 regional_avg = regional_df.apply(lambda row: sum([row.get(col, 0) for col in selected_residues if col in df.columns]), axis=1).mean()
@@ -1749,6 +2635,8 @@ def show_municipality_details(df, municipality_id, selected_residues):
                     "Média Estadual",
                     f"{state_avg:,.0f} Nm³/ano"
                 )
+        else:
+            st.info("📍 Dados regionais não disponíveis para este município")
 
 
 def get_classification_label(percentile):
@@ -1767,8 +2655,8 @@ def get_classification_label(percentile):
 
 def find_neighboring_municipalities(df, target_mun, radius_km=50):
     """Find neighboring municipalities within radius"""
-    target_lat = target_mun.get('latitude', 0)
-    target_lng = target_mun.get('longitude', 0)
+    target_lat = target_mun.get('lat', 0)
+    target_lng = target_mun.get('lon', 0)
     
     if target_lat == 0 or target_lng == 0:
         return df.head(10).to_dict('records')  # Fallback
@@ -1776,8 +2664,8 @@ def find_neighboring_municipalities(df, target_mun, radius_km=50):
     # Calculate distances (simplified)
     distances = []
     for idx, row in df.iterrows():
-        lat = row.get('latitude', 0)
-        lng = row.get('longitude', 0)
+        lat = row.get('lat', 0)
+        lng = row.get('lon', 0)
         
         if lat != 0 and lng != 0:
             # Simplified distance calculation
@@ -1917,9 +2805,21 @@ def page_main():
         st.markdown("---")
         st.markdown("## 🗺️ Camadas Visíveis")
         
+        st.write("**Dados dos Municípios:**")
+        show_municipios_biogas = st.checkbox("📊 Potencial de Biogás", value=True)  # Ativado por padrão
+        
         st.write("**Camadas de Referência:**")
-        show_rios = st.checkbox("Rios Principais", value=False)
         show_rodovias = st.checkbox("Rodovias Estaduais", value=False)
+        show_areas_urbanas = st.checkbox("🏘️ Áreas Urbanas", value=False)
+        show_regioes_admin = st.checkbox("🏛️ Regiões Administrativas", value=False)
+        
+        # Remove rios layer completely
+        show_rios = False
+        
+        st.write("**Infraestrutura de Biogás:**")
+        show_plantas_biogas = st.checkbox("🏭 Plantas de Biogás", value=False)
+        show_gasodutos_dist = st.checkbox("⛽ Gasodutos - Distribuição", value=False)
+        show_gasodutos_transp = st.checkbox("⛽ Gasodutos - Transporte", value=False)
 
         st.write("**Camadas de Imagem:**")
         show_mapbiomas = st.checkbox("MapBiomas - Uso do Solo (BETA)", value=False)
@@ -1944,39 +2844,58 @@ def page_main():
         'normalization': normalization
     })
 
-    # --- 5. PAINEL DE DETALHES CONDICIONAL (ACIMA DO MAPA) ---
+    # --- 5. LAYOUT HORIZONTAL: MAPA E DETALHES LADO A LADO ---
     if st.session_state.clicked_municipality:
-        # Usando um container com borda para um visual de "painel"
-        with st.container():
-            try:
-                mun_data = df[df['cd_mun'].astype(str) == str(st.session_state.clicked_municipality)].iloc[0]
-                mun_name = mun_data['nome_municipio']
+        # Layout horizontal: mapa (60%) e detalhes (40%)
+        map_col, details_col = st.columns([0.6, 0.4])
+        
+        with details_col:
+            # Container para detalhes com altura fixa e scroll
+            with st.container():
+                try:
+                    mun_data = df[df['cd_mun'].astype(str) == str(st.session_state.clicked_municipality)].iloc[0]
+                    mun_name = mun_data['nome_municipio']
 
-                # Cabeçalho do painel com botão de fechar
-                col1, col2 = st.columns([0.9, 0.1])
-                with col1:
-                    st.subheader(f"🔍 Detalhes de: {mun_name}")
-                with col2:
-                    if st.button("❌", key="close_details_button", help="Fechar detalhes"):
+                    # Cabeçalho compacto do painel
+                    if st.button("🔙 Voltar ao Mapa", key="close_details_button", help="Voltar ao mapa principal", use_container_width=True):
                         st.session_state.clicked_municipality = None
-                        st.rerun()  # Precisa de rerun para forçar o fechamento
+                        st.rerun()
+                    
+                    st.markdown(f"### 🔍 {mun_name}")
+                    st.markdown("---")
 
-                # Chama a função de detalhes compactos que já existe
-                show_municipality_details_compact(df, st.session_state.clicked_municipality, residues)
+                    # Detalhes em container com altura controlada
+                    with st.container():
+                        # Versão compacta da função de detalhes
+                        show_municipality_details_horizontal(df, st.session_state.clicked_municipality, residues)
 
-            except Exception as e:
-                st.error(f"Erro ao carregar detalhes: {str(e)}")
-                st.write(f"Município selecionado: {st.session_state.clicked_municipality}")
-                st.write(f"Dados encontrados: {len(mun_data) if 'mun_data' in locals() else 'Não encontrado'}")
-                # NÃO fechar automaticamente para poder debugar
-                if st.button("🔄 Tentar Novamente", key="retry_details"):
-                    st.rerun()
+                except Exception as e:
+                    st.error(f"Erro ao carregar detalhes: {str(e)}")
+                    if st.button("🔄 Tentar Novamente", key="retry_details"):
+                        st.rerun()
+        
+        with map_col:
+            # --- RENDERIZAÇÃO DO MAPA ---
+            map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas)
             
-            st.markdown("---")  # Linha divisória para separar do mapa
-
-    # --- 6. RENDERIZAÇÃO DO MAPA (SEMPRE EM LARGURA TOTAL) ---
-    map_object, _ = create_centroid_map(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, show_rios=show_rios, show_rodovias=show_rodovias)
-    map_data = st_folium(map_object, key="main_map", width=None, height=600)  # Altura um pouco menor
+            # Exibir legenda na sidebar se existir
+            if legend_html and show_municipios_biogas:
+                with st.sidebar:
+                    st.markdown("---")
+                    st.markdown(legend_html, unsafe_allow_html=True)
+            
+            map_data = st_folium(map_object, key="main_map", width=None, height=700)  # Altura maior para compensar layout horizontal
+    else:
+        # Mapa em largura total quando não há detalhes
+        map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas)
+        
+        # Exibir legenda na sidebar se existir
+        if legend_html and show_municipios_biogas:
+            with st.sidebar:
+                st.markdown("---")
+                st.markdown(legend_html, unsafe_allow_html=True)
+        
+        map_data = st_folium(map_object, key="main_map", width=None, height=600)
 
     # --- 7. PROCESSAMENTO DE CLIQUE DO MAPA (NOVA ABORDAGEM) ---
     clicked_id = None
