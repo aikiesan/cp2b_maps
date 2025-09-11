@@ -3332,24 +3332,18 @@ def page_main():
                     col_a, col_b = st.columns(2)
                     with col_a:
                         if st.button("✅ Selecionar Todas", key="select_all_mapbiomas", use_container_width=True):
-                            # Força atualização dos checkboxes usando método seguro
-                            for code in list(pastagem_crops.keys()) + list(temp_crops.keys()) + list(perennial_crops.keys()) + list(silviculture_crops.keys()):
-                                key = f"mapbiomas_{code}"
-                                if key not in st.session_state:
-                                    st.session_state[key] = True
-                                else:
-                                    st.session_state[key] = True
+                            # Força atualização dos checkboxes usando método mais direto
+                            all_codes = list(pastagem_crops.keys()) + list(temp_crops.keys()) + list(perennial_crops.keys()) + list(silviculture_crops.keys())
+                            for code in all_codes:
+                                st.session_state[f"mapbiomas_{code}"] = True
                             st.toast("Todas as culturas selecionadas!", icon="✅")
                             st.rerun()
                     with col_b:
                         if st.button("❌ Desmarcar Todas", key="select_none_mapbiomas", use_container_width=True):
-                            # Força atualização dos checkboxes usando método seguro
-                            for code in list(pastagem_crops.keys()) + list(temp_crops.keys()) + list(perennial_crops.keys()) + list(silviculture_crops.keys()):
-                                key = f"mapbiomas_{code}"
-                                if key not in st.session_state:
-                                    st.session_state[key] = False
-                                else:
-                                    st.session_state[key] = False
+                            # Força atualização dos checkboxes usando método mais direto
+                            all_codes = list(pastagem_crops.keys()) + list(temp_crops.keys()) + list(perennial_crops.keys()) + list(silviculture_crops.keys())
+                            for code in all_codes:
+                                st.session_state[f"mapbiomas_{code}"] = False
                             st.toast("Culturas desmarcadas!", icon="❌")
                             st.rerun()
         

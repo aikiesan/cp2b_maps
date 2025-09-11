@@ -7,7 +7,8 @@
       "Bash(taskkill:*)",
       "Bash(git add:*)",
       "Bash(git push:*)",
-      "Bash(streamlit run:*)"
+      "Bash(streamlit run:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
