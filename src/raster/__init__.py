@@ -2,6 +2,6 @@
 Módulo de carregamento de rasters para CP2B Maps
 """
 
-from .raster_loader import RasterLoader, get_raster_loader, create_mapbiomas_legend
+from .raster_loader import RasterLoader, get_raster_loader, create_mapbiomas_legend, analyze_raster_in_radius
 
-__all__ = ['RasterLoader', 'get_raster_loader', 'create_mapbiomas_legend']
+__all__ = ['RasterLoader', 'get_raster_loader', 'create_mapbiomas_legend', 'analyze_raster_in_radius']

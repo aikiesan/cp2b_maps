@@ -269,6 +269,85 @@ def get_raster_loader():
     return RasterLoader()
 
 
+def analyze_raster_in_radius(raster_path: str, center_lat: float, center_lon: float, radius_km: float, class_map: dict) -> dict:
+    """
+    Analisa dados de raster dentro de um raio específico e retorna áreas por classe.
+    
+    Args:
+        raster_path: Caminho para o arquivo raster GeoTIFF
+        center_lat: Latitude do centro
+        center_lon: Longitude do centro 
+        radius_km: Raio em quilômetros
+        class_map: Dicionário mapeando códigos de classe para nomes
+        
+    Returns:
+        Dicionário com nomes de cultura como chaves e áreas em hectares como valores
+    """
+    try:
+        import rasterio
+        import numpy as np
+        from rasterio.mask import mask
+        from shapely.geometry import Point
+        import geopandas as gpd
+        from pyproj import Transformer
+        
+        # Cria um círculo ao redor do centro
+        center_point = Point(center_lon, center_lat)
+        
+        # Cria um GeoDataFrame com o círculo (aproximado por buffer)
+        # Buffer em graus (aproximação: 1 grau ≈ 111 km)
+        buffer_degrees = radius_km / 111.0
+        circle_geometry = center_point.buffer(buffer_degrees)
+        
+        # Cria GeoDataFrame
+        gdf = gpd.GeoDataFrame([1], geometry=[circle_geometry], crs="EPSG:4326")
+        
+        # Abre o raster
+        with rasterio.open(raster_path) as src:
+            # Transforma a geometria para o CRS do raster
+            if src.crs != gdf.crs:
+                gdf_transformed = gdf.to_crs(src.crs)
+            else:
+                gdf_transformed = gdf
+            
+            # Faz o recorte (mask) do raster
+            out_image, out_transform = mask(src, gdf_transformed.geometry, crop=True, filled=False)
+            
+            # Remove pixels NoData
+            data = out_image[0]  # Primeira banda
+            data_valid = data[~np.isnan(data)]
+            
+            if len(data_valid) == 0:
+                return {}
+            
+            # Conta pixels por classe
+            unique_values, counts = np.unique(data_valid, return_counts=True)
+            
+            # Calcula área de cada pixel em hectares
+            pixel_size_x = abs(out_transform[0])
+            pixel_size_y = abs(out_transform[4])
+            pixel_area_m2 = pixel_size_x * pixel_size_y
+            pixel_area_ha = pixel_area_m2 / 10000  # Converte m² para hectares
+            
+            # Cria resultado
+            results = {}
+            for value, count in zip(unique_values, counts):
+                class_code = int(value)
+                if class_code in class_map:
+                    class_name = class_map[class_code]
+                    area_ha = count * pixel_area_ha
+                    if area_ha > 0.1:  # Só inclui se área > 0.1 ha
+                        results[class_name] = round(area_ha, 1)
+            
+            return results
+            
+    except Exception as e:
+        print(f"Erro na análise raster: {e}")
+        import traceback
+        traceback.print_exc()
+        return {}
+
+
 def create_mapbiomas_legend(selected_classes: List[int] = None) -> str:
     """Cria HTML da legenda para as classes do MapBiomas"""
     legend_html = """

@@ -34,16 +34,6 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
-try:
-    from raster import RasterLoader, get_raster_loader, create_mapbiomas_legend
-    HAS_RASTER_SYSTEM = True
-except ImportError as e:
-    HAS_RASTER_SYSTEM = False
-    RasterLoader = None
-    get_raster_loader = None
-    create_mapbiomas_legend = None
-    logger.warning(f"Sistema de rasters não disponível: {e}")
-
 # Configure logging para DEBUG
 logging.basicConfig(
     level=logging.DEBUG,
@@ -51,6 +41,17 @@ logging.basicConfig(
     stream=sys.stdout
 )
 logger = logging.getLogger(__name__)
+
+try:
+    from raster import RasterLoader, get_raster_loader, create_mapbiomas_legend, analyze_raster_in_radius
+    HAS_RASTER_SYSTEM = True
+except ImportError as e:
+    HAS_RASTER_SYSTEM = False
+    RasterLoader = None
+    get_raster_loader = None
+    create_mapbiomas_legend = None
+    analyze_raster_in_radius = None
+    logger.warning(f"Sistema de rasters não disponível: {e}")
 
 # ============================================================================
 # SISTEMA DE CACHE OTIMIZADO PARA SHAPEFILES
@@ -234,7 +235,7 @@ def add_regioes_layer_fast(m, regioes_gdf):
             popup=False
         ).add_to(m)
 
-def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only=False, search_term="", viz_type="Círculos Proporcionais", show_mapbiomas_layer=False, mapbiomas_classes=None, show_rios=False, show_rodovias=False, show_plantas_biogas=False, show_gasodutos_dist=False, show_gasodutos_transp=False, show_areas_urbanas=False, show_regioes_admin=False, show_municipios_biogas=True):
+def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only=False, search_term="", viz_type="Círculos Proporcionais", show_mapbiomas_layer=False, mapbiomas_classes=None, show_rios=False, show_rodovias=False, show_plantas_biogas=False, show_gasodutos_dist=False, show_gasodutos_transp=False, show_areas_urbanas=False, show_regioes_admin=False, show_municipios_biogas=True, catchment_info=None):
     """VERSÃO ULTRA-OTIMIZADA - Cria mapa folium de forma muito mais rápida"""
     
     # Função otimizada para criação de mapas com camadas customizáveis
@@ -247,6 +248,9 @@ def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only
             tiles='CartoDB positron',
             prefer_canvas=True  # Melhora performance de renderização
         )
+        
+        # Cria um FeatureGroup para a análise de proximidade. Ele será adicionado no final.
+        proximity_group = folium.FeatureGroup(name="Área de Análise", show=True)
         
         # 1.1. ADICIONAR LIMITE DO ESTADO DE SÃO PAULO (SEMPRE VISÍVEL)
         try:
@@ -746,35 +750,146 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                     continue
                     
     elif viz_type == "Mapa de Preenchimento (Coroplético)":
-        print("===> DEBUG VIZ_TYPE: Entrando no bloco Coroplético.")
-        # Para coroplético, precisaríamos dos polígonos dos municípios
-        # Por enquanto, usar círculos com cores muito distintas como aproximação
-        for idx, row in df_sample.iterrows():
-            try:
-                if hasattr(row, 'geometry') and row.geometry:
-                    lat, lon = float(row.geometry.y), float(row.geometry.x)
-                    value = float(values.loc[idx])
-                    color = get_color_for_value(value, max_val)
-                    
-                    municipio_nome = 'N/A'
-                    if 'nome_municipio' in row.index:
-                        municipio_nome = str(row['nome_municipio'])
-                    elif hasattr(row, 'nome_municipio'):
-                        municipio_nome = str(row.nome_municipio)
-                    
-                    # Círculos maiores e mais opacos para simular preenchimento
-                    folium.CircleMarker(
-                        location=[lat, lon],
-                        radius=12,  # Tamanho fixo maior
-                        popup=f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano",
-                        tooltip=municipio_nome,
-                        color=color,      # Borda da mesma cor
-                        fillColor=color,  # Preenchimento da mesma cor
-                        fillOpacity=0.9,  # Mais opaco
-                        weight=2
-                    ).add_to(m)
-            except Exception:
-                continue
+        print("===> DEBUG VIZ_TYPE: Entrando no bloco Coroplético REAL.")
+        try:
+            # 1. Carregar as geometrias dos polígonos (usando a função que já existe)
+            print("===> DEBUG: Carregando polígonos dos municípios...")
+            gdf_polygons = load_optimized_geometries("medium_detail")
+
+            if gdf_polygons is None or 'cd_mun' not in gdf_polygons.columns:
+                print("===> DEBUG: Falha ao carregar geometrias - usando fallback para círculos.")
+                # Fallback para círculos se não conseguir carregar
+                for idx, row in df_sample.iterrows():
+                    try:
+                        if hasattr(row, 'geometry') and row.geometry:
+                            lat, lon = float(row.geometry.y), float(row.geometry.x)
+                            value = float(values.loc[idx])
+                            color = get_color_for_value(value, max_val)
+                            
+                            municipio_nome = 'N/A'
+                            if 'nome_municipio' in row.index:
+                                municipio_nome = str(row['nome_municipio'])
+                            elif hasattr(row, 'nome_municipio'):
+                                municipio_nome = str(row.nome_municipio)
+                            
+                            folium.CircleMarker(
+                                location=[lat, lon],
+                                radius=12,
+                                popup=f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano",
+                                tooltip=municipio_nome,
+                                color=color,
+                                fillColor=color,
+                                fillOpacity=0.9,
+                                weight=2
+                            ).add_to(m)
+                    except Exception:
+                        continue
+                return
+
+            print(f"===> DEBUG: Polígonos carregados: {len(gdf_polygons)} geometrias.")
+
+            # 2. Mesclar dados de potencial com as geometrias
+            # Assegurar que 'cd_mun' seja do mesmo tipo em ambos os dataframes
+            gdf_polygons['cd_mun'] = gdf_polygons['cd_mun'].astype(str)
+            df_merged_copy = df_merged.copy()
+            df_merged_copy['cd_mun'] = df_merged_copy['cd_mun'].astype(str)
+            
+            df_choropleth = gdf_polygons.merge(df_merged_copy, on='cd_mun', how='inner')
+
+            if df_choropleth.empty:
+                print("===> DEBUG: Não foi possível combinar dados - usando fallback para círculos.")
+                # Fallback para círculos se merge falhar
+                for idx, row in df_sample.iterrows():
+                    try:
+                        if hasattr(row, 'geometry') and row.geometry:
+                            lat, lon = float(row.geometry.y), float(row.geometry.x)
+                            value = float(values.loc[idx])
+                            color = get_color_for_value(value, max_val)
+                            
+                            municipio_nome = 'N/A'
+                            if 'nome_municipio' in row.index:
+                                municipio_nome = str(row['nome_municipio'])
+                                
+                            folium.CircleMarker(
+                                location=[lat, lon],
+                                radius=12,
+                                popup=f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano",
+                                tooltip=municipio_nome,
+                                color=color,
+                                fillColor=color,
+                                fillOpacity=0.9,
+                                weight=2
+                            ).add_to(m)
+                    except Exception:
+                        continue
+                return
+
+            print(f"===> DEBUG: Merge concluído: {len(df_choropleth)} municípios com dados.")
+
+            # 3. Criar a camada Choropleth
+            folium.Choropleth(
+                geo_data=df_choropleth,
+                name='Potencial de Biogás',
+                data=df_choropleth,
+                columns=['cd_mun', display_col],
+                key_on='feature.properties.cd_mun',
+                fill_color='YlGnBu',  # Uma escala de cores boa para dados quantitativos
+                fill_opacity=0.7,
+                line_opacity=0.2,
+                line_color='black',
+                legend_name=f'Potencial ({display_col.replace("_", " ").title()})',
+                highlight=True
+            ).add_to(m)
+
+            # 4. (Opcional, mas recomendado) Adicionar tooltips interativos
+            style_function = lambda x: {'fillColor': '#ffffff', 'color':'#000000', 'fillOpacity': 0.1, 'weight': 0.1}
+            highlight_function = lambda x: {'fillColor': '#000000', 'color':'#000000', 'fillOpacity': 0.50, 'weight': 0.1}
+            
+            interactive_layer = folium.features.GeoJson(
+                df_choropleth,
+                style_function=style_function, 
+                control=False,
+                highlight_function=highlight_function, 
+                tooltip=folium.features.GeoJsonTooltip(
+                    fields=['nome_municipio', display_col],
+                    aliases=['Município: ', 'Potencial: '],
+                    style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;") 
+                )
+            )
+            m.add_child(interactive_layer)
+            m.keep_in_front(interactive_layer)
+            
+            print("===> DEBUG: Mapa coroplético criado com sucesso!")
+
+        except Exception as e:
+            print(f"===> DEBUG: Erro ao gerar o mapa coroplético: {e}")
+            # Fallback para círculos se algo der errado
+            print("===> DEBUG VIZ_TYPE: Fallback para círculos devido a erro no coroplético.")
+            for idx, row in df_sample.iterrows():
+                try:
+                    if hasattr(row, 'geometry') and row.geometry:
+                        lat, lon = float(row.geometry.y), float(row.geometry.x)
+                        value = float(values.loc[idx])
+                        color = get_color_for_value(value, max_val)
+                        
+                        municipio_nome = 'N/A'
+                        if 'nome_municipio' in row.index:
+                            municipio_nome = str(row['nome_municipio'])
+                        elif hasattr(row, 'nome_municipio'):
+                            municipio_nome = str(row.nome_municipio)
+                        
+                        folium.CircleMarker(
+                            location=[lat, lon],
+                            radius=12,
+                            popup=f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano",
+                            tooltip=municipio_nome,
+                            color=color,
+                            fillColor=color,
+                            fillOpacity=0.9,
+                            weight=2
+                        ).add_to(m)
+                except Exception:
+                    continue
     else:
         print(f"===> DEBUG VIZ_TYPE: Tipo não reconhecido '{viz_type}' - usando círculos proporcionais como fallback.")
         # Fallback para círculos proporcionais
@@ -1021,6 +1136,41 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     r = 6371
     
     return c * r
+
+def analyze_municipalities_in_radius(df_municipalities, center_lat, center_lon, radius_km):
+    """
+    Encontra municípios dentro de um raio e calcula o potencial total.
+    """
+    if df_municipalities.empty or 'lat' not in df_municipalities.columns:
+        return {'total_potential': 0, 'municipality_count': 0, 'municipalities': []}
+
+    municipalities_in_radius = []
+    total_potential = 0
+
+    for _, row in df_municipalities.iterrows():
+        # Pula municípios sem coordenadas válidas
+        if pd.isna(row['lat']) or pd.isna(row['lon']) or row['lat'] == 0:
+            continue
+
+        distance = calculate_distance(center_lat, center_lon, row['lat'], row['lon'])
+
+        if distance <= radius_km:
+            potential = row.get('total_final_nm_ano', 0)
+            municipalities_in_radius.append({
+                'nome': row['nome_municipio'],
+                'potencial': potential,
+                'distancia_km': round(distance, 1)
+            })
+            total_potential += potential
+    
+    # Ordena por distância (do mais próximo ao mais distante)
+    municipalities_in_radius.sort(key=lambda x: x['distancia_km'])
+    
+    return {
+        'total_potential': total_potential,
+        'municipality_count': len(municipalities_in_radius),
+        'municipalities': municipalities_in_radius
+    }
 
 def calculate_catchment_area(df, center_lat, center_lon, radius_km, display_col):
     """Calculate total potential within a radius from a center point"""
@@ -2068,6 +2218,35 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
             # Add the legend to the map
             m.get_root().html.add_child(folium.Element(legend_html_for_map))
         
+        # --- VISUALIZAÇÃO DA ANÁLISE DE PROXIMIDADE ---
+        if catchment_info and catchment_info.get("center"):
+            center_lat, center_lon = catchment_info["center"]
+            radius_km = catchment_info["radius"]
+            
+            # Adiciona o Pin (Marcador) no centro AO GRUPO
+            folium.Marker(
+                location=[center_lat, center_lon],
+                popup=f"📍 Centro de Análise<br>Raio: {radius_km} km<br>Lat: {center_lat:.4f}<br>Lon: {center_lon:.4f}",
+                tooltip="Centro da Análise de Proximidade",
+                icon=folium.Icon(color='red', icon='crosshairs', prefix='fa')
+            ).add_to(proximity_group)
+            
+            # Adiciona o Círculo do Raio AO GRUPO
+            folium.Circle(
+                location=[center_lat, center_lon],
+                radius=radius_km * 1000,  # folium.Circle usa metros
+                color='#c93c3c',
+                weight=2,
+                fill=True,
+                fill_color='#c93c3c',
+                fill_opacity=0.15,
+                popup=f"Área de Análise<br>Raio: {radius_km} km",
+                tooltip=f"Raio de {radius_km} km"
+            ).add_to(proximity_group)
+        
+        # NO FINAL DA FUNÇÃO, ANTES DO RETURN, adiciona o grupo ao mapa
+        proximity_group.add_to(m)
+        
         return m, legend_html
         
     except Exception as e:
@@ -3059,14 +3238,15 @@ def page_main():
         st.markdown("""
         <div style='background: #2E8B57; color: white; padding: 0.8rem; margin: -1rem -1rem 1rem -1rem;
                     text-align: center; border-radius: 8px;'>
-            <h3 style='margin: 0; font-size: 1.1rem;'>🎛️ PAINEL DE CONTROLE</h3>
+            <h3 style='margin: 0; font-size: 1.1rem;'>🎛️ PAINEL DE CONTROLE DO MAPA</h3>
+            <p style='font-size: 0.8rem; opacity: 0.9; margin: 0.2rem 0 0 0;'>Página Mapa Principal</p>
         </div>
         """, unsafe_allow_html=True)
         
         # === 1. EXPANDER PARA CAMADAS (Ação mais comum) ===
         with st.expander("🗺️ Camadas Visíveis", expanded=True):  # Começa expandido
             st.write("**Dados Principais:**")
-            show_municipios_biogas = st.checkbox("📊 Potencial de Biogás", value=True)
+            show_municipios_biogas = st.checkbox("📊 Potencial de Biogás", value=False)
             
             st.write("**Infraestrutura:**")
             show_plantas_biogas = st.checkbox("🏭 Plantas de Biogás", value=False)
@@ -3087,73 +3267,78 @@ def page_main():
             # Controles granulares de culturas MapBiomas ANINHADOS
             mapbiomas_classes = []
             if show_mapbiomas:
-                st.markdown("**Selecione as culturas:**")
-                
-                # Organizar culturas por categoria com prioridade de cores
-                pastagem_crops = {
-                    15: ('Pastagem', '#FFD966')
-                }
-                
-                temp_crops = {
-                    39: ('Soja', '#E1BEE7'),
-                    20: ('Cana-de-açúcar', '#C5E1A5'),
-                    40: ('Arroz', '#FFCDD2'),
-                    62: ('Algodão', '#F8BBD9'),
-                    41: ('Outras Temporárias', '#DCEDC8')
-                }
-                
-                perennial_crops = {
-                    46: ('Café', '#8D6E63'),
-                    47: ('Citrus', '#FFA726'),
-                    35: ('Dendê', '#66BB6A'),
-                    48: ('Outras Perenes', '#A1887F')
-                }
-                
-                silviculture_crops = {
-                    9: ('Silvicultura', '#6D4C41')
-                }
-                
-                # Interface organizada por categorias
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.markdown("**🌱 Pastagem:**")
-                    for code, (name, color) in pastagem_crops.items():
-                        if st.checkbox(f"{name}", key=f"mapbiomas_{code}"):
-                            mapbiomas_classes.append(code)
+                st.markdown("<hr style='margin: 0.5rem 0;'>", unsafe_allow_html=True)  # Divisor
+                with st.container(border=True):  # Borda para destacar
+                    st.markdown("**Selecione as culturas a visualizar:**")
                     
-                    st.markdown("**🌾 Temporárias:**")
-                    for code, (name, color) in temp_crops.items():
-                        if st.checkbox(f"{name}", key=f"mapbiomas_{code}"):
-                            mapbiomas_classes.append(code)
-                
-                with col2:
-                    st.markdown("**☕ Perenes:**")
-                    for code, (name, color) in perennial_crops.items():
-                        if st.checkbox(f"{name}", key=f"mapbiomas_{code}"):
-                            mapbiomas_classes.append(code)
+                    # Organizar culturas por categoria com prioridade de cores
+                    pastagem_crops = {
+                        15: ('Pastagem', '#FFD966')
+                    }
                     
-                    st.markdown("**🌲 Silvicultura:**")
-                    for code, (name, color) in silviculture_crops.items():
-                        if st.checkbox(f"{name}", key=f"mapbiomas_{code}"):
-                            mapbiomas_classes.append(code)
-                
-                # Controles rápidos
-                col_a, col_b = st.columns(2)
-                with col_a:
-                    if st.button("✅ Todas", key="select_all_mapbiomas"):
-                        # Força atualização dos checkboxes
-                        for code in list(pastagem_crops.keys()) + list(temp_crops.keys()) + list(perennial_crops.keys()) + list(silviculture_crops.keys()):
-                            st.session_state[f"mapbiomas_{code}"] = True
-                        st.toast("Todas as culturas selecionadas!", icon="✅")
-                        st.rerun()
-                with col_b:
-                    if st.button("❌ Nenhuma", key="select_none_mapbiomas"):
-                        # Força atualização dos checkboxes
-                        for code in list(pastagem_crops.keys()) + list(temp_crops.keys()) + list(perennial_crops.keys()) + list(silviculture_crops.keys()):
-                            st.session_state[f"mapbiomas_{code}"] = False
-                        st.toast("Culturas desmarcadas!", icon="❌")
-                        st.rerun()
+                    temp_crops = {
+                        39: ('Soja', '#E1BEE7'),
+                        20: ('Cana-de-açúcar', '#C5E1A5'),
+                        40: ('Arroz', '#FFCDD2'),
+                        62: ('Algodão', '#F8BBD9'),
+                        41: ('Outras Temporárias', '#DCEDC8')
+                    }
+                    
+                    perennial_crops = {
+                        46: ('Café', '#8D6E63'),
+                        47: ('Citrus', '#FFA726'),
+                        48: ('Outras Perenes', '#A1887F')
+                    }
+                    
+                    silviculture_crops = {
+                        9: ('Silvicultura', '#6D4C41')
+                    }
+                    
+                    # Interface organizada em colunas melhorada
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.markdown("**🌱 Pastagem e Silvicultura**")
+                        # Pastagem
+                        for code, (name, color) in pastagem_crops.items():
+                            if st.checkbox(f"{name}", key=f"mapbiomas_{code}"):
+                                mapbiomas_classes.append(code)
+                        # Silvicultura
+                        for code, (name, color) in silviculture_crops.items():
+                            if st.checkbox(f"{name}", key=f"mapbiomas_{code}"):
+                                mapbiomas_classes.append(code)
+                    
+                    with col2:
+                        st.markdown("**🌾 Culturas Agrícolas**")
+                        # Temporárias
+                        st.markdown("*Temporárias:*")
+                        for code, (name, color) in temp_crops.items():
+                            if st.checkbox(f"{name}", key=f"mapbiomas_{code}"):
+                                mapbiomas_classes.append(code)
+                        
+                        # Perenes  
+                        st.markdown("*Perenes:*")
+                        for code, (name, color) in perennial_crops.items():
+                            if st.checkbox(f"{name}", key=f"mapbiomas_{code}"):
+                                mapbiomas_classes.append(code)
+                    
+                    # Controles rápidos melhorados
+                    st.markdown("<hr style='margin: 0.3rem 0;'>", unsafe_allow_html=True)
+                    col_a, col_b = st.columns(2)
+                    with col_a:
+                        if st.button("✅ Selecionar Todas", key="select_all_mapbiomas", use_container_width=True):
+                            # Força atualização dos checkboxes
+                            for code in list(pastagem_crops.keys()) + list(temp_crops.keys()) + list(perennial_crops.keys()) + list(silviculture_crops.keys()):
+                                st.session_state[f"mapbiomas_{code}"] = True
+                            st.toast("Todas as culturas selecionadas!", icon="✅")
+                            st.rerun()
+                    with col_b:
+                        if st.button("❌ Desmarcar Todas", key="select_none_mapbiomas", use_container_width=True):
+                            # Força atualização dos checkboxes
+                            for code in list(pastagem_crops.keys()) + list(temp_crops.keys()) + list(perennial_crops.keys()) + list(silviculture_crops.keys()):
+                                st.session_state[f"mapbiomas_{code}"] = False
+                            st.toast("Culturas desmarcadas!", icon="❌")
+                            st.rerun()
         
         # === 2. EXPANDER PARA FILTROS DE DADOS ===
         with st.expander("📊 Filtros de Dados", expanded=False):
@@ -3174,34 +3359,43 @@ def page_main():
         with st.expander("🎨 Estilos de Visualização", expanded=False):
             viz_type = st.radio("Tipo de mapa:", options=["Círculos Proporcionais", "Mapa de Calor (Heatmap)", "Agrupamentos (Clusters)", "Mapa de Preenchimento (Coroplético)"], key="viz_type")
         
-        # === 4. EXPANDER PARA ANÁLISES AVANÇADAS ===
-        with st.expander("🎯 Análises Avançadas", expanded=False):
+        # === 4. EXPANDER PARA ANÁLISE DE PROXIMIDADE ===
+        with st.expander("🎯 Análise de Proximidade", expanded=False):
             # Initialize proximity analysis session state
             if 'catchment_center' not in st.session_state:
                 st.session_state.catchment_center = None
             if 'catchment_radius' not in st.session_state:
                 st.session_state.catchment_radius = 50
             
-            st.markdown("**Análise de Proximidade:**")
             enable_proximity = st.checkbox("Ativar Análise de Raio de Captação")
             
             if enable_proximity:
-                catchment_radius = st.slider("Raio de Captação (km):", min_value=10, max_value=200, value=st.session_state.catchment_radius, step=5)
+                # Substituir o slider por um radio com opções fixas
+                catchment_radius = st.radio(
+                    "Selecione o Raio de Captação:",
+                    options=[10, 30, 50],
+                    format_func=lambda x: f"{x} km",
+                    horizontal=True,
+                    key="catchment_radius_radio"
+                )
                 st.session_state.catchment_radius = catchment_radius
                 
-                if st.session_state.catchment_center:
+                # Instruções claras para o usuário
+                if st.session_state.get('catchment_center'):
                     center_lat, center_lon = st.session_state.catchment_center
-                    st.write(f"**Centro:** {center_lat:.4f}, {center_lon:.4f}")
-                    
-                    if st.button("Limpar Centro de Captação"):
+                    st.success(f"Centro definido em: {center_lat:.4f}, {center_lon:.4f}")
+                    if st.button("Limpar Centro", key="clear_center_proximity"):
                         st.session_state.catchment_center = None
-                        st.toast("Centro de captação removido!", icon="🗑️")
+                        st.session_state.raster_analysis_results = None  # Limpa resultados
+                        st.toast("Centro de captação removido.", icon="🗑️")
                         st.rerun()
                 else:
-                    st.info("👆 Clique em área vazia do mapa para definir centro")
+                    st.info("👆 Clique em uma área vazia do mapa para definir o centro e iniciar a análise.")
             else:
                 st.session_state.catchment_center = None
-            
+        
+        # === 5. EXPANDER PARA OUTRAS ANÁLISES ===
+        with st.expander("⚙️ Outras Análises", expanded=False):
             st.markdown("**Classificação de Dados:**")
             classification = st.selectbox(
                 "Método:",
@@ -3231,6 +3425,10 @@ def page_main():
                 st.session_state.selected_municipalities.clear()
                 st.toast(f"{len(selected_names)} municípios removidos da seleção!", icon="🗑️")
                 st.rerun()
+        
+        # === INSTRUÇÃO PARA ESCONDER SIDEBAR ===
+        st.markdown("---")
+        st.info("💡 Clique no ícone `>` no topo para recolher este painel e ampliar a visualização.", icon="↔️")
 
     # --- 4. APLICAÇÃO DOS FILTROS ---
     # Processa os dados ANTES de qualquer renderização de layout
@@ -3287,7 +3485,16 @@ def page_main():
         
         with map_col:
             # --- RENDERIZAÇÃO DO MAPA ---
-            map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, mapbiomas_classes=mapbiomas_classes, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas)
+            # Crie um dicionário com as informações da análise
+            catchment_info = None
+            if enable_proximity and st.session_state.get('catchment_center'):
+                catchment_info = {
+                    "center": st.session_state.catchment_center,
+                    "radius": st.session_state.catchment_radius
+                }
+            
+            
+            map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, mapbiomas_classes=mapbiomas_classes, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas, catchment_info=catchment_info)
             
             # Exibir legenda na sidebar se existir
             if legend_html and show_municipios_biogas:
@@ -3298,7 +3505,16 @@ def page_main():
             map_data = st_folium(map_object, key="main_map", width=None, height=700)  # Altura maior para compensar layout horizontal
     else:
         # Mapa em largura total quando não há detalhes
-        map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, mapbiomas_classes=mapbiomas_classes, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas)
+        # Crie um dicionário com as informações da análise
+        catchment_info = None
+        if enable_proximity and st.session_state.get('catchment_center'):
+            catchment_info = {
+                "center": st.session_state.catchment_center,
+                "radius": st.session_state.catchment_radius
+            }
+        
+        
+        map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, mapbiomas_classes=mapbiomas_classes, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas, catchment_info=catchment_info)
         
         # Exibir legenda na sidebar se existir
         if legend_html and show_municipios_biogas:
@@ -3307,6 +3523,133 @@ def page_main():
                 st.markdown(legend_html, unsafe_allow_html=True)
         
         map_data = st_folium(map_object, key="main_map", width=None, height=600)
+    
+    # === CONTAINER PARA RESULTADOS DA ANÁLISE DE PROXIMIDADE ===
+    if enable_proximity and st.session_state.get('catchment_center'):
+        
+        # --- Executa as análises ---
+        with st.spinner("🔍 Analisando área... Calculando uso do solo e potencial de biogás..."):
+            
+            center_lat, center_lon = st.session_state.catchment_center
+            radius_km = st.session_state.catchment_radius
+            
+            # Análise RASTER (Uso do Solo)
+            if st.session_state.get('raster_analysis_results') is None:
+                # Verificação se o sistema de raster está disponível
+                if not HAS_RASTER_SYSTEM or analyze_raster_in_radius is None:
+                    st.error("🔧 Sistema de análise de raster não está disponível. Verifique a instalação das dependências.")
+                    st.session_state.raster_analysis_results = {}
+                else:
+                    try:
+                        # Encontra o caminho do raster dinamicamente
+                        project_root = Path(__file__).parent.parent.parent
+                        raster_dir = project_root / "rasters"
+                        
+                        # Procura por arquivos .tif ou .tiff
+                        raster_files = list(raster_dir.glob("*.tif")) + list(raster_dir.glob("*.tiff"))
+                        
+                        if not raster_files:
+                            st.error(f"📂 Nenhum arquivo raster (.tif) encontrado na pasta '{raster_dir}'.")
+                            st.session_state.raster_analysis_results = {}
+                        else:
+                            raster_path = str(raster_files[0])  # Usa o primeiro que encontrar
+                            st.info(f"🔍 Analisando raster: {Path(raster_path).name}")
+
+                            # Mapa de classes que a função de análise precisa
+                            class_map = {
+                                15: 'Pastagem', 39: 'Soja', 20: 'Cana-de-açúcar', 40: 'Arroz',
+                                62: 'Algodão', 41: 'Outras Temporárias', 46: 'Café', 47: 'Citrus',
+                                48: 'Outras Perenes', 9: 'Silvicultura'
+                            }
+                            
+                            # *** ESTA É A CHAMADA REAL ***
+                            real_results = analyze_raster_in_radius(
+                                raster_path=raster_path,
+                                center_lat=center_lat,
+                                center_lon=center_lon,
+                                radius_km=radius_km,
+                                class_map=class_map
+                            )
+                            
+                            st.session_state.raster_analysis_results = real_results
+                            st.success(f"✅ Análise concluída: {len(real_results)} tipos de cultura encontrados")
+
+                    except Exception as e:
+                        st.error(f"❌ Falha na análise real do raster: {e}")
+                        import traceback
+                        with st.expander("🔍 Detalhes do erro"):
+                            st.code(traceback.format_exc())
+                        st.session_state.raster_analysis_results = None
+
+        # --- Exibe os resultados da análise raster ---
+        if st.session_state.get('raster_analysis_results'):
+            results = st.session_state.raster_analysis_results
+            st.markdown("---")
+            st.markdown(f"### 🎯 Análise de Uso do Solo no Raio de {st.session_state.catchment_radius} km")
+            
+            if results:
+                import pandas as pd  # Local import to ensure availability
+                
+                df_results = pd.DataFrame(list(results.items()), columns=['Cultura', 'Área (Hectares)'])
+                df_results = df_results[df_results['Área (Hectares)'] > 0].sort_values(by='Área (Hectares)', ascending=False)
+                
+                if not df_results.empty:
+                    col1, col2 = st.columns([1, 1.5])
+                    with col1:
+                        # Gráfico de pizza
+                        fig = px.pie(df_results, names='Cultura', values='Área (Hectares)', 
+                                   title='🥧 Composição da Área por Cultura')
+                        st.plotly_chart(fig, use_container_width=True)
+                        
+                        # Métricas resumo
+                        total_area = df_results['Área (Hectares)'].sum()
+                        st.metric("📊 Área Total Analisada", f"{total_area:,.1f} ha")
+                        
+                        # Potencial estimado baseado na área (exemplo)
+                        estimated_potential = total_area * 45  # 45 Nm³/ha/ano (média estimada)
+                        st.metric("⚡ Potencial Estimado de Biogás", f"{estimated_potential:,.0f} Nm³/ano")
+                        
+                    with col2:
+                        # Tabela detalhada
+                        st.markdown("#### 📋 Detalhamento por Cultura")
+                        
+                        # Adiciona coluna de percentual
+                        df_results['Percentual (%)'] = (df_results['Área (Hectares)'] / df_results['Área (Hectares)'].sum() * 100).round(1)
+                        
+                        # Adiciona estimativa de potencial por cultura
+                        potencial_por_cultura = {
+                            'Pastagem': 35,
+                            'Soja': 25, 
+                            'Cana-de-açúcar': 85,
+                            'Café': 30,
+                            'Citrus': 40,
+                            'Milho': 45
+                        }
+                        
+                        df_results['Potencial Estimado (Nm³/ano)'] = df_results.apply(
+                            lambda row: int(row['Área (Hectares)'] * potencial_por_cultura.get(row['Cultura'], 40)), 
+                            axis=1
+                        )
+                        
+                        st.dataframe(df_results, 
+                                   column_config={
+                                       "Cultura": "🌾 Cultura",
+                                       "Área (Hectares)": st.column_config.NumberColumn("📏 Área (ha)", format="%.1f"),
+                                       "Percentual (%)": st.column_config.NumberColumn("📊 %", format="%.1f"),
+                                       "Potencial Estimado (Nm³/ano)": st.column_config.NumberColumn("⚡ Potencial (Nm³/ano)", format="%d")
+                                   },
+                                   use_container_width=True, hide_index=True)
+                        
+                        # Resumo das principais culturas
+                        st.markdown("##### 🎯 Principais Oportunidades:")
+                        top_3 = df_results.head(3)
+                        for _, row in top_3.iterrows():
+                            st.markdown(f"• **{row['Cultura']}**: {row['Área (Hectares)']:.1f} ha ({row['Percentual (%)']:.1f}%)")
+                            
+                else:
+                    st.info("🔍 Nenhuma cultura agropecuária foi identificada na área selecionada.")
+            else:
+                st.warning("⚠️ A análise não retornou resultados. A área pode estar fora da cobertura dos dados MapBiomas.")
 
     # --- 7. PROCESSAMENTO DE CLIQUE DO MAPA (NOVA ABORDAGEM) ---
     clicked_id = None
@@ -3333,11 +3676,37 @@ def page_main():
                     st.rerun()
 
     # Análise de proximidade para cliques em área vazia
-    if map_data and map_data.get("last_clicked") and enable_proximity:
-        if not map_data.get("last_object_clicked") and not map_data.get("last_object_clicked_popup"):
-            clicked_lat = map_data["last_clicked"]["lat"]
-            clicked_lng = map_data["last_clicked"]["lng"]
-            st.session_state.catchment_center = (clicked_lat, clicked_lng)
+    if enable_proximity and map_data and map_data.get("last_clicked"):
+        # Apenas aciona se o clique NÃO foi em um objeto existente
+        if not map_data.get("last_object_clicked"):
+            
+            new_center = (
+                map_data["last_clicked"]["lat"],
+                map_data["last_clicked"]["lng"]
+            )
+            
+            # Pega o centro atual, se existir
+            current_center = st.session_state.get('catchment_center')
+            
+            # COMPARA o novo clique com o anterior para evitar recálculos desnecessários
+            # A tolerância pequena previne problemas com cliques múltiplos no mesmo lugar
+            if current_center is None or \
+               abs(new_center[0] - current_center[0]) > 0.0001 or \
+               abs(new_center[1] - current_center[1]) > 0.0001:
+                
+                # É um novo local de análise!
+                st.toast("🎯 Novo centro de análise definido!", icon="🎯")
+                
+                # **A CORREÇÃO DO BUG ESTÁ AQUI:**
+                # Limpa os resultados antigos para forçar o recálculo
+                st.session_state.raster_analysis_results = None
+                st.session_state.vector_analysis_results = None
+                
+                # Define o novo centro
+                st.session_state.catchment_center = new_center
+                
+                # Força o recarregamento da página para atualizar o mapa e iniciar a análise
+                st.rerun()
 
     # --- 8. FERRAMENTAS DE ANÁLISE (SEMPRE VISÍVEIS ABAIXO) ---
     st.markdown("---")
@@ -3459,6 +3828,7 @@ def page_main():
                     })
             
             if agri_data:
+                import pandas as pd  # Import local para garantir disponibilidade
                 agri_df = pd.DataFrame(agri_data)
                 fig = px.bar(agri_df, x='Tipo', y='Potencial', 
                            title='Líderes por Categoria Agrícola')
@@ -3482,6 +3852,7 @@ def page_main():
                     })
             
             if pec_data:
+                import pandas as pd  # Import local para garantir disponibilidade
                 pec_df = pd.DataFrame(pec_data)
                 fig = px.bar(pec_df, x='Tipo', y='Potencial',
                            title='Líderes por Categoria Pecuária')
