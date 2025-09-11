@@ -533,7 +533,9 @@ def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only
         return basic_map, ""
 
 def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
-    """Adiciona círculos dos municípios de forma ultra-otimizada com cores da legenda"""
+    """Adiciona visualizações dos municípios com diferentes estilos baseados em viz_type"""
+    print(f"===> DEBUG VIZ_TYPE: Função add_municipality_circles_fast recebendo viz_type = '{viz_type}'")
+    
     if df_merged.empty or display_col not in df_merged.columns:
         return
     
@@ -543,17 +545,13 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
     else:
         df_sample = df_merged
     
-    # Normalizar valores para tamanho dos círculos
+    # Preparar dados comuns
     values = df_sample[display_col].fillna(0)
-    if values.max() > 0:
-        sizes = ((values / values.max()) * 15 + 3).astype(float)  # Usar float em vez de int
-    else:
-        sizes = pd.Series([5.0] * len(df_sample))
+    max_val = float(values.max()) if values.max() > 0 else 1.0
     
     # Cores da legenda para os diferentes níveis
     color_scale = ['#ffffcc', '#c7e9b4', '#7fcdbb', '#41b6c4', '#253494']
     
-    # Definir cores baseadas nos valores normalizados
     def get_color_for_value(value, max_val):
         if max_val == 0:
             return color_scale[0]
@@ -569,41 +567,250 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
         else:
             return color_scale[4]  # Muito Alto
     
-    max_val = float(values.max())
+    # ==== LÓGICA DE SELEÇÃO DE VISUALIZAÇÃO RESTAURADA ====
+    print(f"===> DEBUG VIZ_TYPE: Checando a condição para '{viz_type}'")
     
-    # Adicionar círculos de forma batch com cores correspondentes à legenda
-    for idx, row in df_sample.iterrows():
+    if viz_type == "Círculos Proporcionais":
+        print("===> DEBUG VIZ_TYPE: Entrando no bloco de Círculos Proporcionais.")
+        # Implementação atual - círculos proporcionais
+        if values.max() > 0:
+            sizes = ((values / values.max()) * 15 + 3).astype(float)
+        else:
+            sizes = pd.Series([5.0] * len(df_sample))
+        
+        for idx, row in df_sample.iterrows():
+            try:
+                if hasattr(row, 'geometry') and row.geometry:
+                    lat, lon = float(row.geometry.y), float(row.geometry.x)
+                    size = float(sizes.loc[idx])
+                    value = float(values.loc[idx])
+                    color = get_color_for_value(value, max_val)
+                    
+                    municipio_nome = 'N/A'
+                    if 'nome_municipio' in row.index:
+                        municipio_nome = str(row['nome_municipio'])
+                    elif hasattr(row, 'nome_municipio'):
+                        municipio_nome = str(row.nome_municipio)
+                    
+                    popup = f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano"
+                    
+                    folium.CircleMarker(
+                        location=[lat, lon],
+                        radius=size,
+                        popup=popup,
+                        tooltip=municipio_nome,
+                        color='#333333',
+                        fillColor=color,
+                        fillOpacity=0.8,
+                        weight=1
+                    ).add_to(m)
+            except Exception:
+                continue
+                
+    elif viz_type == "Mapa de Calor (Heatmap)":
+        print("===> DEBUG VIZ_TYPE: Entrando no bloco de Mapa de Calor.")
         try:
-            if hasattr(row, 'geometry') and row.geometry:
-                lat, lon = float(row.geometry.y), float(row.geometry.x)
-                size = float(sizes.loc[idx])
-                value = float(values.loc[idx])
-                
-                # Cor baseada no valor
-                color = get_color_for_value(value, max_val)
-                
-                # Obter nome do município (usando diferentes formas de acesso)
-                municipio_nome = 'N/A'
-                if 'nome_municipio' in row.index:
-                    municipio_nome = str(row['nome_municipio'])
-                elif hasattr(row, 'nome_municipio'):
-                    municipio_nome = str(row.nome_municipio)
-                
-                # Popup mínimo para performance
-                popup = f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano"
-                
-                folium.CircleMarker(
-                    location=[lat, lon],
-                    radius=size,
-                    popup=popup,
-                    tooltip=municipio_nome,
-                    color='#333333',  # Borda escura
-                    fillColor=color,  # Cor baseada no valor
-                    fillOpacity=0.8,
-                    weight=1
-                ).add_to(m)
-        except Exception as e:
-            continue  # Pular erros silenciosamente
+            from folium.plugins import HeatMap
+            heat_data = []
+            for idx, row in df_sample.iterrows():
+                try:
+                    if hasattr(row, 'geometry') and row.geometry:
+                        lat, lon = float(row.geometry.y), float(row.geometry.x)
+                        value = float(values.loc[idx])
+                        if value > 0:  # Só incluir valores positivos no heatmap
+                            # Normalizar valor para o heatmap (0-1)
+                            normalized_value = value / max_val
+                            heat_data.append([lat, lon, normalized_value])
+                except Exception:
+                    continue
+            
+            if heat_data:
+                HeatMap(heat_data, radius=15, blur=10, max_zoom=1).add_to(m)
+            else:
+                # Fallback para círculos se heatmap falhar
+                print("===> DEBUG VIZ_TYPE: Fallback para círculos - dados insuficientes para heatmap.")
+                # Implementar círculos simples como fallback
+                for idx, row in df_sample.iterrows():
+                    try:
+                        if hasattr(row, 'geometry') and row.geometry:
+                            lat, lon = float(row.geometry.y), float(row.geometry.x)
+                            value = float(values.loc[idx])
+                            color = get_color_for_value(value, max_val)
+                            
+                            municipio_nome = 'N/A'
+                            if 'nome_municipio' in row.index:
+                                municipio_nome = str(row['nome_municipio'])
+                                
+                            folium.CircleMarker(
+                                location=[lat, lon],
+                                radius=5,
+                                popup=f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano",
+                                tooltip=municipio_nome,
+                                color='#333333',
+                                fillColor=color,
+                                fillOpacity=0.7,
+                                weight=1
+                            ).add_to(m)
+                    except Exception:
+                        continue
+        except ImportError:
+            print("===> DEBUG VIZ_TYPE: HeatMap não disponível - usando fallback para círculos.")
+            # Fallback para círculos se HeatMap não estiver disponível
+            for idx, row in df_sample.iterrows():
+                try:
+                    if hasattr(row, 'geometry') and row.geometry:
+                        lat, lon = float(row.geometry.y), float(row.geometry.x)
+                        value = float(values.loc[idx])
+                        color = get_color_for_value(value, max_val)
+                        
+                        municipio_nome = 'N/A'
+                        if 'nome_municipio' in row.index:
+                            municipio_nome = str(row['nome_municipio'])
+                            
+                        folium.CircleMarker(
+                            location=[lat, lon],
+                            radius=8,
+                            popup=f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano",
+                            tooltip=municipio_nome,
+                            color='red',
+                            fillColor='orange',
+                            fillOpacity=0.7,
+                            weight=2
+                        ).add_to(m)
+                except Exception:
+                    continue
+                    
+    elif viz_type == "Agrupamentos (Clusters)":
+        print("===> DEBUG VIZ_TYPE: Entrando no bloco de Agrupamentos.")
+        try:
+            from folium.plugins import MarkerCluster
+            marker_cluster = MarkerCluster().add_to(m)
+            
+            for idx, row in df_sample.iterrows():
+                try:
+                    if hasattr(row, 'geometry') and row.geometry:
+                        lat, lon = float(row.geometry.y), float(row.geometry.x)
+                        value = float(values.loc[idx])
+                        color = get_color_for_value(value, max_val)
+                        
+                        municipio_nome = 'N/A'
+                        if 'nome_municipio' in row.index:
+                            municipio_nome = str(row['nome_municipio'])
+                        elif hasattr(row, 'nome_municipio'):
+                            municipio_nome = str(row.nome_municipio)
+                        
+                        # Usar tamanho baseado no valor para diferenciação
+                        if values.max() > 0:
+                            size = max(5, int((value / max_val) * 20))
+                        else:
+                            size = 8
+                        
+                        marker = folium.CircleMarker(
+                            location=[lat, lon],
+                            radius=size,
+                            popup=f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano",
+                            tooltip=municipio_nome,
+                            color='#333333',
+                            fillColor=color,
+                            fillOpacity=0.8,
+                            weight=1
+                        )
+                        marker_cluster.add_child(marker)
+                except Exception:
+                    continue
+        except ImportError:
+            print("===> DEBUG VIZ_TYPE: MarkerCluster não disponível - usando fallback para círculos.")
+            # Fallback para círculos se MarkerCluster não estiver disponível
+            for idx, row in df_sample.iterrows():
+                try:
+                    if hasattr(row, 'geometry') and row.geometry:
+                        lat, lon = float(row.geometry.y), float(row.geometry.x)
+                        value = float(values.loc[idx])
+                        color = get_color_for_value(value, max_val)
+                        
+                        municipio_nome = 'N/A'
+                        if 'nome_municipio' in row.index:
+                            municipio_nome = str(row['nome_municipio'])
+                            
+                        folium.CircleMarker(
+                            location=[lat, lon],
+                            radius=8,
+                            popup=f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano",
+                            tooltip=municipio_nome,
+                            color='purple',
+                            fillColor='violet',
+                            fillOpacity=0.7,
+                            weight=2
+                        ).add_to(m)
+                except Exception:
+                    continue
+                    
+    elif viz_type == "Mapa de Preenchimento (Coroplético)":
+        print("===> DEBUG VIZ_TYPE: Entrando no bloco Coroplético.")
+        # Para coroplético, precisaríamos dos polígonos dos municípios
+        # Por enquanto, usar círculos com cores muito distintas como aproximação
+        for idx, row in df_sample.iterrows():
+            try:
+                if hasattr(row, 'geometry') and row.geometry:
+                    lat, lon = float(row.geometry.y), float(row.geometry.x)
+                    value = float(values.loc[idx])
+                    color = get_color_for_value(value, max_val)
+                    
+                    municipio_nome = 'N/A'
+                    if 'nome_municipio' in row.index:
+                        municipio_nome = str(row['nome_municipio'])
+                    elif hasattr(row, 'nome_municipio'):
+                        municipio_nome = str(row.nome_municipio)
+                    
+                    # Círculos maiores e mais opacos para simular preenchimento
+                    folium.CircleMarker(
+                        location=[lat, lon],
+                        radius=12,  # Tamanho fixo maior
+                        popup=f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano",
+                        tooltip=municipio_nome,
+                        color=color,      # Borda da mesma cor
+                        fillColor=color,  # Preenchimento da mesma cor
+                        fillOpacity=0.9,  # Mais opaco
+                        weight=2
+                    ).add_to(m)
+            except Exception:
+                continue
+    else:
+        print(f"===> DEBUG VIZ_TYPE: Tipo não reconhecido '{viz_type}' - usando círculos proporcionais como fallback.")
+        # Fallback para círculos proporcionais
+        if values.max() > 0:
+            sizes = ((values / values.max()) * 15 + 3).astype(float)
+        else:
+            sizes = pd.Series([5.0] * len(df_sample))
+        
+        for idx, row in df_sample.iterrows():
+            try:
+                if hasattr(row, 'geometry') and row.geometry:
+                    lat, lon = float(row.geometry.y), float(row.geometry.x)
+                    size = float(sizes.loc[idx])
+                    value = float(values.loc[idx])
+                    color = get_color_for_value(value, max_val)
+                    
+                    municipio_nome = 'N/A'
+                    if 'nome_municipio' in row.index:
+                        municipio_nome = str(row['nome_municipio'])
+                    elif hasattr(row, 'nome_municipio'):
+                        municipio_nome = str(row.nome_municipio)
+                    
+                    popup = f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano"
+                    
+                    folium.CircleMarker(
+                        location=[lat, lon],
+                        radius=size,
+                        popup=popup,
+                        tooltip=municipio_nome,
+                        color='#333333',
+                        fillColor=color,
+                        fillOpacity=0.8,
+                        weight=1
+                    ).add_to(m)
+            except Exception:
+                continue
 
 
 # Constants
