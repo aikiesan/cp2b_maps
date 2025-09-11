@@ -29,8 +29,18 @@ import pickle
 import os
 from functools import lru_cache
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Importar sistema de rasters
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+from raster import RasterLoader, get_raster_loader, create_mapbiomas_legend
+
+# Configure logging para DEBUG
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    stream=sys.stdout
+)
 logger = logging.getLogger(__name__)
 
 # ============================================================================
@@ -215,8 +225,10 @@ def add_regioes_layer_fast(m, regioes_gdf):
             popup=False
         ).add_to(m)
 
-def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only=False, search_term="", viz_type="Círculos Proporcionais", show_mapbiomas_layer=False, show_rios=False, show_rodovias=False, show_plantas_biogas=False, show_gasodutos_dist=False, show_gasodutos_transp=False, show_areas_urbanas=False, show_regioes_admin=False, show_municipios_biogas=True):
+def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only=False, search_term="", viz_type="Círculos Proporcionais", show_mapbiomas_layer=False, mapbiomas_classes=None, show_rios=False, show_rodovias=False, show_plantas_biogas=False, show_gasodutos_dist=False, show_gasodutos_transp=False, show_areas_urbanas=False, show_regioes_admin=False, show_municipios_biogas=True):
     """VERSÃO ULTRA-OTIMIZADA - Cria mapa folium de forma muito mais rápida"""
+    
+    # Função otimizada para criação de mapas com camadas customizáveis
     
     try:
         # 1. SETUP BÁSICO DO MAPA - MINIMAL
@@ -226,6 +238,30 @@ def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only
             tiles='CartoDB positron',
             prefer_canvas=True  # Melhora performance de renderização
         )
+        
+        # 1.1. ADICIONAR LIMITE DO ESTADO DE SÃO PAULO (SEMPRE VISÍVEL)
+        try:
+            sp_border_path = Path(__file__).parent.parent.parent / "shapefile" / "Limite_SP.shp"
+            if sp_border_path.exists():
+                sp_border = gpd.read_file(sp_border_path)
+                if sp_border.crs != 'EPSG:4326':
+                    sp_border = sp_border.to_crs('EPSG:4326')
+                
+                folium.GeoJson(
+                    sp_border,
+                    style_function=lambda x: {
+                        'fillColor': 'rgba(0,0,0,0)', # Sem preenchimento
+                        'color': '#2E8B57',          # Verde escuro
+                        'weight': 2,                 # Espessura da linha
+                        'opacity': 0.7,              # Opacidade da linha
+                        'dashArray': '5, 5'          # Linha tracejada
+                    },
+                    tooltip='Estado de São Paulo',
+                    interactive=False  # Não clicável
+                ).add_to(m)
+        except Exception as e:
+            # Falha silenciosa - se não conseguir carregar, continua sem o limite
+            pass
         
         # Remover todos os debug prints/writes para melhor performance
         if df.empty:
@@ -427,6 +463,53 @@ def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only
         '''
             # Adicionar a legenda flutuante ao mapa
             m.get_root().html.add_child(folium.Element(floating_legend_html))
+        
+        # --- CAMADA MAPBIOMAS COM RASTER OTIMIZADO ---
+        if show_mapbiomas_layer:
+            try:
+                # Verificar se o caminho do raster existe
+                project_root = Path(__file__).parent.parent.parent
+                raster_dir = project_root / "rasters"
+                
+                if not raster_dir.exists():
+                    st.error(f"❌ Diretório 'rasters' não encontrado: {raster_dir}")
+                else:
+                    raster_loader = RasterLoader(str(raster_dir))
+                    
+                    # Lista rasters disponíveis
+                    available_rasters = raster_loader.list_available_rasters()
+                    mapbiomas_rasters = [r for r in available_rasters if 'mapbiomas' in r.lower() or 'agropecuaria' in r.lower()]
+                    
+                    if mapbiomas_rasters:
+                        # Usa o primeiro raster encontrado
+                        raster_path = mapbiomas_rasters[0]
+                        data, metadata = raster_loader.load_raster(raster_path)
+                        
+                        if data is not None and metadata is not None:
+                            # Cria sobreposição para o Folium com classes filtradas
+                            overlay = raster_loader.raster_to_folium_overlay(data, metadata, opacity=0.7, selected_classes=mapbiomas_classes)
+                            
+                            if overlay is not None:
+                                # Cria FeatureGroup para controle de camadas
+                                mapbiomas_group = folium.FeatureGroup(name="MapBiomas - Agropecuária SP", show=True)
+                                overlay.add_to(mapbiomas_group)
+                                mapbiomas_group.add_to(m)
+                                
+                                # Adiciona legenda com classes filtradas
+                                legend_mapbiomas = create_mapbiomas_legend(selected_classes=mapbiomas_classes)
+                                m.get_root().html.add_child(folium.Element(legend_mapbiomas))
+                            else:
+                                st.warning("⚠️ Erro ao processar raster para visualização")
+                        else:
+                            st.warning("⚠️ Erro ao carregar dados do raster")
+                    else:
+                        st.info("📁 Nenhum arquivo raster MapBiomas encontrado na pasta 'rasters/'")
+                        st.info("💡 Baixe o GeoTIFF do Google Earth Engine e coloque na pasta 'rasters/'")
+                        
+            except ImportError as e:
+                st.error("❌ Sistema de rasters não disponível. Verifique se 'rasterio' está instalado.")
+            except Exception as e:
+                st.error(f"⚠️ Erro ao carregar camada MapBiomas: {str(e)}")
         
         return m, legend_html
         
@@ -973,38 +1056,82 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
         # Dark mode basemap removed completely
         # ------------------------------------
         
-        # --- CAMADA MAPBIOMAS COM FEATUREGROUP (VERSÃO ROBUSTA) ---
-        # TEMPORARIAMENTE DESABILITADA para não quebrar o mapa principal
+        # --- CAMADA MAPBIOMAS COM RASTER OTIMIZADO ---
         if show_mapbiomas_layer:
-            st.info("🚧 Camada MapBiomas temporariamente desabilitada para manutenção")
-            print("[INFO] Camada MapBiomas desabilitada temporariamente")
-            # try:
-            #     # Criar um FeatureGroup para a camada MapBiomas
-            #     mapbiomas_group = folium.FeatureGroup(name="MapBiomas - Uso do Solo", show=True)
-            #     
-            #     layer_info = RASTER_LAYERS["Cobertura do Solo (MapBiomas)"]
-            #     
-            #     # Adicionar WmsTileLayer ao FeatureGroup sem parâmetros control
-            #     folium.WmsTileLayer(
-            #         url=layer_info["url"],
-            #         layers=layer_info["layer"],
-            #         name="MapBiomas - Uso do Solo",
-            #         attr=layer_info["attr"],
-            #         transparent=True,
-            #         overlay=True,
-            #         control=True,
-            #         fmt="image/png",
-            #         version="1.3.0"
-            #     ).add_to(mapbiomas_group)
-            #     
-            #     # Adicionar o FeatureGroup ao mapa
-            #     mapbiomas_group.add_to(m)
-            #     
-            #     print("[SUCESSO] Camada WMS do MapBiomas (FeatureGroup) adicionada.")
-            # 
-            # except Exception as e:
-            #     st.warning(f"⚠️ Não foi possível carregar a camada MapBiomas.")
-            #     print(f"[ERRO] Erro ao adicionar camada WMS: {e}")
+            print("===> PASSO 1: Entrei no bloco 'if show_mapbiomas_layer'.")
+            
+            try:
+                print("===> PASSO 2: Iniciando bloco try...")
+                
+                # Verificar se o caminho do raster existe ANTES de tentar usar
+                project_root = Path(__file__).parent.parent.parent
+                raster_dir = project_root / "rasters"
+                print(f"===> PASSO 3: Diretório rasters: {raster_dir}")
+                print(f"===> PASSO 3b: Diretório existe? {raster_dir.exists()}")
+                
+                if not raster_dir.exists():
+                    print(f"===> ERRO CRÍTICO: Diretório rasters NÃO EXISTE: {raster_dir}")
+                    st.error(f"❌ Diretório 'rasters' não encontrado: {raster_dir}")
+                    return m, ""
+                    
+                print("===> PASSO 4: Criando RasterLoader...")
+                raster_loader = RasterLoader(str(raster_dir))
+                print("===> PASSO 5: RasterLoader criado com sucesso")
+                
+                # Lista rasters disponíveis
+                available_rasters = raster_loader.list_available_rasters()
+                print(f"[DEBUG] Rasters disponíveis: {available_rasters}")
+                
+                mapbiomas_rasters = [r for r in available_rasters if 'mapbiomas' in r.lower() or 'agropecuaria' in r.lower()]
+                print(f"[DEBUG] Rasters MapBiomas encontrados: {mapbiomas_rasters}")
+                
+                if mapbiomas_rasters:
+                    st.info("🔄 Carregando raster MapBiomas...")
+                    # Usa o primeiro raster encontrado
+                    raster_path = mapbiomas_rasters[0]
+                    print(f"[DEBUG] Carregando raster: {raster_path}")
+                    
+                    data, metadata = raster_loader.load_raster(raster_path)
+                    print(f"[DEBUG] Dados carregados: data={data is not None}, metadata={metadata is not None}")
+                    
+                    if data is not None and metadata is not None:
+                        print(f"[DEBUG] Criando sobreposição...")
+                        # Cria sobreposição para o Folium
+                        overlay = raster_loader.raster_to_folium_overlay(data, metadata, opacity=0.7)
+                        
+                        if overlay is not None:
+                            print(f"[DEBUG] Adicionando ao mapa...")
+                            # Cria FeatureGroup para controle de camadas
+                            mapbiomas_group = folium.FeatureGroup(name="MapBiomas - Agropecuária SP", show=True)
+                            overlay.add_to(mapbiomas_group)
+                            mapbiomas_group.add_to(m)
+                            
+                            # Adiciona legenda
+                            legend_html = create_mapbiomas_legend()
+                            m.get_root().html.add_child(folium.Element(legend_html))
+                            
+                            print(f"[SUCESSO] Camada raster MapBiomas adicionada: {os.path.basename(raster_path)}")
+                            st.success("✅ Raster MapBiomas carregado com sucesso!")
+                        else:
+                            print(f"[ERRO] Falha ao criar sobreposição")
+                            st.warning("⚠️ Erro ao processar raster para visualização")
+                    else:
+                        print(f"[ERRO] Falha ao carregar dados do raster")
+                        st.warning("⚠️ Erro ao carregar dados do raster")
+                else:
+                    print(f"[INFO] Nenhum raster MapBiomas encontrado")
+                    st.info("📁 Nenhum arquivo raster MapBiomas encontrado na pasta 'rasters/'")
+                    st.info("💡 Baixe o GeoTIFF do Google Earth Engine e coloque na pasta 'rasters/'")
+                    
+            except ImportError as e:
+                print(f"[ERRO] ImportError: {e}")
+                st.error("❌ Sistema de rasters não disponível. Verifique se 'rasterio' está instalado.")
+            except Exception as e:
+                print(f"[ERRO] Exception geral: {e}")
+                import traceback
+                print(f"[ERRO] Traceback: {traceback.format_exc()}")
+                st.error(f"⚠️ Erro ao carregar camada MapBiomas: {str(e)}")
+                st.code(traceback.format_exc())
         
         # Add São Paulo state borders first (background) - ALWAYS SHOW
         try:
@@ -1748,7 +1875,12 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
         return m, legend_html
         
     except Exception as e:
+        import traceback
+        print(f"🚨🚨🚨 ERRO CRÍTICO CAPTURADO: {e}")
+        print(f"🚨🚨🚨 TRACEBACK COMPLETO:")
+        print(traceback.format_exc())
         st.error(f"❌ Map creation error: {e}")
+        st.code(traceback.format_exc())
         return folium.Map(location=[-22.5, -48.5], zoom_start=7), ""  # Return empty map/legend
 
 def create_map(df, display_col, show_plantas_biogas=False, show_gasodutos_dist=False, show_gasodutos_transp=False, show_rios=False, show_rodovias=False, show_mapbiomas=False):
@@ -2030,7 +2162,7 @@ def show_municipality_details_horizontal(df, municipality_id, selected_residues)
                 showlegend=False,
                 font=dict(size=10)
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
         
         # Top residue sources - compact list
         st.markdown("**📋 Principais Fontes:**")
@@ -2097,7 +2229,7 @@ def show_municipality_details_horizontal(df, municipality_id, selected_residues)
                     yaxis=dict(tickfont=dict(size=8))
                 )
                 fig.update_traces(texttemplate='%{x:.1f}M', textposition='outside')
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
             else:
                 st.info("Único município na região")
 
@@ -2140,7 +2272,7 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
         if st.button("📊 Adicionar", key="add_comparison_compact", help="Adicionar à comparação"):
             if municipality_id not in st.session_state.selected_municipalities:
                 st.session_state.selected_municipalities.append(municipality_id)
-                st.success("✅ Adicionado!")
+                st.toast("Município adicionado!", icon="✅")
                 st.rerun()
     
     # Enhanced key metrics with better visualization
@@ -2221,7 +2353,7 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
                                color_discrete_sequence=px.colors.qualitative.Set3)
                 fig_pie.update_traces(textposition='inside', textinfo='percent+label')
                 fig_pie.update_layout(height=300, showlegend=True)
-                st.plotly_chart(fig_pie, use_container_width=True)
+                st.plotly_chart(fig_pie, width='stretch')
             else:
                 st.info("Sem dados disponíveis para visualização.")
         
@@ -2301,11 +2433,11 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
                                 color_discrete_map={True: '#ff6b6b', False: '#4ecdc4'},
                                 labels={'Potencial': 'Potencial (Nm³/ano)'})
                     fig.update_layout(height=300, showlegend=False)
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width='stretch')
                     
                     # Show distance info in a compact table
                     st.dataframe(neighbor_df[['Município', 'Distância']].head(6), 
-                                use_container_width=True, hide_index=True)
+                                width='stretch', hide_index=True)
             else:
                 st.info("Poucos vizinhos encontrados para comparação.")
         except Exception as e:
@@ -2363,7 +2495,7 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
                 color_continuous_scale='RdYlGn'
             )
             fig.update_layout(height=250, showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
             
         except Exception as e:
             st.warning("Não foi possível calcular rankings.")
@@ -2425,7 +2557,7 @@ def show_municipality_details(df, municipality_id, selected_residues):
         if st.button("📊 Adicionar à Comparação", key="add_comparison"):
             if municipality_id not in st.session_state.selected_municipalities:
                 st.session_state.selected_municipalities.append(municipality_id)
-                st.success("Município adicionado!")
+                st.toast("Município adicionado à comparação!", icon="📊")
                 st.rerun()
     
     # Detailed analysis tabs
@@ -2457,7 +2589,7 @@ def show_municipality_details(df, municipality_id, selected_residues):
         
         if residue_data:
             residue_df = pd.DataFrame(residue_data)
-            st.dataframe(residue_df, use_container_width=True)
+            st.dataframe(residue_df, width='stretch')
             
             # Download button
             csv = residue_df.to_csv(index=False).encode('utf-8')
@@ -2513,7 +2645,7 @@ def show_municipality_details(df, municipality_id, selected_residues):
                 height=400
             )
             fig.update_xaxis(tickangle=45)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
             
             # Summary statistics
             col1, col2, col3 = st.columns(3)
@@ -2581,7 +2713,7 @@ def show_municipality_details(df, municipality_id, selected_residues):
                 height=500
             )
             
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
             
             # Top 3 residues
             residue_ranking = list(zip(residue_names, residue_values))
@@ -2734,106 +2866,177 @@ def page_main():
         st.markdown("""
         <div style='background: #2E8B57; color: white; padding: 0.8rem; margin: -1rem -1rem 1rem -1rem;
                     text-align: center; border-radius: 8px;'>
-            <h3 style='margin: 0; font-size: 1.1rem;'>🗺️ FILTROS DO MAPA</h3>
+            <h3 style='margin: 0; font-size: 1.1rem;'>🎛️ PAINEL DE CONTROLE</h3>
         </div>
         """, unsafe_allow_html=True)
         
-        mode = st.radio("Modo:", ["Individual", "Múltiplos"], horizontal=True, key="map_mode")
-        
-        if mode == "Individual":
-            selected = st.selectbox("Resíduo:", list(RESIDUE_OPTIONS.keys()), key="map_select")
-            residues = [RESIDUE_OPTIONS[selected]]
-            display_name = selected
-        else:
-            selected_list = st.multiselect("Resíduos:", list(RESIDUE_OPTIONS.keys()), default=["Potencial Total"], key="map_multi")
-            residues = [RESIDUE_OPTIONS[item] for item in selected_list]
-            display_name = f"Soma de {len(residues)} tipos" if len(residues) > 1 else (selected_list[0] if selected_list else "Nenhum")
-        
-        search_term = st.text_input("Buscar:", placeholder="Município...", key="search")
-        
-        st.markdown("---")
-        st.markdown("## 🗺️ Estilos de Visualização")
-        viz_type = st.radio("Tipo de mapa:", options=["Círculos Proporcionais", "Mapa de Calor (Heatmap)", "Agrupamentos (Clusters)", "Mapa de Preenchimento (Coroplético)"], key="viz_type")
-        
-        st.markdown("---")
-        st.markdown("## 🎯 Análise de Proximidade")
-        
-        # Initialize proximity analysis session state
-        if 'catchment_center' not in st.session_state:
-            st.session_state.catchment_center = None
-        if 'catchment_radius' not in st.session_state:
-            st.session_state.catchment_radius = 50
-        
-        enable_proximity = st.checkbox("Ativar Análise de Raio de Captação")
-        
-        if enable_proximity:
-            catchment_radius = st.slider("Raio de Captação (km):", min_value=10, max_value=200, value=st.session_state.catchment_radius, step=5)
-            st.session_state.catchment_radius = catchment_radius
+        # === 1. EXPANDER PARA CAMADAS (Ação mais comum) ===
+        with st.expander("🗺️ Camadas Visíveis", expanded=True):  # Começa expandido
+            st.write("**Dados Principais:**")
+            show_municipios_biogas = st.checkbox("📊 Potencial de Biogás", value=True)
             
-            if st.session_state.catchment_center:
-                center_lat, center_lon = st.session_state.catchment_center
-                st.write(f"**Centro:** {center_lat:.4f}, {center_lon:.4f}")
+            st.write("**Infraestrutura:**")
+            show_plantas_biogas = st.checkbox("🏭 Plantas de Biogás", value=False)
+            show_gasodutos_dist = st.checkbox("⛽ Distribuição", value=False)
+            show_gasodutos_transp = st.checkbox("⛽ Transporte", value=False)
+            
+            st.write("**Referência:**")
+            show_rodovias = st.checkbox("Rodovias", value=False)
+            show_areas_urbanas = st.checkbox("🏘️ Áreas Urbanas", value=False)
+            show_regioes_admin = st.checkbox("🏛️ Regiões Admin.", value=False)
+            
+            # Remove rios layer completely
+            show_rios = False
+            
+            st.write("**Imagem de Satélite:**")
+            show_mapbiomas = st.checkbox("🌾 MapBiomas - Uso do Solo", value=False)
+            
+            # Controles granulares de culturas MapBiomas ANINHADOS
+            mapbiomas_classes = []
+            if show_mapbiomas:
+                st.markdown("**Selecione as culturas:**")
                 
-                if st.button("Limpar Centro de Captação"):
-                    st.session_state.catchment_center = None
-                    st.rerun()
+                # Organizar culturas por categoria com prioridade de cores
+                pastagem_crops = {
+                    15: ('Pastagem', '#FFD966')
+                }
+                
+                temp_crops = {
+                    39: ('Soja', '#E1BEE7'),
+                    20: ('Cana-de-açúcar', '#C5E1A5'),
+                    40: ('Arroz', '#FFCDD2'),
+                    62: ('Algodão', '#F8BBD9'),
+                    41: ('Outras Temporárias', '#DCEDC8')
+                }
+                
+                perennial_crops = {
+                    46: ('Café', '#8D6E63'),
+                    47: ('Citrus', '#FFA726'),
+                    35: ('Dendê', '#66BB6A'),
+                    48: ('Outras Perenes', '#A1887F')
+                }
+                
+                silviculture_crops = {
+                    9: ('Silvicultura', '#6D4C41')
+                }
+                
+                # Interface organizada por categorias
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.markdown("**🌱 Pastagem:**")
+                    for code, (name, color) in pastagem_crops.items():
+                        if st.checkbox(f"{name}", key=f"mapbiomas_{code}"):
+                            mapbiomas_classes.append(code)
+                    
+                    st.markdown("**🌾 Temporárias:**")
+                    for code, (name, color) in temp_crops.items():
+                        if st.checkbox(f"{name}", key=f"mapbiomas_{code}"):
+                            mapbiomas_classes.append(code)
+                
+                with col2:
+                    st.markdown("**☕ Perenes:**")
+                    for code, (name, color) in perennial_crops.items():
+                        if st.checkbox(f"{name}", key=f"mapbiomas_{code}"):
+                            mapbiomas_classes.append(code)
+                    
+                    st.markdown("**🌲 Silvicultura:**")
+                    for code, (name, color) in silviculture_crops.items():
+                        if st.checkbox(f"{name}", key=f"mapbiomas_{code}"):
+                            mapbiomas_classes.append(code)
+                
+                # Controles rápidos
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    if st.button("✅ Todas", key="select_all_mapbiomas"):
+                        # Força atualização dos checkboxes
+                        for code in list(pastagem_crops.keys()) + list(temp_crops.keys()) + list(perennial_crops.keys()) + list(silviculture_crops.keys()):
+                            st.session_state[f"mapbiomas_{code}"] = True
+                        st.toast("Todas as culturas selecionadas!", icon="✅")
+                        st.rerun()
+                with col_b:
+                    if st.button("❌ Nenhuma", key="select_none_mapbiomas"):
+                        # Força atualização dos checkboxes
+                        for code in list(pastagem_crops.keys()) + list(temp_crops.keys()) + list(perennial_crops.keys()) + list(silviculture_crops.keys()):
+                            st.session_state[f"mapbiomas_{code}"] = False
+                        st.toast("Culturas desmarcadas!", icon="❌")
+                        st.rerun()
+        
+        # === 2. EXPANDER PARA FILTROS DE DADOS ===
+        with st.expander("📊 Filtros de Dados", expanded=False):
+            mode = st.radio("Modo:", ["Individual", "Múltiplos"], horizontal=True, key="map_mode")
+            
+            if mode == "Individual":
+                selected = st.selectbox("Resíduo:", list(RESIDUE_OPTIONS.keys()), key="map_select")
+                residues = [RESIDUE_OPTIONS[selected]]
+                display_name = selected
             else:
-                st.info("👆 Clique em área vazia do mapa para definir centro")
-        else:
-            st.session_state.catchment_center = None
+                selected_list = st.multiselect("Resíduos:", list(RESIDUE_OPTIONS.keys()), default=["Potencial Total"], key="map_multi")
+                residues = [RESIDUE_OPTIONS[item] for item in selected_list]
+                display_name = f"Soma de {len(residues)} tipos" if len(residues) > 1 else (selected_list[0] if selected_list else "Nenhum")
+            
+            search_term = st.text_input("Buscar:", placeholder="Município...", key="search")
         
-        st.markdown("---")
-        st.markdown("## 📈 Classificação de Dados")
+        # === 3. EXPANDER PARA ESTILOS DE VISUALIZAÇÃO ===
+        with st.expander("🎨 Estilos de Visualização", expanded=False):
+            viz_type = st.radio("Tipo de mapa:", options=["Círculos Proporcionais", "Mapa de Calor (Heatmap)", "Agrupamentos (Clusters)", "Mapa de Preenchimento (Coroplético)"], key="viz_type")
         
-        classification = st.selectbox(
-            "Método de Classificação:",
-            options=["Linear (Intervalo Uniforme)", "Quantiles (Contagem Igual)", "Quebras Naturais (Jenks)", "Desvio Padrão"],
-            key="classification"
-        )
+        # === 4. EXPANDER PARA ANÁLISES AVANÇADAS ===
+        with st.expander("🎯 Análises Avançadas", expanded=False):
+            # Initialize proximity analysis session state
+            if 'catchment_center' not in st.session_state:
+                st.session_state.catchment_center = None
+            if 'catchment_radius' not in st.session_state:
+                st.session_state.catchment_radius = 50
+            
+            st.markdown("**Análise de Proximidade:**")
+            enable_proximity = st.checkbox("Ativar Análise de Raio de Captação")
+            
+            if enable_proximity:
+                catchment_radius = st.slider("Raio de Captação (km):", min_value=10, max_value=200, value=st.session_state.catchment_radius, step=5)
+                st.session_state.catchment_radius = catchment_radius
+                
+                if st.session_state.catchment_center:
+                    center_lat, center_lon = st.session_state.catchment_center
+                    st.write(f"**Centro:** {center_lat:.4f}, {center_lon:.4f}")
+                    
+                    if st.button("Limpar Centro de Captação"):
+                        st.session_state.catchment_center = None
+                        st.toast("Centro de captação removido!", icon="🗑️")
+                        st.rerun()
+                else:
+                    st.info("👆 Clique em área vazia do mapa para definir centro")
+            else:
+                st.session_state.catchment_center = None
+            
+            st.markdown("**Classificação de Dados:**")
+            classification = st.selectbox(
+                "Método:",
+                options=["Linear (Intervalo Uniforme)", "Quantiles (Contagem Igual)", "Quebras Naturais (Jenks)", "Desvio Padrão"],
+                key="classification"
+            )
+            
+            num_classes = st.slider("Número de Classes:", min_value=3, max_value=8, value=5, key="num_classes")
+            
+            st.markdown("**Normalização de Dados:**")
+            normalization = st.selectbox(
+                "Métrica:",
+                options=["Potencial Absoluto (Nm³/ano)", "Potencial per Capita (Nm³/hab/ano)", "Potencial por Área (Nm³/km²/ano)", "Densidade Populacional (hab/km²)"],
+                key="normalization"
+            )
         
-        num_classes = st.slider("Número de Classes:", min_value=3, max_value=8, value=5, key="num_classes")
-        
-        st.markdown("---")
-        st.markdown("## 📊 Normalização de Dados")
-        
-        normalization = st.selectbox(
-            "Métrica:",
-            options=["Potencial Absoluto (Nm³/ano)", "Potencial per Capita (Nm³/hab/ano)", "Potencial por Área (Nm³/km²/ano)", "Densidade Populacional (hab/km²)"],
-            key="normalization"
-        )
-        
-        st.markdown("---")
-        st.markdown("## 🗺️ Camadas Visíveis")
-        
-        st.write("**Dados dos Municípios:**")
-        show_municipios_biogas = st.checkbox("📊 Potencial de Biogás", value=True)  # Ativado por padrão
-        
-        st.write("**Camadas de Referência:**")
-        show_rodovias = st.checkbox("Rodovias Estaduais", value=False)
-        show_areas_urbanas = st.checkbox("🏘️ Áreas Urbanas", value=False)
-        show_regioes_admin = st.checkbox("🏛️ Regiões Administrativas", value=False)
-        
-        # Remove rios layer completely
-        show_rios = False
-        
-        st.write("**Infraestrutura de Biogás:**")
-        show_plantas_biogas = st.checkbox("🏭 Plantas de Biogás", value=False)
-        show_gasodutos_dist = st.checkbox("⛽ Gasodutos - Distribuição", value=False)
-        show_gasodutos_transp = st.checkbox("⛽ Gasodutos - Transporte", value=False)
-
-        st.write("**Camadas de Imagem:**")
-        show_mapbiomas = st.checkbox("MapBiomas - Uso do Solo (BETA)", value=False)
-        
-        # Selected municipalities
+        # === SEÇÃO FIXA: MUNICÍPIOS SELECIONADOS ===
         if st.session_state.selected_municipalities:
-            st.markdown("**Selecionados:**")
+            st.markdown("---")
+            st.markdown("**🎯 Municípios Selecionados:**")
             selected_names = df[df['cd_mun'].isin(st.session_state.selected_municipalities)]['nome_municipio'].tolist()
             for name in selected_names[:3]:
                 st.markdown(f"• {name[:15]}..." if len(name) > 15 else f"• {name}")
             if len(selected_names) > 3:
                 st.markdown(f"...+{len(selected_names)-3} mais")
-            if st.button("Limpar", key="clear_selection"):
+            if st.button("🗑️ Limpar Seleção", key="clear_selection"):
                 st.session_state.selected_municipalities.clear()
+                st.toast(f"{len(selected_names)} municípios removidos da seleção!", icon="🗑️")
                 st.rerun()
 
     # --- 4. APLICAÇÃO DOS FILTROS ---
@@ -2843,6 +3046,21 @@ def page_main():
         'display_name': display_name, 
         'normalization': normalization
     })
+
+    # --- 4.5. RESUMO DOS FILTROS ATIVOS ---
+    active_filters = []
+    if display_name != "Potencial Total":
+        active_filters.append(f"Resíduo: **{display_name}**")
+    if search_term:
+        active_filters.append(f"Busca: **'{search_term}'**")
+    if normalization != "Potencial Absoluto (Nm³/ano)":
+        metric_short = normalization.split('(')[0].strip()
+        active_filters.append(f"Métrica: **{metric_short}**")
+    if show_mapbiomas and mapbiomas_classes:
+        active_filters.append(f"MapBiomas: **{len(mapbiomas_classes)} culturas**")
+    
+    if active_filters:
+        st.info(f"🎯 Filtros Ativos: {' | '.join(active_filters)}")
 
     # --- 5. LAYOUT HORIZONTAL: MAPA E DETALHES LADO A LADO ---
     if st.session_state.clicked_municipality:
@@ -2857,7 +3075,7 @@ def page_main():
                     mun_name = mun_data['nome_municipio']
 
                     # Cabeçalho compacto do painel
-                    if st.button("🔙 Voltar ao Mapa", key="close_details_button", help="Voltar ao mapa principal", use_container_width=True):
+                    if st.button("🔙 Voltar ao Mapa", key="close_details_button", help="Voltar ao mapa principal", width='stretch'):
                         st.session_state.clicked_municipality = None
                         st.rerun()
                     
@@ -2876,7 +3094,7 @@ def page_main():
         
         with map_col:
             # --- RENDERIZAÇÃO DO MAPA ---
-            map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas)
+            map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, mapbiomas_classes=mapbiomas_classes, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas)
             
             # Exibir legenda na sidebar se existir
             if legend_html and show_municipios_biogas:
@@ -2887,7 +3105,7 @@ def page_main():
             map_data = st_folium(map_object, key="main_map", width=None, height=700)  # Altura maior para compensar layout horizontal
     else:
         # Mapa em largura total quando não há detalhes
-        map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas)
+        map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, mapbiomas_classes=mapbiomas_classes, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas)
         
         # Exibir legenda na sidebar se existir
         if legend_html and show_municipios_biogas:
@@ -2967,7 +3185,7 @@ def page_main():
                 if not melted_df.empty:
                     fig = px.pie(melted_df, names='Tipo', values='Potencial', 
                                title='Composição do Potencial por Tipo de Resíduo', hole=0.4)
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width='stretch')
                 
             else: # Múltiplos municípios
                 st.markdown("#### Comparativo entre Municípios Selecionados")
@@ -2999,7 +3217,7 @@ def page_main():
                     color_continuous_scale='Viridis'
                 )
                 fig_bar.update_layout(height=400, xaxis_tickangle=45)
-                st.plotly_chart(fig_bar, use_container_width=True)
+                st.plotly_chart(fig_bar, width='stretch')
         else:
             # Análise estadual padrão (quando NENHUM município está selecionado)
             st.markdown("### 📊 Análise Estadual: " + display_name)
@@ -3009,13 +3227,13 @@ def page_main():
                 st.markdown("##### 🏆 Top 15 Municípios")
                 chart1 = create_top_chart(df_to_display, display_col, display_name, limit=15)
                 if chart1: 
-                    st.plotly_chart(chart1, use_container_width=True)
+                    st.plotly_chart(chart1, width='stretch')
             
             with col2:
                 st.markdown("##### 📈 Distribuição")
                 chart2 = create_distribution_chart(df_to_display, display_col, display_name)
                 if chart2: 
-                    st.plotly_chart(chart2, use_container_width=True)
+                    st.plotly_chart(chart2, width='stretch')
             
             # Estatísticas resumidas
             col1, col2, col3, col4 = st.columns(4)
@@ -3052,9 +3270,9 @@ def page_main():
                 fig = px.bar(agri_df, x='Tipo', y='Potencial', 
                            title='Líderes por Categoria Agrícola')
                 fig.update_layout(xaxis_tickangle=-45)
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
                 
-                st.dataframe(agri_df, use_container_width=True)
+                st.dataframe(agri_df, width='stretch')
         
         with col2:
             st.markdown("#### 🐄 Resíduos Pecuários")
@@ -3075,9 +3293,9 @@ def page_main():
                 fig = px.bar(pec_df, x='Tipo', y='Potencial',
                            title='Líderes por Categoria Pecuária')
                 fig.update_layout(xaxis_tickangle=-45)
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
                 
-                st.dataframe(pec_df, use_container_width=True)
+                st.dataframe(pec_df, width='stretch')
     
     with analysis_tabs[2]:  # Comparison Tools
         st.markdown("### ⚖️ Ferramentas de Comparação")
@@ -3099,7 +3317,7 @@ def page_main():
             summary_cols = ['nome_municipio', 'total_final_nm_ano', 'total_agricola_nm_ano', 'total_pecuaria_nm_ano']
             available_summary_cols = [col for col in summary_cols if col in comparison_df.columns]
             summary_df = comparison_df[available_summary_cols].round(0)
-            st.dataframe(summary_df, use_container_width=True)
+            st.dataframe(summary_df, width='stretch')
     
     with analysis_tabs[3]:  # Advanced Filters
         st.markdown("### 🎯 Filtros Avançados e Seleção Inteligente")
@@ -3112,23 +3330,28 @@ def page_main():
             if st.button("🏆 Top 10 Potencial", key="top_10"):
                 top_municipalities = df.nlargest(10, display_col)['cd_mun'].tolist()
                 st.session_state.selected_municipalities = top_municipalities
+                st.toast("Top 10 municípios selecionados!", icon="🏆")
                 st.rerun()
         
         with preset_col2:
             if st.button("🌾 Foco Agrícola", key="agri_focus"):
                 agri_municipalities = df[df['total_agricola_nm_ano'] > df['total_agricola_nm_ano'].quantile(0.75)]['cd_mun'].tolist()
                 st.session_state.selected_municipalities = agri_municipalities
+                st.toast(f"{len(agri_municipalities)} municípios agrícolas selecionados!", icon="🌾")
                 st.rerun()
         
         with preset_col3:
             if st.button("🐄 Foco Pecuário", key="livestock_focus"):
                 livestock_municipalities = df[df['total_pecuaria_nm_ano'] > df['total_pecuaria_nm_ano'].quantile(0.75)]['cd_mun'].tolist()
                 st.session_state.selected_municipalities = livestock_municipalities
+                st.toast(f"{len(livestock_municipalities)} municípios pecuários selecionados!", icon="🐄")
                 st.rerun()
         
         with preset_col4:
             if st.button("🔄 Limpar Seleção", key="clear_all"):
+                num_selected = len(st.session_state.selected_municipalities)
                 st.session_state.selected_municipalities = []
+                st.toast(f"Seleção limpa! {num_selected} municípios removidos.", icon="🔄")
                 st.rerun()
         
         # Show filtered results
@@ -3138,7 +3361,7 @@ def page_main():
             
             chart = create_top_chart(filtered_df, display_col, "Municípios Selecionados", limit=10)
             if chart:
-                st.plotly_chart(chart, use_container_width=True)
+                st.plotly_chart(chart, width='stretch')
     
     with analysis_tabs[4]:  # Complete Data
         st.markdown("### 📋 Dados Completos")
@@ -3184,7 +3407,7 @@ def page_main():
         if selected_cols:
             available_selected_cols = [col for col in selected_cols if col in display_df.columns]
             final_display_df = display_df[available_selected_cols].sort_values(by=available_selected_cols[1] if len(available_selected_cols) > 1 else available_selected_cols[0], ascending=False)
-            st.dataframe(final_display_df, use_container_width=True, height=600)
+            st.dataframe(final_display_df, width='stretch', height=600)
 
 def page_explorer():
     """User-Friendly Data Explorer - Designed for Non-Technical Users"""
@@ -3322,7 +3545,7 @@ def page_explorer():
             })
         
         ranking_df = pd.DataFrame(ranking_data)
-        st.dataframe(ranking_df, use_container_width=True, hide_index=True)
+        st.dataframe(ranking_df, width='stretch', hide_index=True)
         
         # Visual ranking chart
         fig_ranking = px.bar(
@@ -3340,7 +3563,7 @@ def page_explorer():
             showlegend=False,
             yaxis={'categoryorder': 'total ascending'}
         )
-        st.plotly_chart(fig_ranking, use_container_width=True)
+        st.plotly_chart(fig_ranking, width='stretch')
         
         # Simple insights
         if top_n >= 3:
@@ -3362,7 +3585,7 @@ def page_explorer():
             color_discrete_sequence=['#2E8B57']
         )
         fig_hist.update_layout(height=400)
-        st.plotly_chart(fig_hist, use_container_width=True)
+        st.plotly_chart(fig_hist, width='stretch')
         
         # Simple explanation of what this means
         median_val = df_filtered[display_col].median()
@@ -3421,7 +3644,7 @@ def page_explorer():
                 })
             
             comparison_df = pd.DataFrame(comparison_data)
-            st.dataframe(comparison_df, use_container_width=True, hide_index=True)
+            st.dataframe(comparison_df, width='stretch', hide_index=True)
             
             # Visual comparison
             if len(selected_municipalities) > 1:
@@ -3444,7 +3667,7 @@ def page_explorer():
                     color_continuous_scale='Greens'
                 )
                 fig_comparison.update_layout(height=400)
-                st.plotly_chart(fig_comparison, use_container_width=True)
+                st.plotly_chart(fig_comparison, width='stretch')
     
     # Step 4: Explore all data
     st.markdown("---")
@@ -3494,7 +3717,7 @@ def page_explorer():
     if '👥 População (2022)' in display_table.columns:
         display_table['👥 População (2022)'] = display_table['👥 População (2022)'].apply(lambda x: f"{x:,.0f}" if pd.notna(x) else "N/A")
     
-    st.dataframe(display_table, use_container_width=True, hide_index=True, height=400)
+    st.dataframe(display_table, width='stretch', hide_index=True, height=400)
     
     # Download section - simplified
     st.markdown("---")
@@ -3726,7 +3949,7 @@ def page_analysis():
                         color_continuous_scale='Oranges'
                     )
                     fig_total.update_layout(height=500, xaxis_tickangle=-45)
-                    st.plotly_chart(fig_total, use_container_width=True)
+                    st.plotly_chart(fig_total, width='stretch')
                     
                     # Add percentage breakdown
                     comp_df_pct = comp_df.copy()
@@ -3747,7 +3970,7 @@ def page_analysis():
                         color_continuous_scale='Blues'
                     )
                     fig_avg.update_layout(height=500, xaxis_tickangle=-45)
-                    st.plotly_chart(fig_avg, use_container_width=True)
+                    st.plotly_chart(fig_avg, width='stretch')
                     
                     st.markdown("**📖 O que isso significa:**")
                     st.markdown("O potencial médio mostra quanto cada município produz em média para cada tipo de resíduo. Valores altos indicam que quando um município tem esse tipo de resíduo, ele tende a ter bastante.")
@@ -3763,7 +3986,7 @@ def page_analysis():
                         color_continuous_scale='Greens'
                     )
                     fig_coverage.update_layout(height=500, xaxis_tickangle=-45)
-                    st.plotly_chart(fig_coverage, use_container_width=True)
+                    st.plotly_chart(fig_coverage, width='stretch')
                     
                     st.markdown("**📍 Cobertura Territorial:**")
                     for _, row in comp_df.iterrows():
@@ -3775,7 +3998,7 @@ def page_analysis():
                 display_comp_df = comp_df.copy()
                 display_comp_df['Potencial Total'] = display_comp_df['Potencial Total'].apply(format_number)
                 display_comp_df['Potencial Médio'] = display_comp_df['Potencial Médio'].apply(format_number)
-                st.dataframe(display_comp_df, use_container_width=True, hide_index=True)
+                st.dataframe(display_comp_df, width='stretch', hide_index=True)
     
     # Analysis Type 2: Regional Analysis
     elif analysis_type == "🌍 Analisar por Região":
@@ -3855,7 +4078,7 @@ def page_analysis():
                         color_continuous_scale='Viridis'
                     )
                     fig_regional.update_layout(height=500)
-                    st.plotly_chart(fig_regional, use_container_width=True)
+                    st.plotly_chart(fig_regional, width='stretch')
                     
                     # Show detailed table
                     display_regional = regional_summary.copy()
@@ -3863,7 +4086,7 @@ def page_analysis():
                     display_regional['Potencial Médio'] = display_regional['Potencial Médio'].apply(format_number)
                     display_regional['População Total'] = display_regional['População Total'].apply(lambda x: f"{x:,.0f}")
                     display_regional.columns = ['Tamanho do Município', 'Potencial Total', 'Potencial Médio', 'Qtd Municípios', 'População Total']
-                    st.dataframe(display_regional, use_container_width=True, hide_index=True)
+                    st.dataframe(display_regional, width='stretch', hide_index=True)
             
             elif region_analysis_type == "🏆 Top Regiões vs Resto do Estado":
                 # Analysis of top municipalities vs others
@@ -3926,7 +4149,7 @@ def page_analysis():
                     color='Potencial Total',
                     color_continuous_scale='Reds'
                 )
-                st.plotly_chart(fig_comparison, use_container_width=True)
+                st.plotly_chart(fig_comparison, width='stretch')
                 
                 # Show top municipalities
                 st.markdown(f"#### 🏆 Lista dos Top {top_n} Municípios")
@@ -3935,7 +4158,7 @@ def page_analysis():
                 top_display.columns = ['Município', f'{selected_residue_regional} (Nm³/ano)']
                 top_display = top_display.reset_index(drop=True)
                 top_display.index += 1
-                st.dataframe(top_display, use_container_width=True)
+                st.dataframe(top_display, width='stretch')
     
     # Analysis Type 3: Patterns and Correlations
     elif analysis_type == "🔍 Encontrar Padrões e Correlações":
@@ -4047,7 +4270,7 @@ def page_analysis():
                         plot_bgcolor='rgba(0,0,0,0)',
                         paper_bgcolor='rgba(0,0,0,0)'
                     )
-                    st.plotly_chart(fig_scatter, use_container_width=True)
+                    st.plotly_chart(fig_scatter, width='stretch')
                     
                     # Show municipalities with both high values
                     if correlation > 0.3:
@@ -4063,7 +4286,7 @@ def page_analysis():
                             top_display[col_a_name] = top_display[col_a_name].apply(format_number)
                             top_display[col_b_name] = top_display[col_b_name].apply(format_number)
                             top_display.columns = ['Município', residue_a, residue_b]
-                            st.dataframe(top_display, use_container_width=True, hide_index=True)
+                            st.dataframe(top_display, width='stretch', hide_index=True)
                         else:
                             st.write("Nenhum município se destaca simultaneamente nos dois tipos.")
                 else:
@@ -4144,7 +4367,7 @@ def page_analysis():
                         plot_bgcolor='rgba(0,0,0,0)',
                         paper_bgcolor='rgba(0,0,0,0)'
                     )
-                    st.plotly_chart(fig_pop, use_container_width=True)
+                    st.plotly_chart(fig_pop, width='stretch')
         
         elif correlation_type == "🏆 Municípios Multiespecializados":
             st.markdown("#### Descubra quais municípios se destacam em vários tipos de resíduos:")
@@ -4206,7 +4429,7 @@ def page_analysis():
                     })
                 
                 ranking_multi_df = pd.DataFrame(ranking_multi)
-                st.dataframe(ranking_multi_df, use_container_width=True, hide_index=True)
+                st.dataframe(ranking_multi_df, width='stretch', hide_index=True)
                 
                 # Visualization
                 fig_multi = px.histogram(
@@ -4216,7 +4439,7 @@ def page_analysis():
                     labels={'score_especializacao': 'Número de Especializações', 'count': 'Quantidade de Municípios'},
                     nbins=max_score
                 )
-                st.plotly_chart(fig_multi, use_container_width=True)
+                st.plotly_chart(fig_multi, width='stretch')
             else:
                 st.info("Nenhum município se destaca significativamente em múltiplos tipos de resíduos.")
     
@@ -4276,7 +4499,7 @@ def page_analysis():
                 })
             
             ranking_df = pd.DataFrame(ranking_data)
-            st.dataframe(ranking_df, use_container_width=True, hide_index=True)
+            st.dataframe(ranking_df, width='stretch', hide_index=True)
             
             # Visualization
             fig_diversity = px.scatter(
@@ -4293,7 +4516,7 @@ def page_analysis():
                 color='diversidade_score',
                 color_continuous_scale='Viridis'
             )
-            st.plotly_chart(fig_diversity, use_container_width=True)
+            st.plotly_chart(fig_diversity, width='stretch')
         
         elif portfolio_analysis == "🎯 Municípios Especializados":
             # Municipalities specialized in few types but with high potential
@@ -4328,7 +4551,7 @@ def page_analysis():
                     })
                 
                 specialized_df = pd.DataFrame(specialized_ranking)
-                st.dataframe(specialized_df, use_container_width=True, hide_index=True)
+                st.dataframe(specialized_df, width='stretch', hide_index=True)
             else:
                 st.info("Não há municípios com especialização em poucos tipos.")
         
@@ -4387,7 +4610,7 @@ def page_analysis():
                 plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)'
             )
-            st.plotly_chart(fig_div_pot, use_container_width=True)
+            st.plotly_chart(fig_div_pot, width='stretch')
             
             # Interpretation
             if correlation_div > 0.3:
@@ -4454,7 +4677,7 @@ def page_analysis():
             
             st.markdown("#### 🏆 Top 15 Oportunidades de Investimento")
             ranking_opp_df = pd.DataFrame(opportunities_ranking)
-            st.dataframe(ranking_opp_df, use_container_width=True, hide_index=True)
+            st.dataframe(ranking_opp_df, width='stretch', hide_index=True)
             
             # Opportunity matrix visualization
             fig_matrix = px.scatter(
@@ -4487,7 +4710,7 @@ def page_analysis():
                                     showarrow=False, font=dict(size=12, color="red"))
             
             fig_matrix.update_layout(height=600)
-            st.plotly_chart(fig_matrix, use_container_width=True)
+            st.plotly_chart(fig_matrix, width='stretch')
             
         elif opportunity_type == "🎯 Clusters de Sinergia Regional":
             st.markdown("#### 🌍 Análise de Clusters Regionais para Sinergia")
@@ -4518,7 +4741,7 @@ def page_analysis():
                     })
                 
                 cluster_df = pd.DataFrame(cluster_ranking)
-                st.dataframe(cluster_df, use_container_width=True, hide_index=True)
+                st.dataframe(cluster_df, width='stretch', hide_index=True)
                 
                 # Regional potential visualization
                 fig_regional = px.bar(
@@ -4532,7 +4755,7 @@ def page_analysis():
                 )
                 fig_regional.update_xaxes(tickangle=45)
                 fig_regional.update_layout(height=500)
-                st.plotly_chart(fig_regional, use_container_width=True)
+                st.plotly_chart(fig_regional, width='stretch')
 
     # Analysis Type 6: Intelligent Insights
     elif analysis_type == "💡 Insights Inteligentes e Recomendações":
@@ -4629,7 +4852,7 @@ def page_analysis():
                         "🎯 Tipo Principal": "Agrícola" if inv['total_agricola_nm_ano'] > inv['total_pecuaria_nm_ano'] else "Pecuário"
                     })
                 
-                st.dataframe(pd.DataFrame(investment_table), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(investment_table), width='stretch', hide_index=True)
                 
                 st.markdown("**💡 Recomendações Estratégicas:**")
                 col1, col2 = st.columns(2)
@@ -4726,7 +4949,7 @@ def page_about():
             "Unidade": ["cabeça", "cabeça", "ave", "ton cana", "ton soja", "ton milho", "ton café", "m³ madeira", "habitante", "habitante"]
         })
         
-        st.dataframe(fatores_conversao, use_container_width=True)
+        st.dataframe(fatores_conversao, width='stretch')
         
         st.subheader("🧮 Exemplo de Cálculo: Dejetos Bovinos")
         st.markdown("""
