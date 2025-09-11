@@ -3332,16 +3332,24 @@ def page_main():
                     col_a, col_b = st.columns(2)
                     with col_a:
                         if st.button("✅ Selecionar Todas", key="select_all_mapbiomas", use_container_width=True):
-                            # Força atualização dos checkboxes
+                            # Força atualização dos checkboxes usando método seguro
                             for code in list(pastagem_crops.keys()) + list(temp_crops.keys()) + list(perennial_crops.keys()) + list(silviculture_crops.keys()):
-                                st.session_state[f"mapbiomas_{code}"] = True
+                                key = f"mapbiomas_{code}"
+                                if key not in st.session_state:
+                                    st.session_state[key] = True
+                                else:
+                                    st.session_state[key] = True
                             st.toast("Todas as culturas selecionadas!", icon="✅")
                             st.rerun()
                     with col_b:
                         if st.button("❌ Desmarcar Todas", key="select_none_mapbiomas", use_container_width=True):
-                            # Força atualização dos checkboxes
+                            # Força atualização dos checkboxes usando método seguro
                             for code in list(pastagem_crops.keys()) + list(temp_crops.keys()) + list(perennial_crops.keys()) + list(silviculture_crops.keys()):
-                                st.session_state[f"mapbiomas_{code}"] = False
+                                key = f"mapbiomas_{code}"
+                                if key not in st.session_state:
+                                    st.session_state[key] = False
+                                else:
+                                    st.session_state[key] = False
                             st.toast("Culturas desmarcadas!", icon="❌")
                             st.rerun()
         
