@@ -17,8 +17,16 @@ from rasterio.warp import calculate_default_transform, reproject, Resampling
 from rasterio.enums import ColorInterp
 import base64
 from io import BytesIO
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
+
+# Matplotlib é opcional - fallback se não estiver disponível
+try:
+    import matplotlib.pyplot as plt
+    import matplotlib.colors as mcolors
+    HAS_MATPLOTLIB = True
+except ImportError:
+    HAS_MATPLOTLIB = False
+    plt = None
+    mcolors = None
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -185,8 +193,13 @@ class RasterLoader:
             color = MAPBIOMAS_COLORS.get(int(value), '#CCCCCC')  # Cinza para classes desconhecidas
             
             # Converte cor hex para RGB
-            rgb = mcolors.hex2color(color)
-            rgb_255 = [int(c * 255) for c in rgb]
+            if HAS_MATPLOTLIB:
+                rgb = mcolors.hex2color(color)
+                rgb_255 = [int(c * 255) for c in rgb]
+            else:
+                # Fallback: conversão manual hex para RGB
+                hex_color = color.lstrip('#')
+                rgb_255 = [int(hex_color[i:i+2], 16) for i in (0, 2, 4)]
             
             colored_image[mask] = [rgb_255[0], rgb_255[1], rgb_255[2], 200]  # 200 = ~78% opacidade
         

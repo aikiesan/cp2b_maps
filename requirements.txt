@@ -11,3 +11,4 @@ xlrd>=2.0.1
 jenkspy>=0.3.2
 rasterio>=1.3.0
 pillow>=10.0.0
+matplotlib>=3.7.0

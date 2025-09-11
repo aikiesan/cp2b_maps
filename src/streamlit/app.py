@@ -29,11 +29,20 @@ import pickle
 import os
 from functools import lru_cache
 
-# Importar sistema de rasters
+# Importar sistema de rasters - com fallback se não estiver disponível
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
-from raster import RasterLoader, get_raster_loader, create_mapbiomas_legend
+
+try:
+    from raster import RasterLoader, get_raster_loader, create_mapbiomas_legend
+    HAS_RASTER_SYSTEM = True
+except ImportError as e:
+    HAS_RASTER_SYSTEM = False
+    RasterLoader = None
+    get_raster_loader = None
+    create_mapbiomas_legend = None
+    logger.warning(f"Sistema de rasters não disponível: {e}")
 
 # Configure logging para DEBUG
 logging.basicConfig(
@@ -466,6 +475,10 @@ def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only
         
         # --- CAMADA MAPBIOMAS COM RASTER OTIMIZADO ---
         if show_mapbiomas_layer:
+            if not HAS_RASTER_SYSTEM:
+                st.warning("⚠️ Sistema de rasters não disponível. Instale as dependências necessárias.")
+                return m, legend_html
+                
             try:
                 # Verificar se o caminho do raster existe
                 project_root = Path(__file__).parent.parent.parent
@@ -1058,49 +1071,35 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
         
         # --- CAMADA MAPBIOMAS COM RASTER OTIMIZADO ---
         if show_mapbiomas_layer:
-            print("===> PASSO 1: Entrei no bloco 'if show_mapbiomas_layer'.")
-            
-            try:
-                print("===> PASSO 2: Iniciando bloco try...")
+            if not HAS_RASTER_SYSTEM:
+                st.info("📁 Sistema MapBiomas não disponível - instale as dependências rasterio e matplotlib")
+                return m, ""
                 
+            try:
                 # Verificar se o caminho do raster existe ANTES de tentar usar
                 project_root = Path(__file__).parent.parent.parent
                 raster_dir = project_root / "rasters"
-                print(f"===> PASSO 3: Diretório rasters: {raster_dir}")
-                print(f"===> PASSO 3b: Diretório existe? {raster_dir.exists()}")
                 
                 if not raster_dir.exists():
-                    print(f"===> ERRO CRÍTICO: Diretório rasters NÃO EXISTE: {raster_dir}")
-                    st.error(f"❌ Diretório 'rasters' não encontrado: {raster_dir}")
+                    st.info("📁 Pasta 'rasters' não encontrada - funcionalidade MapBiomas desabilitada")
                     return m, ""
                     
-                print("===> PASSO 4: Criando RasterLoader...")
                 raster_loader = RasterLoader(str(raster_dir))
-                print("===> PASSO 5: RasterLoader criado com sucesso")
                 
                 # Lista rasters disponíveis
                 available_rasters = raster_loader.list_available_rasters()
-                print(f"[DEBUG] Rasters disponíveis: {available_rasters}")
-                
                 mapbiomas_rasters = [r for r in available_rasters if 'mapbiomas' in r.lower() or 'agropecuaria' in r.lower()]
-                print(f"[DEBUG] Rasters MapBiomas encontrados: {mapbiomas_rasters}")
                 
                 if mapbiomas_rasters:
-                    st.info("🔄 Carregando raster MapBiomas...")
                     # Usa o primeiro raster encontrado
                     raster_path = mapbiomas_rasters[0]
-                    print(f"[DEBUG] Carregando raster: {raster_path}")
-                    
                     data, metadata = raster_loader.load_raster(raster_path)
-                    print(f"[DEBUG] Dados carregados: data={data is not None}, metadata={metadata is not None}")
                     
                     if data is not None and metadata is not None:
-                        print(f"[DEBUG] Criando sobreposição...")
                         # Cria sobreposição para o Folium
                         overlay = raster_loader.raster_to_folium_overlay(data, metadata, opacity=0.7)
                         
                         if overlay is not None:
-                            print(f"[DEBUG] Adicionando ao mapa...")
                             # Cria FeatureGroup para controle de camadas
                             mapbiomas_group = folium.FeatureGroup(name="MapBiomas - Agropecuária SP", show=True)
                             overlay.add_to(mapbiomas_group)
@@ -1110,28 +1109,18 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                             legend_html = create_mapbiomas_legend()
                             m.get_root().html.add_child(folium.Element(legend_html))
                             
-                            print(f"[SUCESSO] Camada raster MapBiomas adicionada: {os.path.basename(raster_path)}")
-                            st.success("✅ Raster MapBiomas carregado com sucesso!")
                         else:
-                            print(f"[ERRO] Falha ao criar sobreposição")
                             st.warning("⚠️ Erro ao processar raster para visualização")
                     else:
-                        print(f"[ERRO] Falha ao carregar dados do raster")
                         st.warning("⚠️ Erro ao carregar dados do raster")
                 else:
-                    print(f"[INFO] Nenhum raster MapBiomas encontrado")
                     st.info("📁 Nenhum arquivo raster MapBiomas encontrado na pasta 'rasters/'")
                     st.info("💡 Baixe o GeoTIFF do Google Earth Engine e coloque na pasta 'rasters/'")
                     
             except ImportError as e:
-                print(f"[ERRO] ImportError: {e}")
-                st.error("❌ Sistema de rasters não disponível. Verifique se 'rasterio' está instalado.")
+                st.error("❌ Sistema de rasters não disponível. Instale as dependências: pip install rasterio matplotlib")
             except Exception as e:
-                print(f"[ERRO] Exception geral: {e}")
-                import traceback
-                print(f"[ERRO] Traceback: {traceback.format_exc()}")
-                st.error(f"⚠️ Erro ao carregar camada MapBiomas: {str(e)}")
-                st.code(traceback.format_exc())
+                st.warning(f"⚠️ Erro ao carregar camada MapBiomas: {str(e)}")
         
         # Add São Paulo state borders first (background) - ALWAYS SHOW
         try:
@@ -1876,11 +1865,8 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
         
     except Exception as e:
         import traceback
-        print(f"🚨🚨🚨 ERRO CRÍTICO CAPTURADO: {e}")
-        print(f"🚨🚨🚨 TRACEBACK COMPLETO:")
-        print(traceback.format_exc())
-        st.error(f"❌ Map creation error: {e}")
-        st.code(traceback.format_exc())
+        logger.error(f"Erro na criação do mapa: {e}")
+        st.error(f"❌ Erro na criação do mapa: {e}")
         return folium.Map(location=[-22.5, -48.5], zoom_start=7), ""  # Return empty map/legend
 
 def create_map(df, display_col, show_plantas_biogas=False, show_gasodutos_dist=False, show_gasodutos_transp=False, show_rios=False, show_rodovias=False, show_mapbiomas=False):
