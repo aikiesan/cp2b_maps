@@ -6,7 +6,8 @@
       "Bash(findstr:*)",
       "Bash(taskkill:*)",
       "Bash(git add:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(streamlit run:*)"
     ],
     "deny": [],
     "ask": []

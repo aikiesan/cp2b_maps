@@ -32,7 +32,12 @@ from functools import lru_cache
 # Importar sistema de rasters - com fallback se não estiver disponível
 import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent))
+# Adiciona o diretório src ao Python path
+current_dir = Path(__file__).parent  # src/streamlit
+src_dir = current_dir.parent         # src
+root_dir = src_dir.parent           # CP2B_Maps
+sys.path.insert(0, str(src_dir))
+sys.path.insert(0, str(root_dir))
 
 # Configure logging para DEBUG
 logging.basicConfig(

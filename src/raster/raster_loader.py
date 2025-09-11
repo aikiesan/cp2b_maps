@@ -311,17 +311,23 @@ def analyze_raster_in_radius(raster_path: str, center_lat: float, center_lon: fl
                 gdf_transformed = gdf
             
             # Faz o recorte (mask) do raster
-            out_image, out_transform = mask(src, gdf_transformed.geometry, crop=True, filled=False)
+            # O 'filled=True' é importante. Ele preenche áreas fora da geometria com o valor 'nodata' do raster.
+            # Isso evita os 'masked elements' do NumPy.
+            out_image, out_transform = mask(src, gdf_transformed.geometry, crop=True, filled=True)
             
             # Remove pixels NoData
             data = out_image[0]  # Primeira banda
-            data_valid = data[~np.isnan(data)]
+            # Agora, filtramos explicitamente pelo valor nodata. 
+            # Como filled=True, não teremos mais 'masked elements'.
+            valid_data = data[data != src.nodata]
             
-            if len(data_valid) == 0:
+            if valid_data.size == 0:
+                logger.warning("Nenhum pixel válido (não-nodata) encontrado na área de análise.")
                 return {}
             
             # Conta pixels por classe
-            unique_values, counts = np.unique(data_valid, return_counts=True)
+            unique_values, counts = np.unique(valid_data, return_counts=True)
+            logger.info(f"Classes encontradas na área: {unique_values}")
             
             # Calcula área de cada pixel em hectares
             pixel_size_x = abs(out_transform[0])
