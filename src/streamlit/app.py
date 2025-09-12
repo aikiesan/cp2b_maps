@@ -3,7 +3,27 @@ CP2B Maps - Clean Multi-Page Streamlit Application
 Simple and robust biogas potential analysis for São Paulo municipalities
 """
 
+# Standard library imports
+import logging
+import os
+import pickle
+import re
+import sqlite3
+import sys
+from functools import lru_cache
+from pathlib import Path
+
+# Third-party imports
+import folium
+import geopandas as gpd
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
+import streamlit.components.v1 as components
+from folium.plugins import MiniMap, HeatMap, MarkerCluster
+from streamlit_folium import st_folium
 
 # Configure page layout for wide mode
 st.set_page_config(
@@ -12,26 +32,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"  # This ensures the sidebar is visible and open on load
 )
-import pandas as pd
-import folium
-from streamlit_folium import st_folium
-import sqlite3
-import plotly.express as px
-import plotly.graph_objects as go
-from pathlib import Path
-import numpy as np
-import logging
-from folium.plugins import MiniMap, HeatMap, MarkerCluster
-import re  # We need this for parsing the popup
-import streamlit.components.v1 as components
-import geopandas as gpd
-import pickle
-import os
-from functools import lru_cache
 
 # Importar sistema de rasters - com fallback se não estiver disponível
-import sys
-from pathlib import Path
 # Adiciona o diretório src ao Python path
 current_dir = Path(__file__).parent  # src/streamlit
 src_dir = current_dir.parent         # src
@@ -39,13 +41,17 @@ root_dir = src_dir.parent           # CP2B_Maps
 sys.path.insert(0, str(src_dir))
 sys.path.insert(0, str(root_dir))
 
-# Configure logging para DEBUG
+# Configure logging with environment-based level
+LOG_LEVEL = os.getenv('CP2B_LOG_LEVEL', 'INFO').upper()
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
     format='%(asctime)s - %(levelname)s - %(message)s',
     stream=sys.stdout
 )
 logger = logging.getLogger(__name__)
+
+# Log startup info
+logger.info(f"CP2B Maps starting with log level: {LOG_LEVEL}")
 
 try:
     from raster import RasterLoader, get_raster_loader, create_mapbiomas_legend, analyze_raster_in_radius
@@ -952,6 +958,7 @@ RESIDUE_OPTIONS = {
     'Resíduos Poda': 'rpo_total_nm_ano'
 }
 
+@st.cache_data
 def get_residue_label(column_name):
     """Convert column name back to readable label"""
     # Create reverse mapping
@@ -1011,6 +1018,7 @@ def safe_divide(numerator, denominator, default=0):
     except (TypeError, ZeroDivisionError):
         return default
 
+@st.cache_data
 def format_number(value, unit="Nm³/ano", scale=1):
     """Format numbers with proper scaling"""
     try:
