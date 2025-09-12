@@ -228,6 +228,61 @@ def add_choropleth_layer(m, gdf, df_merged, display_col):
     except Exception as e:
         logger.error(f"Error adding choropleth layer: {e}")
 
+def add_proximity_visualization(m, catchment_info):
+    """Add visual feedback for proximity analysis (marker + circle)"""
+    if not catchment_info or not catchment_info.get("center"):
+        return
+    
+    try:
+        center_lat, center_lon = catchment_info["center"]
+        radius_km = catchment_info["radius"]
+        
+        # Create dedicated feature group for proximity analysis
+        proximity_group = folium.FeatureGroup(name="🎯 Análise de Proximidade", show=True)
+        
+        # Add center marker with crosshairs icon
+        folium.Marker(
+            location=[center_lat, center_lon],
+            popup=f"""
+            <div style="font-family: Arial; font-size: 12px; text-align: center;">
+                <h4 style="margin: 0 0 8px 0; color: #c93c3c;">🎯 Centro de Análise</h4>
+                <p style="margin: 2px 0;"><b>📍 Coordenadas:</b><br>{center_lat:.4f}, {center_lon:.4f}</p>
+                <p style="margin: 2px 0;"><b>📏 Raio:</b> {radius_km} km</p>
+                <p style="margin: 2px 0;"><b>🏞️ Área:</b> {3.14159 * radius_km * radius_km:.0f} km²</p>
+            </div>
+            """,
+            tooltip=f"🎯 Centro de Análise (Raio: {radius_km} km)",
+            icon=folium.Icon(color='red', icon='bullseye', prefix='fa')
+        ).add_to(proximity_group)
+        
+        # Add radius circle
+        folium.Circle(
+            location=[center_lat, center_lon],
+            radius=radius_km * 1000,  # Convert km to meters
+            color='#c93c3c',
+            weight=3,
+            fill=True,
+            fill_color='#c93c3c',
+            fill_opacity=0.1,
+            popup=f"""
+            <div style="font-family: Arial; font-size: 12px; text-align: center;">
+                <h4 style="margin: 0 0 8px 0; color: #c93c3c;">🌍 Área de Análise</h4>
+                <p style="margin: 2px 0;"><b>📏 Raio:</b> {radius_km} km</p>
+                <p style="margin: 2px 0;"><b>🏞️ Área Total:</b> {3.14159 * radius_km * radius_km:.0f} km²</p>
+                <p style="margin: 2px 0;"><b>🔍 Status:</b> Análise Ativa</p>
+            </div>
+            """,
+            tooltip=f"Área de análise: {radius_km} km de raio"
+        ).add_to(proximity_group)
+        
+        # Add the group to the map
+        proximity_group.add_to(m)
+        
+        logger.info(f"Added proximity visualization: center=({center_lat:.4f}, {center_lon:.4f}), radius={radius_km}km")
+        
+    except Exception as e:
+        logger.error(f"Error adding proximity visualization: {e}")
+
 def create_basic_map():
     """Cria um mapa básico para fallback"""
     return folium.Map(location=[-22.5, -48.5], zoom_start=7, tiles='CartoDB positron')

@@ -206,48 +206,74 @@ def render_proximity_controls():
         return enable_proximity
 
 def handle_map_click(map_data, enable_proximity):
-    """Handle map click events for proximity analysis"""
-    if not enable_proximity or not map_data.get('last_object_clicked_popup'):
-        return
+    """Handle map click events for proximity analysis with improved detection"""
+    if not enable_proximity or not map_data:
+        return False
+    
+    # Try different ways to detect map clicks
+    clicked = False
+    new_center = None
     
     try:
-        # Extract coordinates from click
-        popup_content = map_data['last_object_clicked_popup']
-        
-        # Parse coordinates from various possible formats
-        coords = None
-        if 'lat' in popup_content and 'lng' in popup_content:
-            coords = [popup_content['lat'], popup_content['lng']]
-        elif 'coordinates' in popup_content:
-            coords = popup_content['coordinates']
-        
-        if not coords or len(coords) != 2:
-            logger.warning(f"Could not extract coordinates from map click: {popup_content}")
-            return
-        
-        new_center = [float(coords[0]), float(coords[1])]
-        current_center = st.session_state.get('catchment_center')
-        
-        # Check if this is a new location (avoid unnecessary re-analysis)
-        is_new_location = (
-            current_center is None or
-            abs(new_center[0] - current_center[0]) > 0.0001 or
-            abs(new_center[1] - current_center[1]) > 0.0001
-        )
-        
-        if is_new_location:
-            logger.info(f"New proximity center selected: {new_center}")
+        # Method 1: Check for direct coordinate click
+        if map_data.get('last_clicked') and 'lat' in map_data['last_clicked'] and 'lng' in map_data['last_clicked']:
+            lat = map_data['last_clicked']['lat']
+            lng = map_data['last_clicked']['lng']
+            new_center = [float(lat), float(lng)]
+            clicked = True
+            logger.info(f"Map click detected via last_clicked: {new_center}")
             
-            # Clear old results and set new center
-            force_raster_reanalysis()
-            st.session_state.catchment_center = new_center
+        # Method 2: Check for popup clicks (fallback)
+        elif map_data.get('last_object_clicked_popup'):
+            popup_content = map_data['last_object_clicked_popup']
+            if isinstance(popup_content, dict):
+                if 'lat' in popup_content and 'lng' in popup_content:
+                    new_center = [float(popup_content['lat']), float(popup_content['lng'])]
+                    clicked = True
+                    logger.info(f"Map click detected via popup: {new_center}")
+        
+        # Method 3: Check for feature clicks and extract coordinates
+        elif map_data.get('last_object_clicked'):
+            obj = map_data['last_object_clicked']
+            if obj and 'lat' in str(obj) and 'lng' in str(obj):
+                # Try to extract coordinates from the object
+                try:
+                    import re
+                    coord_match = re.search(r'lat[\'\":\s]*([+-]?\d*\.?\d+).*lng[\'\":\s]*([+-]?\d*\.?\d+)', str(obj))
+                    if coord_match:
+                        lat, lng = float(coord_match.group(1)), float(coord_match.group(2))
+                        new_center = [lat, lng]
+                        clicked = True
+                        logger.info(f"Map click detected via object parsing: {new_center}")
+                except:
+                    pass
+        
+        if clicked and new_center:
+            current_center = st.session_state.get('catchment_center')
             
-            st.toast(f"Centro definido: {new_center[0]:.4f}, {new_center[1]:.4f}", icon="🎯")
-            st.rerun()
+            # Check if this is a new location (avoid unnecessary re-analysis)
+            is_new_location = (
+                current_center is None or
+                abs(new_center[0] - current_center[0]) > 0.0001 or
+                abs(new_center[1] - current_center[1]) > 0.0001
+            )
             
+            if is_new_location:
+                logger.info(f"New proximity center selected: {new_center}")
+                
+                # Clear old results and set new center
+                force_raster_reanalysis()
+                st.session_state.catchment_center = new_center
+                
+                st.toast(f"🎯 Centro definido: {new_center[0]:.4f}, {new_center[1]:.4f}", icon="🎯")
+                return True  # Indicate that we should rerun
+        
+        return False
+        
     except Exception as e:
         logger.error(f"Error handling map click: {e}")
         st.error(f"❌ Erro ao processar clique no mapa: {e}")
+        return False
 
 def render_proximity_results():
     """Render enhanced proximity analysis results with complete land-use profile"""
