@@ -159,83 +159,94 @@ def create_integrated_map(df, display_col, layers_config, viz_type, catchment_in
 
 def render_proximity_results_panel(results, center_coordinates, radius_km):
     """Render a professional results panel below the map"""
+    logger.info(f"🎨 Rendering professional panel: {len(results) if results else 0} results")
     if not results:
+        st.warning("⚠️ No results to display in professional panel")
         return
     
-    st.markdown("---")
-    st.markdown(f"### 🎯 Análise de Uso do Solo - Raio de {radius_km} km")
-    
-    if center_coordinates:
-        center_lat, center_lon = center_coordinates
-        st.caption(f"**📍 Centro:** {center_lat:.4f}, {center_lon:.4f} | **📏 Raio:** {radius_km} km | **🏞️ Área Total:** {3.14159 * radius_km * radius_km:.0f} km²")
-    
-    if isinstance(results, dict) and results:
-        # Convert to DataFrame for better display
-        results_df = pd.DataFrame([
-            {'Uso do Solo': uso, 'Área (hectares)': area, 'Área (km²)': area/100}
-            for uso, area in results.items() if area > 0
-        ]).sort_values('Área (hectares)', ascending=False)
+    try:
+        st.markdown("---")
+        st.markdown(f"### 🎯 Análise de Uso do Solo - Raio de {radius_km} km")
         
-        if not results_df.empty:
-            # Separate agricultural from other uses
-            agricultural_keywords = ['🌾', '🌱', '☕', '🍊', '🌴', '🌲']
-            agri_df = results_df[results_df['Uso do Solo'].str.contains('|'.join(agricultural_keywords), na=False)]
-            other_df = results_df[~results_df['Uso do Solo'].str.contains('|'.join(agricultural_keywords), na=False)]
+        if center_coordinates:
+            center_lat, center_lon = center_coordinates
+            st.caption(f"**📍 Centro:** {center_lat:.4f}, {center_lon:.4f} | **📏 Raio:** {radius_km} km | **🏞️ Área Total:** {3.14159 * radius_km * radius_km:.0f} km²")
+        
+        if isinstance(results, dict) and results:
+            # Convert to DataFrame for better display
+            results_df = pd.DataFrame([
+                {'Uso do Solo': uso, 'Área (hectares)': area, 'Área (km²)': area/100}
+                for uso, area in results.items() if area > 0
+            ]).sort_values('Área (hectares)', ascending=False)
             
-            col1, col2 = st.columns([1.5, 1])
-            
-            with col1:
-                # Data tables
-                if not agri_df.empty:
-                    st.success(f"✅ **Culturas Agrícolas Encontradas: {len(agri_df)} tipos**")
-                    st.dataframe(agri_df[['Uso do Solo', 'Área (hectares)']], 
-                               use_container_width=True, hide_index=True)
-                    
-                    if not other_df.empty:
-                        with st.expander(f"ℹ️ Outros Usos do Solo ({len(other_df)} tipos)"):
+            if not results_df.empty:
+                # Separate agricultural from other uses
+                agricultural_keywords = ['🌾', '🌱', '☕', '🍊', '🌴', '🌲']
+                agri_df = results_df[results_df['Uso do Solo'].str.contains('|'.join(agricultural_keywords), na=False)]
+                other_df = results_df[~results_df['Uso do Solo'].str.contains('|'.join(agricultural_keywords), na=False)]
+                
+                col1, col2 = st.columns([1.5, 1])
+                
+                with col1:
+                    # Data tables
+                    if not agri_df.empty:
+                        st.success(f"✅ **Culturas Agrícolas Encontradas: {len(agri_df)} tipos**")
+                        st.dataframe(agri_df[['Uso do Solo', 'Área (hectares)']], 
+                                   use_container_width=True, hide_index=True)
+                        
+                        if not other_df.empty:
+                            with st.expander(f"ℹ️ Outros Usos do Solo ({len(other_df)} tipos)"):
+                                st.dataframe(other_df[['Uso do Solo', 'Área (hectares)']], 
+                                           use_container_width=True, hide_index=True)
+                    else:
+                        st.warning("⚠️ **Nenhuma Cultura Agrícola Encontrada**")
+                        if not other_df.empty:
+                            st.info(f"**Outros Usos Identificados: {len(other_df)} tipos**")
                             st.dataframe(other_df[['Uso do Solo', 'Área (hectares)']], 
                                        use_container_width=True, hide_index=True)
-                else:
-                    st.warning("⚠️ **Nenhuma Cultura Agrícola Encontrada**")
-                    if not other_df.empty:
-                        st.info(f"**Outros Usos Identificados: {len(other_df)} tipos**")
-                        st.dataframe(other_df[['Uso do Solo', 'Área (hectares)']], 
-                                   use_container_width=True, hide_index=True)
-            
-            with col2:
-                # Summary metrics
-                total_area = results_df['Área (hectares)'].sum()
-                agri_area = agri_df['Área (hectares)'].sum() if not agri_df.empty else 0
-                agri_percentage = (agri_area / total_area * 100) if total_area > 0 else 0
                 
-                st.metric("📊 Área Analisada", f"{total_area:,.0f} ha")
-                st.metric("🌾 Área Agrícola", f"{agri_area:,.0f} ha")
-                st.metric("📈 % Agrícola", f"{agri_percentage:.1f}%")
-                
-                # Top use
-                if not results_df.empty:
-                    top_use = results_df.iloc[0]
-                    clean_name = top_use['Uso do Solo']
-                    for emoji in agricultural_keywords + ['🌳', '🏘️', '💧', '🌿']:
-                        clean_name = clean_name.replace(f'{emoji} ', '')
-                    st.metric("🥇 Uso Predominante", clean_name, 
-                            f"{top_use['Área (hectares)']:,.0f} ha")
-                
-                # Pie chart
-                try:
-                    import plotly.express as px
-                    if len(results_df) > 1:
-                        fig = px.pie(
-                            results_df.head(8),  # Top 8 to avoid clutter
-                            values='Área (hectares)', 
-                            names='Uso do Solo',
-                            title='Distribuição de Uso do Solo'
-                        )
-                        fig.update_layout(height=300, showlegend=False)
-                        st.plotly_chart(fig, use_container_width=True)
-                except ImportError:
-                    pass
+                with col2:
+                    # Summary metrics
+                    total_area = results_df['Área (hectares)'].sum()
+                    agri_area = agri_df['Área (hectares)'].sum() if not agri_df.empty else 0
+                    agri_percentage = (agri_area / total_area * 100) if total_area > 0 else 0
+                    
+                    st.metric("📊 Área Analisada", f"{total_area:,.0f} ha")
+                    st.metric("🌾 Área Agrícola", f"{agri_area:,.0f} ha")
+                    st.metric("📈 % Agrícola", f"{agri_percentage:.1f}%")
+                    
+                    # Top use
+                    if not results_df.empty:
+                        top_use = results_df.iloc[0]
+                        clean_name = top_use['Uso do Solo']
+                        for emoji in agricultural_keywords + ['🌳', '🏘️', '💧', '🌿']:
+                            clean_name = clean_name.replace(f'{emoji} ', '')
+                        st.metric("🥇 Uso Predominante", clean_name, 
+                                f"{top_use['Área (hectares)']:,.0f} ha")
+                    
+                    # Pie chart
+                    try:
+                        import plotly.express as px
+                        if len(results_df) > 1:
+                            fig = px.pie(
+                                results_df.head(8),  # Top 8 to avoid clutter
+                                values='Área (hectares)', 
+                                names='Uso do Solo',
+                                title='Distribuição de Uso do Solo'
+                            )
+                            fig.update_layout(height=300, showlegend=False)
+                            st.plotly_chart(fig)
+                    except ImportError:
+                        pass
+            else:
+                st.info("🔍 Nenhum uso do solo identificado na área selecionada.")
         else:
-            st.info("🔍 Nenhum uso do solo identificado na área selecionada.")
-    else:
-        st.warning("⚠️ A análise não retornou resultados válidos.")
+            st.warning("⚠️ A análise não retornou resultados válidos.")
+            
+    except Exception as e:
+        logger.error(f"❌ Error in professional results panel: {e}")
+        st.error(f"❌ Error rendering results panel: {e}")
+        # Fallback to simple display
+        st.write("**Results (fallback):**")
+        for cultura, area in results.items():
+            st.write(f"- {cultura}: {area:,.1f} ha")

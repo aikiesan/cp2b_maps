@@ -11,7 +11,8 @@
       "Bash(git commit:*)",
       "Bash(git pull:*)",
       "Bash(cat:*)",
-      "Bash(copy app.py app_backup.py)"
+      "Bash(copy app.py app_backup.py)",
+      "Bash(tasklist)"
     ],
     "deny": [],
     "ask": []
