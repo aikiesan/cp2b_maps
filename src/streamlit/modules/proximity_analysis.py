@@ -94,19 +94,37 @@ def perform_raster_analysis(center_lat, center_lon, radius_km):
     try:
         raster_path = str(raster_files[0])
         
-        # MapBiomas class mapping for agriculture/livestock
+        # ENHANCED: Complete MapBiomas class mapping (not just agriculture)
         class_map = {
-            15: 'Pastagem',
-            9: 'Silvicultura',
-            39: 'Soja',
-            20: 'Cana-de-açúcar',
-            40: 'Arroz',
-            62: 'Algodão',
-            41: 'Outras Temporárias',
-            46: 'Café',
-            47: 'Citrus',
-            35: 'Dendê',
-            48: 'Outras Perenes'
+            # === AGRICULTURAL CLASSES (Priority) ===
+            15: '🌾 Pastagem',
+            20: '🌾 Cana-de-açúcar',  
+            39: '🌱 Soja',
+            40: '🌾 Arroz',
+            41: '🌾 Outras Culturas Temporárias',
+            46: '☕ Café',
+            47: '🍊 Citrus', 
+            62: '🌾 Algodão',
+            35: '🌴 Dendê',
+            48: '🌾 Outras Culturas Perenes',
+            9: '🌲 Silvicultura',
+            
+            # === OTHER LAND USE CLASSES ===
+            3: '🌳 Formação Florestal',
+            4: '🌿 Formação Savânica',
+            5: '🌾 Mangue',
+            11: '🌾 Campo Alagado',
+            12: '🌿 Formação Campestre',
+            13: '🌿 Outras Formações',
+            23: '🏖️ Praia e Duna',
+            24: '🏘️ Área Urbanizada',
+            25: '🌿 Outras Áreas não Vegetadas',
+            26: '💧 Corpo d\'Água',
+            27: '❄️ Não Observado',
+            29: '🏞️ Afloramento Rochoso',
+            30: '⛏️ Mineração',
+            32: '💧 Apicum',
+            33: '💧 Rio, Lago e Oceano'
         }
         
         logger.info(f"Starting raster analysis: center=({center_lat}, {center_lon}), radius={radius_km}km")
@@ -232,7 +250,7 @@ def handle_map_click(map_data, enable_proximity):
         st.error(f"❌ Erro ao processar clique no mapa: {e}")
 
 def render_proximity_results():
-    """Render proximity analysis results"""
+    """Render enhanced proximity analysis results with complete land-use profile"""
     if not st.session_state.get('catchment_center'):
         return
     
@@ -252,37 +270,105 @@ def render_proximity_results():
     results = st.session_state.get('raster_analysis_results', {})
     
     if results:
-        st.markdown(f"#### 🌾 Uso do Solo no Raio de {radius_km} km")
+        st.markdown(f"#### 📍 Análise de Uso do Solo - Raio de {radius_km} km")
+        st.caption(f"**Centro:** {center_lat:.4f}, {center_lon:.4f}")
         
-        # Convert to DataFrame for better display
+        # Convert to DataFrame and separate agricultural from other uses
         results_df = pd.DataFrame([
             {'Tipo de Uso': uso, 'Área (hectares)': area}
             for uso, area in results.items()
         ]).sort_values('Área (hectares)', ascending=False)
         
-        # Display table
-        st.dataframe(results_df, use_container_width=True)
+        # Separate agricultural and other land uses
+        agricultural_keywords = ['🌾', '🌱', '☕', '🍊', '🌴', '🌲']
+        agri_df = results_df[results_df['Tipo de Uso'].str.contains('|'.join(agricultural_keywords), na=False)]
+        other_df = results_df[~results_df['Tipo de Uso'].str.contains('|'.join(agricultural_keywords), na=False)]
         
-        # Create pie chart if possible
+        # Display agricultural results prominently
+        if not agri_df.empty:
+            st.success(f"✅ **Culturas de Interesse Encontradas: {len(agri_df)} tipos**")
+            
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                st.dataframe(agri_df, use_container_width=True, hide_index=True)
+            with col2:
+                total_agri = agri_df['Área (hectares)'].sum()
+                st.metric("🌾 Área Agrícola Total", f"{total_agri:,.0f} ha")
+                
+                # Show top agricultural use
+                if len(agri_df) > 0:
+                    top_use = agri_df.iloc[0]
+                    st.metric("🥇 Uso Predominante", 
+                            top_use['Tipo de Uso'].replace('🌾 ', '').replace('🌱 ', ''),
+                            f"{top_use['Área (hectares)']:,.0f} ha")
+        else:
+            st.warning("⚠️ **Nenhuma Cultura Agrícola Encontrada**")
+            st.info("💡 **Dica:** Tente clicar em regiões como Ribeirão Preto (cana), Sertãozinho (cana), ou Presidente Prudente (pastagem)")
+        
+        # Display other land uses
+        if not other_df.empty:
+            with st.expander(f"ℹ️ **Outros Usos do Solo na Área** ({len(other_df)} tipos)", expanded=len(agri_df) == 0):
+                st.dataframe(other_df, use_container_width=True, hide_index=True)
+        
+        # Create comprehensive pie chart
         if len(results_df) > 1:
             try:
                 import plotly.express as px
+                
+                # Color agricultural areas differently
+                colors = []
+                for uso in results_df['Tipo de Uso']:
+                    if any(keyword in uso for keyword in agricultural_keywords):
+                        colors.append('#2E8B57')  # Green for agriculture
+                    else:
+                        colors.append('#87CEEB')  # Light blue for other
+                
                 fig = px.pie(
                     results_df, 
                     values='Área (hectares)', 
                     names='Tipo de Uso',
-                    title=f'Distribuição de Uso do Solo ({radius_km}km)'
+                    title=f'Distribuição Completa de Uso do Solo (Raio: {radius_km}km)',
+                    color_discrete_sequence=px.colors.qualitative.Set3
                 )
+                fig.update_layout(height=400, showlegend=True)
                 st.plotly_chart(fig, use_container_width=True)
             except ImportError:
                 pass  # Plotly not available
                 
         # Summary statistics
         total_area = results_df['Área (hectares)'].sum()
-        st.metric("🏞️ Área Total Analisada", f"{total_area:,.0f} hectares")
+        agri_area = agri_df['Área (hectares)'].sum() if not agri_df.empty else 0
+        agri_percentage = (agri_area / total_area * 100) if total_area > 0 else 0
         
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("🏞️ Área Total", f"{total_area:,.0f} ha")
+        with col2:
+            st.metric("🌾 Área Agrícola", f"{agri_area:,.0f} ha")
+        with col3:
+            st.metric("📊 % Agrícola", f"{agri_percentage:.1f}%")
+            
     else:
-        st.info("🔍 Clique em uma área no mapa para iniciar a análise de proximidade")
+        st.info("🔍 **Clique em uma área no mapa para iniciar a análise**")
+        
+        # Provide helpful suggestions
+        with st.expander("💡 **Sugestões de Áreas para Testar**", expanded=True):
+            st.markdown("""
+            **🌾 Regiões Canavieiras:**
+            - Ribeirão Preto, Sertãozinho, Jaboticabal
+            
+            **🐄 Regiões de Pastagem:**
+            - Presidente Prudente, Araçatuba, Bauru
+            
+            **🌱 Regiões de Soja:**
+            - Oeste do estado, região de Presidente Prudente
+            
+            **☕ Regiões Cafeeiras:**
+            - Sul de Minas (fronteira), Franca, Mococa
+            """)
+            
+        st.markdown("---")
+        st.caption("💡 **Dica:** O sistema analisa o uso real do solo usando dados do MapBiomas. Se você clicar em áreas urbanas ou florestais, isso será mostrado nos resultados!")
 
 def get_catchment_info():
     """Get catchment information for map rendering"""
