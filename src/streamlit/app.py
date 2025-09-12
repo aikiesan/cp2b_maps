@@ -3614,11 +3614,30 @@ def page_main():
                             raster_path = str(raster_files[0])  # Usa o primeiro que encontrar
                             st.info(f"🔍 Analisando raster: {Path(raster_path).name}")
 
-                            # Mapa de classes que a função de análise precisa
+                            # ENHANCED: Complete MapBiomas class mapping (includes ALL classes found in logs)
                             class_map = {
-                                15: 'Pastagem', 39: 'Soja', 20: 'Cana-de-açúcar', 40: 'Arroz',
-                                62: 'Algodão', 41: 'Outras Temporárias', 46: 'Café', 47: 'Citrus',
-                                48: 'Outras Perenes', 9: 'Silvicultura'
+                                # Found in your logs: [ 0  9 15 20 39 41 46 47 48]
+                                0: '❓ Não Classificado',  # This was missing!
+                                9: '🌲 Silvicultura', 
+                                15: '🌾 Pastagem',
+                                20: '🌾 Cana-de-açúcar',  
+                                39: '🌱 Soja',
+                                40: '🌾 Arroz',
+                                41: '🌾 Outras Culturas Temporárias',
+                                46: '☕ Café',
+                                47: '🍊 Citrus', 
+                                48: '🌾 Outras Culturas Perenes',
+                                62: '🌾 Algodão',
+                                35: '🌴 Dendê',
+                                
+                                # Additional classes for complete coverage
+                                3: '🌳 Formação Florestal',
+                                4: '🌿 Formação Savânica',
+                                11: '🌾 Campo Alagado',
+                                12: '🌿 Formação Campestre',
+                                24: '🏘️ Área Urbanizada',
+                                26: '💧 Corpo d\'Água',
+                                33: '💧 Rio, Lago e Oceano'
                             }
                             
                             # *** ESTA É A CHAMADA REAL ***
