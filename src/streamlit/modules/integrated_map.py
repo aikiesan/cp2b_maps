@@ -192,18 +192,18 @@ def render_proximity_results_panel(results, center_coordinates, radius_km):
                     if not agri_df.empty:
                         st.success(f"✅ **Culturas Agrícolas Encontradas: {len(agri_df)} tipos**")
                         st.dataframe(agri_df[['Uso do Solo', 'Área (hectares)']], 
-                                   use_container_width=True, hide_index=True)
+                                   width='stretch', hide_index=True)
                         
                         if not other_df.empty:
                             with st.expander(f"ℹ️ Outros Usos do Solo ({len(other_df)} tipos)"):
                                 st.dataframe(other_df[['Uso do Solo', 'Área (hectares)']], 
-                                           use_container_width=True, hide_index=True)
+                                           width='stretch', hide_index=True)
                     else:
                         st.warning("⚠️ **Nenhuma Cultura Agrícola Encontrada**")
                         if not other_df.empty:
                             st.info(f"**Outros Usos Identificados: {len(other_df)} tipos**")
                             st.dataframe(other_df[['Uso do Solo', 'Área (hectares)']], 
-                                       use_container_width=True, hide_index=True)
+                                       width='stretch', hide_index=True)
                 
                 with col2:
                     # Summary metrics

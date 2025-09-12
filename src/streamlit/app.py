@@ -2249,14 +2249,16 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
             logger.info(f"✅ Adding visual marker at ({center_lat:.4f}, {center_lon:.4f}) with radius {radius_km}km")
             
             # Adiciona o Pin (Marcador) no centro AO GRUPO
+            logger.info(f"🔴 Adding marker to proximity_group at [{center_lat}, {center_lon}]")
             folium.Marker(
                 location=[center_lat, center_lon],
                 popup=f"📍 Centro de Análise<br>Raio: {radius_km} km<br>Lat: {center_lat:.4f}<br>Lon: {center_lon:.4f}",
                 tooltip="Centro da Análise de Proximidade",
-                icon=folium.Icon(color='red', icon='crosshairs', prefix='fa')
+                icon=folium.Icon(color='red', icon='glyphicon-record')  # Use simpler icon
             ).add_to(proximity_group)
             
             # Adiciona o Círculo do Raio AO GRUPO
+            logger.info(f"🔵 Adding circle to proximity_group with radius {radius_km * 1000}m")
             folium.Circle(
                 location=[center_lat, center_lon],
                 radius=radius_km * 1000,  # folium.Circle usa metros
@@ -2270,6 +2272,7 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
             ).add_to(proximity_group)
         
         # NO FINAL DA FUNÇÃO, ANTES DO RETURN, adiciona o grupo ao mapa
+        logger.info(f"🗺️ Adding proximity_group to map (contains {len(proximity_group._children)} children)")
         proximity_group.add_to(m)
         
         return m, legend_html
@@ -3564,6 +3567,9 @@ def page_main():
                     "center": st.session_state.catchment_center,
                     "radius": st.session_state.catchment_radius
                 }
+                logger.info(f"🎯 Creating catchment_info: center={st.session_state.catchment_center}, radius={st.session_state.catchment_radius}")
+            else:
+                logger.info(f"🚫 No catchment_info: enable_proximity={enable_proximity}, catchment_center={st.session_state.get('catchment_center')}")
             
             
             map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, mapbiomas_classes=mapbiomas_classes, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas, catchment_info=catchment_info)
@@ -3584,6 +3590,9 @@ def page_main():
                 "center": st.session_state.catchment_center,
                 "radius": st.session_state.catchment_radius
             }
+            logger.info(f"🎯 Creating catchment_info (fullwidth): center={st.session_state.catchment_center}, radius={st.session_state.catchment_radius}")
+        else:
+            logger.info(f"🚫 No catchment_info (fullwidth): enable_proximity={enable_proximity}, catchment_center={st.session_state.get('catchment_center')}")
         
         
         map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, mapbiomas_classes=mapbiomas_classes, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas, catchment_info=catchment_info)
