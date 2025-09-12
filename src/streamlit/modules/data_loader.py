@@ -71,26 +71,9 @@ def prepare_layer_data():
     rios_path = base_path / "Rios_SP.shp" 
     layers['rios'] = load_shapefile_cached(str(rios_path), simplify_tolerance=0.001)
     
-    # Áreas Urbanas (polígonos otimizados via GeoParquet) - LIMITADO para evitar problemas
-    areas_path = geoparquet_path / "Areas_Urbanas_SP.parquet"
-    if areas_path.exists():
-        try:
-            areas_gdf = gpd.read_parquet(areas_path)
-            if areas_gdf.crs and areas_gdf.crs != 'EPSG:4326':
-                areas_gdf = areas_gdf.to_crs('EPSG:4326')
-            
-            # LIMITAR drasticamente para evitar travamento - apenas 1000 polígonos máximo
-            if len(areas_gdf) > 1000:
-                areas_gdf = areas_gdf.sample(n=1000, random_state=42)
-            
-            # Simplificação muito agressiva para polígonos complexos
-            areas_gdf['geometry'] = areas_gdf['geometry'].simplify(0.005, preserve_topology=True)
-            layers['areas_urbanas'] = areas_gdf
-        except Exception as e:
-            logger.error(f"Erro ao carregar áreas urbanas: {e}")
-            layers['areas_urbanas'] = None
-    else:
-        layers['areas_urbanas'] = None
+    # Urban Areas layer removed for performance improvement (Step 2 of improvement plan)
+    # This large dataset was memory-intensive and less critical for biogas analysis
+    layers['areas_urbanas'] = None
     
     # Regiões Administrativas (polígonos - simplificação leve)
     regioes_path = base_path / "Regiao_Adm_SP.shp"

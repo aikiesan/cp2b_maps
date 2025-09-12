@@ -176,6 +176,58 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
             logger.warning(f"Erro ao processar município {row.get('nome_municipio', 'Unknown')}: {e}")
             continue
 
+def add_choropleth_layer(m, gdf, df_merged, display_col):
+    """Add choropleth layer to map using municipality boundaries"""
+    if gdf is None or df_merged is None or df_merged.empty:
+        return
+        
+    try:
+        # Merge geometry with data
+        merged_gdf = gdf.merge(df_merged, on='cd_mun', how='inner')
+        
+        if merged_gdf.empty or display_col not in merged_gdf.columns:
+            return
+        
+        # Create choropleth layer
+        folium.Choropleth(
+            geo_data=merged_gdf,
+            name='Potencial de Biogás',
+            data=merged_gdf,
+            columns=['cd_mun', display_col],
+            key_on='feature.properties.cd_mun',
+            fill_color='YlOrRd',
+            fill_opacity=0.7,
+            line_opacity=0.2,
+            legend_name=f'Potencial ({display_col.replace("_", " ").title()})'
+        ).add_to(m)
+        
+        # Add interactive layer for tooltips
+        folium.features.GeoJson(
+            merged_gdf,
+            style_function=lambda x: {
+                'fillColor': 'transparent',
+                'color': 'transparent',
+                'weight': 0
+            },
+            tooltip=folium.features.GeoJsonTooltip(
+                fields=['nome_municipio', display_col, 'populacao_2022'],
+                aliases=['Município:', 'Potencial:', 'População:'],
+                localize=True,
+                sticky=False,
+                labels=True,
+                style="""
+                    background-color: white;
+                    border: 2px solid black;
+                    border-radius: 3px;
+                    box-shadow: 3px;
+                """,
+                max_width=200,
+            )
+        ).add_to(m)
+        
+    except Exception as e:
+        logger.error(f"Error adding choropleth layer: {e}")
+
 def create_basic_map():
     """Cria um mapa básico para fallback"""
     return folium.Map(location=[-22.5, -48.5], zoom_start=7, tiles='CartoDB positron')

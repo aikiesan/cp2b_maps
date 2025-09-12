@@ -36,7 +36,8 @@ def render_sidebar_filters():
     # Visualization type
     viz_type = st.sidebar.radio(
         "📊 Tipo de Visualização",
-        ["Círculos Proporcionais", "Tamanho Fixo"],
+        ["Mapa de Preenchimento (Coroplético)", "Círculos Proporcionais", "Tamanho Fixo"],
+        index=0,  # Default to choropleth map
         help="Como os municípios são representados no mapa"
     )
     
@@ -65,13 +66,18 @@ def render_layer_controls():
     st.sidebar.markdown("### 🗺️ Camadas do Mapa")
     
     layers = {}
+    # Enable biogas municipalities by default - this is what users want to see first
+    layers['show_municipios_biogas'] = st.sidebar.checkbox("📊 Potencial de Biogás", value=True, key="municipios_biogas_layer")
+    
+    # Other layers start disabled for cleaner initial view
     layers['show_mapbiomas'] = st.sidebar.checkbox("🌍 MapBiomas - Uso do Solo", key="mapbiomas_layer")
     layers['show_plantas_biogas'] = st.sidebar.checkbox("🏭 Plantas de Biogás", key="plantas_layer")
     layers['show_gasodutos_dist'] = st.sidebar.checkbox("⛽ Gasodutos - Distribuição", key="gasodutos_dist_layer")
     layers['show_gasodutos_transp'] = st.sidebar.checkbox("🚛 Gasodutos - Transporte", key="gasodutos_transp_layer")
     layers['show_rodovias'] = st.sidebar.checkbox("🛣️ Rodovias", key="rodovias_layer")
     layers['show_rios'] = st.sidebar.checkbox("🌊 Rios", key="rios_layer")
-    layers['show_areas_urbanas'] = st.sidebar.checkbox("🏘️ Áreas Urbanas", key="areas_layer")
+    # Remove urban areas layer (Step 2 of the plan)
+    # layers['show_areas_urbanas'] = st.sidebar.checkbox("🏘️ Áreas Urbanas", key="areas_layer")
     layers['show_regioes_admin'] = st.sidebar.checkbox("🏛️ Regiões Administrativas", key="regioes_layer")
     
     return layers
