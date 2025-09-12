@@ -62,7 +62,7 @@ class RasterLoader:
         """Retorna o caminho completo para um arquivo raster"""
         return self.raster_dir / filename
     
-    def load_raster(self, raster_path: str, max_size: int = 2048) -> Tuple[Optional[np.ndarray], Optional[Dict[str, Any]]]:
+    def load_raster(self, raster_path: str, max_size: int = 1536) -> Tuple[Optional[np.ndarray], Optional[Dict[str, Any]]]:
         """
         Carrega um raster GeoTIFF com cache e redimensionamento automático
         
