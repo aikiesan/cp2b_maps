@@ -33,3 +33,20 @@ Thumbs.db
 # Backup files
 *_backup.py
 *.bak
+
+# Test files
+test_*.py
+*_test.py
+pytest_cache/
+.pytest_cache/
+
+# Temporary files
+*.tmp
+*.temp
+*~
+*.swp
+*.swo
+
+# Report files
+*_REPORT.md
+*_report.md
