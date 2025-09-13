@@ -64,16 +64,20 @@ try:
 except ImportError as e:
     logger.warning(f"⚠️ Failed to import professional panel: {e}")
 
-try:
-    from raster import RasterLoader, get_raster_loader, create_mapbiomas_legend, analyze_raster_in_radius
-    HAS_RASTER_SYSTEM = True
-except ImportError as e:
-    HAS_RASTER_SYSTEM = False
-    RasterLoader = None
-    get_raster_loader = None
-    create_mapbiomas_legend = None
-    analyze_raster_in_radius = None
-    logger.warning(f"Sistema de rasters não disponível: {e}")
+# Temporarily disable raster system to avoid errors - can be re-enabled when raster module is available
+HAS_RASTER_SYSTEM = False
+analyze_raster_in_radius = None
+
+# try:
+#     from raster import RasterLoader, get_raster_loader, create_mapbiomas_legend, analyze_raster_in_radius
+#     HAS_RASTER_SYSTEM = True
+# except ImportError as e:
+#     HAS_RASTER_SYSTEM = False
+#     RasterLoader = None
+#     get_raster_loader = None
+#     create_mapbiomas_legend = None
+#     analyze_raster_in_radius = None
+#     logger.warning(f"Sistema de rasters não disponível: {e}")
 
 # ============================================================================
 # SISTEMA DE CACHE OTIMIZADO PARA SHAPEFILES
@@ -3499,8 +3503,17 @@ def page_main():
         </div>
         """, unsafe_allow_html=True)
         
+        # === SISTEMA DE PAINÉIS EXCLUSIVOS ===
+        # Initialize panel states if not exists
+        if 'active_panel' not in st.session_state:
+            st.session_state.active_panel = 'camadas'
+        
         # === 1. EXPANDER PARA CAMADAS (Ação mais comum) ===
-        with st.expander("🗺️ Camadas Visíveis", expanded=True):  # Começa expandido
+        with st.expander("🗺️ Camadas Visíveis", expanded=(st.session_state.active_panel == 'camadas')):  # Controle dinâmico
+            # Auto-set as active panel when interacted with
+            if st.session_state.active_panel != 'camadas':
+                st.session_state.active_panel = 'camadas'
+            
             st.write("**Dados Principais:**")
             show_municipios_biogas = st.checkbox("📊 Potencial de Biogás", value=True)
             
@@ -3599,34 +3612,105 @@ def page_main():
                             st.toast("Culturas desmarcadas!", icon="❌")
                             st.rerun()
         
-        # === 2. EXPANDER PARA FILTROS DE DADOS ===
-        with st.expander("📊 Filtros de Dados", expanded=False):
-            mode = st.radio("Modo:", ["Individual", "Múltiplos"], horizontal=True, key="map_mode")
-            
-            if mode == "Individual":
-                selected = st.selectbox("Resíduo:", list(RESIDUE_OPTIONS.keys()), key="map_select")
-                residues = [RESIDUE_OPTIONS[selected]]
-                display_name = selected
-            else:
-                selected_list = st.multiselect("Resíduos:", list(RESIDUE_OPTIONS.keys()), default=["Potencial Total"], key="map_multi")
-                residues = [RESIDUE_OPTIONS[item] for item in selected_list]
-                display_name = f"Soma de {len(residues)} tipos" if len(residues) > 1 else (selected_list[0] if selected_list else "Nenhum")
-            
-            search_term = st.text_input("Buscar:", placeholder="Município...", key="search")
+        # === 2. EXPANDER PARA FILTROS DE DADOS (Só ativo se Potencial de Biogás estiver ativo) ===
+        if show_municipios_biogas:
+            with st.expander("📊 Filtros de Dados", expanded=(st.session_state.active_panel == 'filtros')):
+                # Auto-set as active panel when interacted with
+                if st.session_state.active_panel != 'filtros':
+                    st.session_state.active_panel = 'filtros'
+                
+                st.info("💡 **Filtros específicos para visualização do Potencial de Biogás**")
+                mode = st.radio("Modo:", ["Individual", "Múltiplos"], horizontal=True, key="map_mode")
+                
+                if mode == "Individual":
+                    selected = st.selectbox("Resíduo:", list(RESIDUE_OPTIONS.keys()), key="map_select")
+                    residues = [RESIDUE_OPTIONS[selected]]
+                    display_name = selected
+                else:
+                    selected_list = st.multiselect("Resíduos:", list(RESIDUE_OPTIONS.keys()), default=["Potencial Total"], key="map_multi")
+                    residues = [RESIDUE_OPTIONS[item] for item in selected_list]
+                    display_name = f"Soma de {len(residues)} tipos" if len(residues) > 1 else (selected_list[0] if selected_list else "Nenhum")
+                
+                search_term = st.text_input("Buscar:", placeholder="Município...", key="search")
+        else:
+            # Show disabled message when biogas layer is not active
+            with st.expander("📊 Filtros de Dados", expanded=False):
+                st.warning("⚠️ **Active a camada 'Potencial de Biogás' para usar os filtros de dados**")
+                st.markdown("Os filtros de dados funcionam em conjunto com a visualização do potencial de biogás para permitir análises mais específicas.")
+                
+            # Set default values when disabled
+            mode = "Individual"
+            selected = "Potencial Total"
+            residues = [RESIDUE_OPTIONS[selected]]
+            display_name = selected
+            search_term = ""
         
         # === 3. EXPANDER PARA ESTILOS DE VISUALIZAÇÃO ===
-        with st.expander("🎨 Estilos de Visualização", expanded=False):
+        with st.expander("🎨 Estilos de Visualização", expanded=(st.session_state.active_panel == 'estilos')):
+            # Auto-set as active panel when interacted with
+            if st.session_state.active_panel != 'estilos':
+                st.session_state.active_panel = 'estilos'
+            
+            st.markdown("**🎯 Escolha o estilo de visualização dos dados no mapa:**")
             viz_type = st.radio("Tipo de mapa:", options=["Círculos Proporcionais", "Mapa de Calor (Heatmap)", "Agrupamentos (Clusters)", "Mapa de Preenchimento (Coroplético)"], key="viz_type")
+            
+            # Add descriptions for each visualization type
+            if viz_type == "Círculos Proporcionais":
+                st.info("🔵 **Círculos Proporcionais**: O tamanho dos círculos representa o valor dos dados. Maior potencial = círculo maior.")
+            elif viz_type == "Mapa de Calor (Heatmap)":
+                st.info("🔥 **Mapa de Calor**: Cores quentes (vermelho) indicam valores altos, cores frias (azul) indicam valores baixos.")
+            elif viz_type == "Agrupamentos (Clusters)":
+                st.info("📍 **Agrupamentos**: Municípios próximos são agrupados em clusters. Números indicam quantos pontos estão agrupados.")
+            elif viz_type == "Mapa de Preenchimento (Coroplético)":
+                st.info("🗺️ **Coroplético**: Polígonos dos municípios são coloridos de acordo com o valor dos dados. Cores mais escuras = valores maiores.")
+            
+            st.markdown("---")
+            st.markdown("💡 **Dica**: Experimente diferentes estilos para descobrir qual visualização funciona melhor para seus dados!")
         
         # === 4. EXPANDER PARA ANÁLISE DE PROXIMIDADE ===
-        with st.expander("🎯 Análise de Proximidade", expanded=False):
+        with st.expander("🎯 Análise de Proximidade", expanded=(st.session_state.active_panel == 'proximidade')):
+            # Initialize proximity session state flags
+            if 'proximity_layers_disabled' not in st.session_state:
+                st.session_state.proximity_layers_disabled = False
+            
+            # Auto-set as active panel when interacted with (without triggering layer changes)
+            if st.session_state.active_panel != 'proximidade':
+                st.session_state.active_panel = 'proximidade'
+            
             # Initialize proximity analysis session state
             if 'catchment_center' not in st.session_state:
                 st.session_state.catchment_center = None
             if 'catchment_radius' not in st.session_state:
                 st.session_state.catchment_radius = 50
             
-            enable_proximity = st.checkbox("Ativar Análise de Raio de Captação")
+            # Single unified checkbox for proximity analysis
+            enable_proximity = st.checkbox(
+                "🎯 Ativar Análise de Raio de Captação", 
+                value=st.session_state.proximity_layers_disabled,
+                help="Ativa o modo de análise de proximidade e desliga outras camadas para melhor visualização"
+            )
+            
+            # Handle layer disabling and enabling
+            if enable_proximity != st.session_state.proximity_layers_disabled:
+                st.session_state.proximity_layers_disabled = enable_proximity
+                if enable_proximity:
+                    st.toast("🎯 Análise de Proximidade ativada", icon="🎯")
+                else:
+                    st.toast("✅ Análise desativada - Camadas disponíveis", icon="✅")
+            
+            # Apply layer overrides when proximity analysis is active
+            if enable_proximity:
+                show_municipios_biogas = False
+                show_plantas_biogas = False
+                show_gasodutos_dist = False
+                show_gasodutos_transp = False
+                show_rodovias = False
+                show_areas_urbanas = False
+                show_regioes_admin = False
+                show_rios = False
+                show_mapbiomas = False
+                
+                st.info("ℹ️ **Análise de Proximidade Ativa**: Outras camadas foram desabilitadas para melhor visualização.")
             
             if enable_proximity:
                 # Substituir o slider por um radio com opções fixas
@@ -3653,23 +3737,11 @@ def page_main():
             else:
                 st.session_state.catchment_center = None
         
-        # === 5. EXPANDER PARA OUTRAS ANÁLISES ===
-        with st.expander("⚙️ Outras Análises", expanded=False):
-            st.markdown("**Classificação de Dados:**")
-            classification = st.selectbox(
-                "Método:",
-                options=["Linear (Intervalo Uniforme)", "Quantiles (Contagem Igual)", "Quebras Naturais (Jenks)", "Desvio Padrão"],
-                key="classification"
-            )
-            
-            num_classes = st.slider("Número de Classes:", min_value=3, max_value=8, value=5, key="num_classes")
-            
-            st.markdown("**Normalização de Dados:**")
-            normalization = st.selectbox(
-                "Métrica:",
-                options=["Potencial Absoluto (Nm³/ano)", "Potencial per Capita (Nm³/hab/ano)", "Potencial por Área (Nm³/km²/ano)", "Densidade Populacional (hab/km²)"],
-                key="normalization"
-            )
+        # === PAINEL REMOVIDO: OUTRAS ANÁLISES (confuso para usuários) ===
+        # Valores padrão para manter compatibilidade
+        classification = "Linear (Intervalo Uniforme)"
+        num_classes = 5
+        normalization = "Potencial Absoluto (Nm³/ano)"
         
         # === SEÇÃO FIXA: MUNICÍPIOS SELECIONADOS ===
         if st.session_state.selected_municipalities:
@@ -3685,9 +3757,60 @@ def page_main():
                 st.toast(f"{len(selected_names)} municípios removidos da seleção!", icon="🗑️")
                 st.rerun()
         
-        # === INSTRUÇÃO PARA ESCONDER SIDEBAR ===
+        # === INSTRUÇÃO MELHORADA PARA ESCONDER SIDEBAR ===
         st.markdown("---")
-        st.info("💡 Clique no ícone `>` no topo para recolher este painel e ampliar a visualização.", icon="↔️")
+        
+        # Create a more visible instruction box
+        st.markdown("""
+        <div style='
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); 
+            color: white; 
+            padding: 1rem; 
+            border-radius: 10px; 
+            text-align: center; 
+            margin: 1rem 0;
+            border: 2px solid #388E3C;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        '>
+            <div style='font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem;'>
+                🖥️ MAXIMIZAR VISUALIZAÇÃO DO MAPA
+            </div>
+            <div style='font-size: 0.9rem; opacity: 0.95;'>
+                👆 Procure pelo botão <strong>[×]</strong> ou <strong>[>]</strong> no CANTO SUPERIOR ESQUERDO desta barra lateral
+            </div>
+            <div style='font-size: 0.85rem; opacity: 0.9; margin-top: 0.3rem;'>
+                Isso ocultará este painel e dará mais espaço para o mapa!
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Add CSS to make the sidebar collapse button more visible
+        st.markdown("""
+        <style>
+        /* Highlight the sidebar collapse button */
+        .css-1d391kg, .css-1v0mbdj, button[title="Close sidebar"] {
+            background-color: #FF6B6B !important;
+            color: white !important;
+            border: 2px solid #FF4444 !important;
+            border-radius: 8px !important;
+            font-weight: bold !important;
+            font-size: 16px !important;
+            padding: 8px !important;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 107, 107, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+        }
+        
+        /* Highlight sidebar header area */
+        .css-1544g2n {
+            border-top: 3px solid #FF6B6B !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
 
     # --- 4. APLICAÇÃO DOS FILTROS ---
     # Processa os dados ANTES de qualquer renderização de layout
@@ -3802,7 +3925,7 @@ def page_main():
             if st.session_state.get('raster_analysis_results') is None:
                 # Verificação se o sistema de raster está disponível
                 if not HAS_RASTER_SYSTEM or analyze_raster_in_radius is None:
-                    st.error("🔧 Sistema de análise de raster não está disponível. Verifique a instalação das dependências.")
+                    st.info("ℹ️ **Análise de uso do solo temporariamente indisponível**. A análise de proximidade funciona normalmente com os dados municipais.")
                     st.session_state.raster_analysis_results = {}
                 else:
                     try:
