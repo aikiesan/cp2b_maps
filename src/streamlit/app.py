@@ -6,8 +6,6 @@ Simple and robust biogas potential analysis for São Paulo municipalities
 # Standard library imports
 import logging
 import os
-import pickle
-import re
 import sqlite3
 import sys
 from datetime import datetime
@@ -22,7 +20,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-import streamlit.components.v1 as components
 from folium.plugins import MiniMap, HeatMap, MarkerCluster
 from streamlit_folium import st_folium
 
@@ -64,7 +61,7 @@ HAS_PROFESSIONAL_PANEL = False
 try:
     from modules.integrated_map import render_proximity_results_panel
     HAS_PROFESSIONAL_PANEL = True
-    logger.info("✅ Professional results panel imported successfully")
+    logger.info("Professional results panel imported successfully")
 except ImportError as e:
     logger.warning(f"⚠️ Failed to import professional panel: {e}")
 
@@ -568,7 +565,7 @@ def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only
 
 def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
     """Adiciona visualizações dos municípios com diferentes estilos baseados em viz_type"""
-    print(f"===> DEBUG VIZ_TYPE: Função add_municipality_circles_fast recebendo viz_type = '{viz_type}'")
+    logger.debug(f"VIZ_TYPE: Function add_municipality_circles_fast receiving viz_type = '{viz_type}'")
     
     if df_merged.empty or display_col not in df_merged.columns:
         return
@@ -602,10 +599,10 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
             return color_scale[4]  # Muito Alto
     
     # ==== LÓGICA DE SELEÇÃO DE VISUALIZAÇÃO RESTAURADA ====
-    print(f"===> DEBUG VIZ_TYPE: Checando a condição para '{viz_type}'")
+    logger.debug(f"VIZ_TYPE: Checking condition for '{viz_type}'")
     
     if viz_type == "Círculos Proporcionais":
-        print("===> DEBUG VIZ_TYPE: Entrando no bloco de Círculos Proporcionais.")
+        logger.debug("VIZ_TYPE: Entering Proportional Circles block")
         # Implementação atual - círculos proporcionais
         if values.max() > 0:
             sizes = ((values / values.max()) * 15 + 3).astype(float)
@@ -642,7 +639,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                 continue
                 
     elif viz_type == "Mapa de Calor (Heatmap)":
-        print("===> DEBUG VIZ_TYPE: Entrando no bloco de Mapa de Calor.")
+        logger.debug("VIZ_TYPE: Entering Heat Map block")
         try:
             from folium.plugins import HeatMap
             heat_data = []
@@ -662,7 +659,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                 HeatMap(heat_data, radius=15, blur=10, max_zoom=1).add_to(m)
             else:
                 # Fallback para círculos se heatmap falhar
-                print("===> DEBUG VIZ_TYPE: Fallback para círculos - dados insuficientes para heatmap.")
+                logger.debug("VIZ_TYPE: Fallback to circles - insufficient data for heatmap")
                 # Implementar círculos simples como fallback
                 for idx, row in df_sample.iterrows():
                     try:
@@ -688,7 +685,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                     except Exception:
                         continue
         except ImportError:
-            print("===> DEBUG VIZ_TYPE: HeatMap não disponível - usando fallback para círculos.")
+            logger.debug("VIZ_TYPE: HeatMap not available - using fallback to circles")
             # Fallback para círculos se HeatMap não estiver disponível
             for idx, row in df_sample.iterrows():
                 try:
@@ -715,7 +712,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                     continue
                     
     elif viz_type == "Agrupamentos (Clusters)":
-        print("===> DEBUG VIZ_TYPE: Entrando no bloco de Agrupamentos.")
+        logger.debug("VIZ_TYPE: Entering Clustering block")
         try:
             from folium.plugins import MarkerCluster
             marker_cluster = MarkerCluster().add_to(m)
@@ -753,7 +750,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                 except Exception:
                     continue
         except ImportError:
-            print("===> DEBUG VIZ_TYPE: MarkerCluster não disponível - usando fallback para círculos.")
+            logger.debug("VIZ_TYPE: MarkerCluster not available - using fallback to circles")
             # Fallback para círculos se MarkerCluster não estiver disponível
             for idx, row in df_sample.iterrows():
                 try:
@@ -780,14 +777,14 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                     continue
                     
     elif viz_type == "Mapa de Preenchimento (Coroplético)":
-        print("===> DEBUG VIZ_TYPE: Entrando no bloco Coroplético REAL.")
+        logger.debug("VIZ_TYPE: Entering Choropleth block")
         try:
             # 1. Carregar as geometrias dos polígonos (usando a função que já existe)
-            print("===> DEBUG: Carregando polígonos dos municípios...")
+            logger.debug("Loading municipality polygons...")
             gdf_polygons = load_optimized_geometries("medium_detail")
 
             if gdf_polygons is None or 'cd_mun' not in gdf_polygons.columns:
-                print("===> DEBUG: Falha ao carregar geometrias - usando fallback para círculos.")
+                logger.debug("Failed to load geometries - using fallback to circles")
                 # Fallback para círculos se não conseguir carregar
                 for idx, row in df_sample.iterrows():
                     try:
@@ -816,7 +813,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                         continue
                 return
 
-            print(f"===> DEBUG: Polígonos carregados: {len(gdf_polygons)} geometrias.")
+            logger.debug(f"Polygons loaded: {len(gdf_polygons)} geometries")
 
             # 2. Mesclar dados de potencial com as geometrias
             # Assegurar que 'cd_mun' seja do mesmo tipo em ambos os dataframes
@@ -827,7 +824,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
             df_choropleth = gdf_polygons.merge(df_merged_copy, on='cd_mun', how='inner')
 
             if df_choropleth.empty:
-                print("===> DEBUG: Não foi possível combinar dados - usando fallback para círculos.")
+                logger.debug("Could not merge data - using fallback to circles")
                 # Fallback para círculos se merge falhar
                 for idx, row in df_sample.iterrows():
                     try:
@@ -854,7 +851,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                         continue
                 return
 
-            print(f"===> DEBUG: Merge concluído: {len(df_choropleth)} municípios com dados.")
+            logger.debug(f"Merge completed: {len(df_choropleth)} municipalities with data")
 
             # 3. Criar a camada Choropleth
             folium.Choropleth(
@@ -889,12 +886,12 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
             m.add_child(interactive_layer)
             m.keep_in_front(interactive_layer)
             
-            print("===> DEBUG: Mapa coroplético criado com sucesso!")
+            logger.debug("Choropleth map created successfully")
 
         except Exception as e:
-            print(f"===> DEBUG: Erro ao gerar o mapa coroplético: {e}")
+            logger.error(f"Error generating choropleth map: {e}")
             # Fallback para círculos se algo der errado
-            print("===> DEBUG VIZ_TYPE: Fallback para círculos devido a erro no coroplético.")
+            logger.debug("VIZ_TYPE: Fallback to circles due to choropleth error")
             for idx, row in df_sample.iterrows():
                 try:
                     if hasattr(row, 'geometry') and row.geometry:
@@ -921,7 +918,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                 except Exception:
                     continue
     else:
-        print(f"===> DEBUG VIZ_TYPE: Tipo não reconhecido '{viz_type}' - usando círculos proporcionais como fallback.")
+        logger.warning(f"VIZ_TYPE: Unrecognized type '{viz_type}' - using proportional circles as fallback")
         # Fallback para círculos proporcionais
         if values.max() > 0:
             sizes = ((values / values.max()) * 15 + 3).astype(float)
@@ -2439,7 +2436,7 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
         if catchment_info and catchment_info.get("center"):
             center_lat, center_lon = catchment_info["center"]
             radius_km = catchment_info["radius"]
-            logger.info(f"✅ Adding visual marker at ({center_lat:.4f}, {center_lon:.4f}) with radius {radius_km}km")
+            logger.info(f"Adding visual marker at ({center_lat:.4f}, {center_lon:.4f}) with radius {radius_km}km")
             
             # Adiciona o Pin (Marcador) no centro - MELHORADO
             logger.info(f"🔴 Adding marker to proximity_group at [{center_lat}, {center_lon}]")
@@ -3749,7 +3746,7 @@ def page_main():
                 }
                 logger.info(f"🎯 Creating catchment_info: center={st.session_state.catchment_center}, radius={st.session_state.catchment_radius}")
             else:
-                logger.info(f"🚫 No catchment_info: enable_proximity={enable_proximity}, catchment_center={st.session_state.get('catchment_center')}")
+                logger.info(f"No catchment_info: enable_proximity={enable_proximity}, catchment_center={st.session_state.get('catchment_center')}")
             
             
             map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, mapbiomas_classes=mapbiomas_classes, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas, catchment_info=catchment_info)
@@ -3772,7 +3769,7 @@ def page_main():
             }
             logger.info(f"🎯 Creating catchment_info (fullwidth): center={st.session_state.catchment_center}, radius={st.session_state.catchment_radius}")
         else:
-            logger.info(f"🚫 No catchment_info (fullwidth): enable_proximity={enable_proximity}, catchment_center={st.session_state.get('catchment_center')}")
+            logger.info(f"No catchment_info (fullwidth): enable_proximity={enable_proximity}, catchment_center={st.session_state.get('catchment_center')}")
         
         
         map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, mapbiomas_classes=mapbiomas_classes, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas, catchment_info=catchment_info)
@@ -3873,7 +3870,7 @@ def page_main():
             
             if HAS_PROFESSIONAL_PANEL and results:
                 # Use the beautiful professional panel from integrated_map module
-                logger.info("✅ Using professional results panel")
+                logger.info("Using professional results panel")
                 render_proximity_results_panel(results, center_coordinates, radius_km)
             else:
                 logger.warning(f"⚠️ Using enhanced fallback panel: HAS_PROFESSIONAL_PANEL={HAS_PROFESSIONAL_PANEL}, results={bool(results)}")
