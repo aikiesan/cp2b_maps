@@ -9,7 +9,11 @@
       "Bash(git push:*)",
       "Bash(streamlit run:*)",
       "Bash(git commit:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(git pull:*)",
+      "Bash(cat:*)",
+      "Bash(copy app.py app_backup.py)",
+      "Bash(tasklist)"
     ],
     "deny": [],
     "ask": []

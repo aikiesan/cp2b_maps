@@ -62,7 +62,7 @@ class RasterLoader:
         """Retorna o caminho completo para um arquivo raster"""
         return self.raster_dir / filename
     
-    def load_raster(self, raster_path: str, max_size: int = 2048) -> Tuple[Optional[np.ndarray], Optional[Dict[str, Any]]]:
+    def load_raster(self, raster_path: str, max_size: int = 1536) -> Tuple[Optional[np.ndarray], Optional[Dict[str, Any]]]:
         """
         Carrega um raster GeoTIFF com cache e redimensionamento automático
         
@@ -329,20 +329,28 @@ def analyze_raster_in_radius(raster_path: str, center_lat: float, center_lon: fl
             unique_values, counts = np.unique(valid_data, return_counts=True)
             logger.info(f"Classes encontradas na área: {unique_values}")
             
-            # Calcula área de cada pixel em hectares
-            pixel_size_x = abs(out_transform[0])
-            pixel_size_y = abs(out_transform[4])
-            pixel_area_m2 = pixel_size_x * pixel_size_y
+            # Calcula área de cada pixel em hectares (CORREÇÃO para coordenadas WGS84)
+            pixel_width_deg = abs(out_transform[0])   # Largura do pixel em graus
+            pixel_height_deg = abs(out_transform[4])  # Altura do pixel em graus
+            
+            # Conversão correta de graus para metros considerando a curvatura da Terra
+            # 111320 é o comprimento aproximado de 1 grau de latitude em metros
+            m_per_deg_lat = 111320
+            m_per_deg_lon = m_per_deg_lat * np.cos(np.radians(center_lat))  # Ajuste para latitude
+            
+            pixel_area_m2 = (pixel_height_deg * m_per_deg_lat) * (pixel_width_deg * m_per_deg_lon)
             pixel_area_ha = pixel_area_m2 / 10000  # Converte m² para hectares
+            
             
             # Cria resultado
             results = {}
             for value, count in zip(unique_values, counts):
                 class_code = int(value)
+                area_ha = count * pixel_area_ha
+                
                 if class_code in class_map:
                     class_name = class_map[class_code]
-                    area_ha = count * pixel_area_ha
-                    if area_ha > 0.1:  # Só inclui se área > 0.1 ha
+                    if area_ha > 0.01:  # Lowered threshold: include areas > 0.01 ha (100 m²)
                         results[class_name] = round(area_ha, 1)
             
             return results

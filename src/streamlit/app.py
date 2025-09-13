@@ -26,6 +26,7 @@ import streamlit.components.v1 as components
 from folium.plugins import MiniMap, HeatMap, MarkerCluster
 from streamlit_folium import st_folium
 
+
 # Configure page layout for wide mode
 st.set_page_config(
     page_title="CP2B Maps",
@@ -53,6 +54,15 @@ logger = logging.getLogger(__name__)
 
 # Log startup info
 logger.info(f"CP2B Maps starting with log level: {LOG_LEVEL}")
+
+# Import professional results panel
+HAS_PROFESSIONAL_PANEL = False
+try:
+    from modules.integrated_map import render_proximity_results_panel
+    HAS_PROFESSIONAL_PANEL = True
+    logger.info("✅ Professional results panel imported successfully")
+except ImportError as e:
+    logger.warning(f"⚠️ Failed to import professional panel: {e}")
 
 try:
     from raster import RasterLoader, get_raster_loader, create_mapbiomas_legend, analyze_raster_in_radius
@@ -2416,19 +2426,23 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
             m.get_root().html.add_child(folium.Element(legend_html_for_map))
         
         # --- VISUALIZAÇÃO DA ANÁLISE DE PROXIMIDADE ---
+        logger.info(f"🔍 Map rendering: catchment_info = {catchment_info}")
         if catchment_info and catchment_info.get("center"):
             center_lat, center_lon = catchment_info["center"]
             radius_km = catchment_info["radius"]
+            logger.info(f"✅ Adding visual marker at ({center_lat:.4f}, {center_lon:.4f}) with radius {radius_km}km")
             
             # Adiciona o Pin (Marcador) no centro AO GRUPO
+            logger.info(f"🔴 Adding marker to proximity_group at [{center_lat}, {center_lon}]")
             folium.Marker(
                 location=[center_lat, center_lon],
                 popup=f"📍 Centro de Análise<br>Raio: {radius_km} km<br>Lat: {center_lat:.4f}<br>Lon: {center_lon:.4f}",
                 tooltip="Centro da Análise de Proximidade",
-                icon=folium.Icon(color='red', icon='crosshairs', prefix='fa')
+                icon=folium.Icon(color='red', icon='glyphicon-record')  # Use simpler icon
             ).add_to(proximity_group)
             
             # Adiciona o Círculo do Raio AO GRUPO
+            logger.info(f"🔵 Adding circle to proximity_group with radius {radius_km * 1000}m")
             folium.Circle(
                 location=[center_lat, center_lon],
                 radius=radius_km * 1000,  # folium.Circle usa metros
@@ -2442,6 +2456,7 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
             ).add_to(proximity_group)
         
         # NO FINAL DA FUNÇÃO, ANTES DO RETURN, adiciona o grupo ao mapa
+        logger.info(f"🗺️ Adding proximity_group to map (contains {len(proximity_group._children)} children)")
         proximity_group.add_to(m)
         
         return m, legend_html
@@ -3381,10 +3396,54 @@ def find_neighboring_municipalities(df, target_mun, radius_km=50):
     return distances
 
 
+def get_memory_usage():
+    """Get current memory usage in MB"""
+    try:
+        import psutil
+        process = psutil.Process()
+        return process.memory_info().rss / 1024 / 1024
+    except:
+        return 0
+
+def cleanup_memory():
+    """Clean up memory-intensive session state variables"""
+    memory_intensive_keys = [
+        'raster_analysis_results',
+        'vector_analysis_results', 
+        'cached_maps',
+        'large_datasets'
+    ]
+    
+    # Monitor memory before cleanup
+    memory_before = get_memory_usage()
+    
+    for key in memory_intensive_keys:
+        if key in st.session_state:
+            del st.session_state[key]
+    
+    # Clear matplotlib figures to free memory
+    try:
+        import matplotlib.pyplot as plt
+        plt.close('all')
+    except:
+        pass
+    
+    # Force garbage collection
+    import gc
+    gc.collect()
+    
+    memory_after = get_memory_usage()
+    if memory_before > 0 and memory_after > 0:
+        memory_saved = memory_before - memory_after
+        if memory_saved > 10:  # Only log if significant memory was freed
+            st.caption(f"🧹 Freed {memory_saved:.1f}MB of memory")
+
 def page_main():
     """Main map page with ultra-thin sidebar and comprehensive analysis tools."""
     
-    # --- 1. GERENCIAMENTO DE ESTADO ---
+    # --- 1. GERENCIAMENTO DE ESTADO E LIMPEZA DE MEMÓRIA ---
+    cleanup_memory()
+    
     if 'clicked_municipality' not in st.session_state:
         st.session_state.clicked_municipality = None
     if 'selected_municipalities' not in st.session_state:
@@ -3451,8 +3510,9 @@ def page_main():
             show_gasodutos_transp = st.checkbox("⛽ Transporte", value=False)
             
             st.write("**Referência:**")
-            show_rodovias = st.checkbox("Rodovias", value=False)
-            show_areas_urbanas = st.checkbox("🏘️ Áreas Urbanas", value=False)
+            show_rodovias = st.checkbox("🛣️ Rodovias", value=False)
+            # Areas Urbanas layer removed for performance (Step 2 of improvement plan)
+            show_areas_urbanas = False
             show_regioes_admin = st.checkbox("🏛️ Regiões Admin.", value=False)
             
             # Remove rios layer completely
@@ -3691,6 +3751,9 @@ def page_main():
                     "center": st.session_state.catchment_center,
                     "radius": st.session_state.catchment_radius
                 }
+                logger.info(f"🎯 Creating catchment_info: center={st.session_state.catchment_center}, radius={st.session_state.catchment_radius}")
+            else:
+                logger.info(f"🚫 No catchment_info: enable_proximity={enable_proximity}, catchment_center={st.session_state.get('catchment_center')}")
             
             
             map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, mapbiomas_classes=mapbiomas_classes, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas, catchment_info=catchment_info)
@@ -3711,6 +3774,9 @@ def page_main():
                 "center": st.session_state.catchment_center,
                 "radius": st.session_state.catchment_radius
             }
+            logger.info(f"🎯 Creating catchment_info (fullwidth): center={st.session_state.catchment_center}, radius={st.session_state.catchment_radius}")
+        else:
+            logger.info(f"🚫 No catchment_info (fullwidth): enable_proximity={enable_proximity}, catchment_center={st.session_state.get('catchment_center')}")
         
         
         map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, mapbiomas_classes=mapbiomas_classes, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas, catchment_info=catchment_info)
@@ -3752,14 +3818,33 @@ def page_main():
                             st.session_state.raster_analysis_results = {}
                         else:
                             raster_path = str(raster_files[0])  # Usa o primeiro que encontrar
-                            st.info(f"🔍 Analisando raster: {Path(raster_path).name}")
 
-                            # Mapa de classes que a função de análise precisa
+                            # ENHANCED: Complete MapBiomas class mapping (includes ALL classes found in logs)
                             class_map = {
-                                15: 'Pastagem', 39: 'Soja', 20: 'Cana-de-açúcar', 40: 'Arroz',
-                                62: 'Algodão', 41: 'Outras Temporárias', 46: 'Café', 47: 'Citrus',
-                                48: 'Outras Perenes', 9: 'Silvicultura'
+                                # Found in your logs: [ 0  9 15 20 39 41 46 47 48]
+                                # 0: '❓ Não Classificado',  # Removed - not useful for agricultural analysis
+                                9: '🌲 Silvicultura', 
+                                15: '🌾 Pastagem',
+                                20: '🌾 Cana-de-açúcar',  
+                                39: '🌱 Soja',
+                                40: '🌾 Arroz',
+                                41: '🌾 Outras Culturas Temporárias',
+                                46: '☕ Café',
+                                47: '🍊 Citrus', 
+                                48: '🌾 Outras Culturas Perenes',
+                                62: '🌾 Algodão',
+                                35: '🌴 Dendê',
+                                
+                                # Additional classes for complete coverage
+                                3: '🌳 Formação Florestal',
+                                4: '🌿 Formação Savânica',
+                                11: '🌾 Campo Alagado',
+                                12: '🌿 Formação Campestre',
+                                24: '🏘️ Área Urbanizada',
+                                26: '💧 Corpo d\'Água',
+                                33: '💧 Rio, Lago e Oceano'
                             }
+                            
                             
                             # *** ESTA É A CHAMADA REAL ***
                             real_results = analyze_raster_in_radius(
@@ -3780,75 +3865,27 @@ def page_main():
                             st.code(traceback.format_exc())
                         st.session_state.raster_analysis_results = None
 
-        # --- Exibe os resultados da análise raster ---
+        # --- Professional Results Panel ---
         if st.session_state.get('raster_analysis_results'):
             results = st.session_state.raster_analysis_results
-            st.markdown("---")
-            st.markdown(f"### 🎯 Análise de Uso do Solo no Raio de {st.session_state.catchment_radius} km")
+            center_coordinates = st.session_state.get('catchment_center')
+            radius_km = st.session_state.get('catchment_radius', 10)
             
-            if results:
-                import pandas as pd  # Local import to ensure availability
-                
-                df_results = pd.DataFrame(list(results.items()), columns=['Cultura', 'Área (Hectares)'])
-                df_results = df_results[df_results['Área (Hectares)'] > 0].sort_values(by='Área (Hectares)', ascending=False)
-                
-                if not df_results.empty:
-                    col1, col2 = st.columns([1, 1.5])
-                    with col1:
-                        # Gráfico de pizza
-                        fig = px.pie(df_results, names='Cultura', values='Área (Hectares)', 
-                                   title='🥧 Composição da Área por Cultura')
-                        st.plotly_chart(fig, use_container_width=True)
-                        
-                        # Métricas resumo
-                        total_area = df_results['Área (Hectares)'].sum()
-                        st.metric("📊 Área Total Analisada", f"{total_area:,.1f} ha")
-                        
-                        # Potencial estimado baseado na área (exemplo)
-                        estimated_potential = total_area * 45  # 45 Nm³/ha/ano (média estimada)
-                        st.metric("⚡ Potencial Estimado de Biogás", f"{estimated_potential:,.0f} Nm³/ano")
-                        
-                    with col2:
-                        # Tabela detalhada
-                        st.markdown("#### 📋 Detalhamento por Cultura")
-                        
-                        # Adiciona coluna de percentual
-                        df_results['Percentual (%)'] = (df_results['Área (Hectares)'] / df_results['Área (Hectares)'].sum() * 100).round(1)
-                        
-                        # Adiciona estimativa de potencial por cultura
-                        potencial_por_cultura = {
-                            'Pastagem': 35,
-                            'Soja': 25, 
-                            'Cana-de-açúcar': 85,
-                            'Café': 30,
-                            'Citrus': 40,
-                            'Milho': 45
-                        }
-                        
-                        df_results['Potencial Estimado (Nm³/ano)'] = df_results.apply(
-                            lambda row: int(row['Área (Hectares)'] * potencial_por_cultura.get(row['Cultura'], 40)), 
-                            axis=1
-                        )
-                        
-                        st.dataframe(df_results, 
-                                   column_config={
-                                       "Cultura": "🌾 Cultura",
-                                       "Área (Hectares)": st.column_config.NumberColumn("📏 Área (ha)", format="%.1f"),
-                                       "Percentual (%)": st.column_config.NumberColumn("📊 %", format="%.1f"),
-                                       "Potencial Estimado (Nm³/ano)": st.column_config.NumberColumn("⚡ Potencial (Nm³/ano)", format="%d")
-                                   },
-                                   use_container_width=True, hide_index=True)
-                        
-                        # Resumo das principais culturas
-                        st.markdown("##### 🎯 Principais Oportunidades:")
-                        top_3 = df_results.head(3)
-                        for _, row in top_3.iterrows():
-                            st.markdown(f"• **{row['Cultura']}**: {row['Área (Hectares)']:.1f} ha ({row['Percentual (%)']:.1f}%)")
-                            
-                else:
-                    st.info("🔍 Nenhuma cultura agropecuária foi identificada na área selecionada.")
+            if HAS_PROFESSIONAL_PANEL and results:
+                # Use the beautiful professional panel from integrated_map module
+                logger.info("✅ Using professional results panel")
+                render_proximity_results_panel(results, center_coordinates, radius_km)
             else:
-                st.warning("⚠️ A análise não retornou resultados. A área pode estar fora da cobertura dos dados MapBiomas.")
+                logger.warning(f"⚠️ Using fallback panel: HAS_PROFESSIONAL_PANEL={HAS_PROFESSIONAL_PANEL}, results={bool(results)}")
+                # Fallback to simple display if panel not available
+                st.markdown("---")
+                st.markdown(f"### 🎯 Análise de Uso do Solo - Raio de {radius_km} km")
+                if results:
+                    st.success(f"✅ Análise concluída: {len(results)} tipos de cultura encontrados")
+                    for cultura, area in sorted(results.items(), key=lambda x: x[1], reverse=True):
+                        st.write(f"**{cultura}**: {area:,.1f} hectares")
+                else:
+                    st.warning("⚠️ A análise não retornou resultados.")
 
     # --- 7. PROCESSAMENTO DE CLIQUE DO MAPA (NOVA ABORDAGEM) ---
     clicked_id = None
