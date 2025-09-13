@@ -1,6 +1,7 @@
 """
 Data Loading Module for CP2B Maps
 Handles all data loading, caching, and preprocessing functions
+Updated to use centralized data service for better performance
 """
 
 import os
@@ -11,9 +12,13 @@ import pandas as pd
 import geopandas as gpd
 import streamlit as st
 
+# Import the new centralized data service
+from .data_service import get_data_service, DataService
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
+# Keep original function for backward compatibility, but mark as deprecated
 @st.cache_data(ttl=3600)  # Cache por 1 hora
 def load_shapefile_cached(shapefile_path, simplify_tolerance=0.001):
     """Carrega shapefile com cache e simplificação opcional"""
@@ -47,157 +52,41 @@ def load_shapefile_cached(shapefile_path, simplify_tolerance=0.001):
 
 @st.cache_data(ttl=3600)
 def prepare_layer_data():
-    """Pré-carrega todos os dados das camadas uma vez"""
-    base_path = Path(__file__).parent.parent.parent.parent / "shapefile"
-    geoparquet_path = Path(__file__).parent.parent.parent.parent / "geoparquet"
-    
-    layers = {}
-    
-    # Plantas de Biogás (pontos - sem simplificação)
-    plantas_path = base_path / "Plantas_Biogas_SP.shp" 
-    layers['plantas'] = load_shapefile_cached(str(plantas_path), simplify_tolerance=0)
-    
-    # Gasodutos (linhas - simplificação leve)
-    gasodutos_dist = base_path / "Gasodutos_Distribuicao_SP.shp"
-    gasodutos_transp = base_path / "Gasodutos_Transporte_SP.shp"
-    layers['gasodutos_dist'] = load_shapefile_cached(str(gasodutos_dist), simplify_tolerance=0.0001)
-    layers['gasodutos_transp'] = load_shapefile_cached(str(gasodutos_transp), simplify_tolerance=0.0001)
-    
-    # Rodovias (linhas - simplificação leve)
-    rodovias_path = base_path / "Rodovias_Estaduais_SP.shp"
-    layers['rodovias'] = load_shapefile_cached(str(rodovias_path), simplify_tolerance=0.0001)
-    
-    # Rios (linhas - simplificação média)
-    rios_path = base_path / "Rios_SP.shp" 
-    layers['rios'] = load_shapefile_cached(str(rios_path), simplify_tolerance=0.001)
-    
-    # Urban Areas layer removed for performance improvement (Step 2 of improvement plan)
-    # This large dataset was memory-intensive and less critical for biogas analysis
-    layers['areas_urbanas'] = None
-    
-    # Regiões Administrativas (polígonos - simplificação leve)
-    regioes_path = base_path / "Regiao_Adm_SP.shp"
-    layers['regioes_admin'] = load_shapefile_cached(str(regioes_path), simplify_tolerance=0.001)
-    
+    """
+    Pré-carrega todos os dados das camadas uma vez
+    OPTIMIZED: Now uses centralized data service with lazy loading
+    """
+    service = get_data_service()
+
+    layers = {
+        'plantas': service.get_layer_data('plantas'),
+        'gasodutos_dist': service.get_layer_data('gasodutos_dist'),
+        'gasodutos_transp': service.get_layer_data('gasodutos_transp'),
+        'rodovias': service.get_layer_data('rodovias'),
+        'rios': service.get_layer_data('rios'),
+        'areas_urbanas': None,  # Kept disabled for performance
+        'regioes_admin': service.get_layer_data('regioes_admin'),
+        'sp_border': service.get_layer_data('sp_border')
+    }
+
     return layers
 
 def get_database_path():
     """Get database path"""
     return Path(__file__).parent.parent.parent.parent / "data" / "cp2b_maps.db"
 
-@st.cache_data
+# OPTIMIZED: Use centralized data service
 def load_municipalities():
-    """Load municipality data from database with error handling"""
-    try:
-        db_path = get_database_path()
-        
-        if not db_path.exists():
-            logger.warning("Database not found")
-            return pd.DataFrame()
-        
-        with sqlite3.connect(db_path) as conn:
-            query = "SELECT * FROM municipalities ORDER BY total_final_nm_ano DESC"
-            df = pd.read_sql_query(query, conn)
-            
-            # Convert per capita values to total values by multiplying by population
-            if 'rsu_potencial_nm_habitante_ano' in df.columns and 'populacao_2022' in df.columns:
-                df['rsu_potencial_nm_ano'] = df['rsu_potencial_nm_habitante_ano'] * df['populacao_2022']
-                df['rsu_potencial_nm_ano'] = df['rsu_potencial_nm_ano'].fillna(0)
-            
-            if 'rpo_potencial_nm_habitante_ano' in df.columns and 'populacao_2022' in df.columns:
-                df['rpo_potencial_nm_ano'] = df['rpo_potencial_nm_habitante_ano'] * df['populacao_2022']
-                df['rpo_potencial_nm_ano'] = df['rpo_potencial_nm_ano'].fillna(0)
-            
-            logger.info(f"Loaded {len(df)} municipalities")
-            return df
-            
-    except Exception as e:
-        logger.error(f"Error loading data: {e}")
-        return pd.DataFrame()
+    """Load municipality data from database with error handling - OPTIMIZED"""
+    service = get_data_service()
+    return service.load_municipalities()
 
-@st.cache_data
 def load_optimized_geometries(detail_level="medium_detail"):
-    """Load optimized municipality geometries from GeoParquet"""
-    try:
-        parquet_path = Path(__file__).parent.parent.parent.parent / "shapefile" / f"municipalities_{detail_level}.parquet"
-        
-        if parquet_path.exists():
-            return gpd.read_parquet(parquet_path)
-        else:
-            # Fallback to original shapefile
-            shapefile_path = Path(__file__).parent.parent.parent.parent / "shapefile" / "Municipios_SP_shapefile.shp"
-            if shapefile_path.exists():
-                gdf = gpd.read_file(shapefile_path)
-                if gdf.crs != 'EPSG:4326':
-                    gdf = gdf.to_crs('EPSG:4326')
-                gdf['cd_mun'] = gdf['CD_MUN'].astype(str)
-                return gdf
-    except Exception as e:
-        logger.error(f"Error loading geometries: {e}")
-    
-    return None
+    """Load optimized municipality geometries - OPTIMIZED"""
+    service = get_data_service()
+    return service.load_municipality_geometries(detail_level)
 
-def safe_divide(numerator, denominator, default=0):
-    """Safe division with default value"""
-    try:
-        return numerator / denominator if denominator != 0 else default
-    except (TypeError, ZeroDivisionError):
-        return default
+# Import utility functions from centralized data service
+from .data_service import safe_divide, format_number, apply_filters, get_residue_label
 
-@st.cache_data
-def format_number(value, unit="Nm³/ano", scale=1):
-    """Format numbers with proper scaling"""
-    try:
-        if pd.isna(value) or value == 0:
-            return f"0 {unit}"
-        
-        scaled_value = value / scale
-        if scale >= 1_000_000:
-            return f"{scaled_value:.1f}M {unit}"
-        elif scale >= 1_000:
-            return f"{scaled_value:.0f}K {unit}"
-        else:
-            return f"{value:,.0f} {unit}"
-    except:
-        return f"0 {unit}"
-
-def apply_filters(df, filters):
-    """Apply filters to dataframe"""
-    if not filters:
-        return df
-    
-    filtered_df = df.copy()
-    
-    for filter_type, filter_value in filters.items():
-        if filter_type == 'min_potential':
-            filtered_df = filtered_df[filtered_df['total_final_nm_ano'] >= filter_value]
-        elif filter_type == 'max_potential':
-            filtered_df = filtered_df[filtered_df['total_final_nm_ano'] <= filter_value]
-        elif filter_type == 'region':
-            if filter_value != 'All':
-                filtered_df = filtered_df[filtered_df['region'] == filter_value]
-        elif filter_type == 'residue_type':
-            if filter_value in ['Agrícola', 'Pecuária']:
-                col_name = f"total_{filter_value.lower()}_nm_ano"
-                if col_name in filtered_df.columns:
-                    filtered_df = filtered_df[filtered_df[col_name] > 0]
-    
-    return filtered_df
-
-def get_residue_label(column_name):
-    """Get friendly label for residue column names"""
-    labels = {
-        'total_final_nm_ano': 'Potencial Total',
-        'total_agricola_nm_ano': 'Potencial Agrícola',
-        'total_pecuaria_nm_ano': 'Potencial Pecuário',
-        'biogas_cana_nm_ano': 'Biogás de Cana',
-        'biogas_soja_nm_ano': 'Biogás de Soja', 
-        'biogas_milho_nm_ano': 'Biogás de Milho',
-        'biogas_cafe_nm_ano': 'Biogás de Café',
-        'biogas_citros_nm_ano': 'Biogás de Citros',
-        'biogas_bovinos_nm_ano': 'Biogás de Bovinos',
-        'biogas_suino_nm_ano': 'Biogás de Suínos',
-        'biogas_aves_nm_ano': 'Biogás de Aves',
-        'biogas_piscicultura_nm_ano': 'Biogás de Piscicultura'
-    }
-    return labels.get(column_name, column_name.replace('_', ' ').title())
+# Keep these functions here for backward compatibility but they now delegate to data_service
