@@ -7104,35 +7104,68 @@ def page_proximity_analysis():
             </div>
             """, unsafe_allow_html=True)
             
-            # Step-by-step instructions
+            # Step-by-step instructions with responsive design
             st.markdown("### 🚀 Como usar (3 passos simples):")
-            
+
             col_step1, col_step2, col_step3 = st.columns(3)
-            
+
             with col_step1:
                 st.markdown("""
-                <div style='text-align: center; padding: 1rem; border: 2px solid #E0E0E0; border-radius: 8px; height: 120px;'>
-                    <div style='font-size: 2rem; margin-bottom: 0.5rem;'>📏</div>
-                    <strong>1. Escolha o Raio</strong><br>
-                    <small>Selecione 10km, 30km ou 50km na barra lateral</small>
+                <div style='
+                    text-align: center;
+                    padding: 1.2rem 0.8rem;
+                    border: 2px solid #4CAF50;
+                    border-radius: 12px;
+                    background: linear-gradient(135deg, #f8fff8 0%, #e8f5e8 100%);
+                    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.15);
+                    min-height: 140px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                '>
+                    <div style='font-size: 2.2rem; margin-bottom: 0.8rem;'>📏</div>
+                    <div style='font-weight: bold; font-size: 1rem; color: #2E7D32; margin-bottom: 0.5rem;'>1. Escolha o Raio</div>
+                    <div style='font-size: 0.85rem; color: #4A4A4A; line-height: 1.3;'>Selecione 10km, 30km ou<br>50km na barra lateral</div>
                 </div>
                 """, unsafe_allow_html=True)
-            
+
             with col_step2:
                 st.markdown("""
-                <div style='text-align: center; padding: 1rem; border: 2px solid #E0E0E0; border-radius: 8px; height: 120px;'>
-                    <div style='font-size: 2rem; margin-bottom: 0.5rem;'>🗺️</div>
-                    <strong>2. Clique no Mapa</strong><br>
-                    <small>Defina o centro da sua análise</small>
+                <div style='
+                    text-align: center;
+                    padding: 1.2rem 0.8rem;
+                    border: 2px solid #2196F3;
+                    border-radius: 12px;
+                    background: linear-gradient(135deg, #f0f8ff 0%, #e3f2fd 100%);
+                    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15);
+                    min-height: 140px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                '>
+                    <div style='font-size: 2.2rem; margin-bottom: 0.8rem;'>🗺️</div>
+                    <div style='font-weight: bold; font-size: 1rem; color: #1565C0; margin-bottom: 0.5rem;'>2. Clique no Mapa</div>
+                    <div style='font-size: 0.85rem; color: #4A4A4A; line-height: 1.3;'>Defina o centro da<br>sua análise</div>
                 </div>
                 """, unsafe_allow_html=True)
-            
+
             with col_step3:
                 st.markdown("""
-                <div style='text-align: center; padding: 1rem; border: 2px solid #E0E0E0; border-radius: 8px; height: 120px;'>
-                    <div style='font-size: 2rem; margin-bottom: 0.5rem;'>📊</div>
-                    <strong>3. Veja os Resultados</strong><br>
-                    <small>Análise completa em segundos</small>
+                <div style='
+                    text-align: center;
+                    padding: 1.2rem 0.8rem;
+                    border: 2px solid #FF9800;
+                    border-radius: 12px;
+                    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+                    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.15);
+                    min-height: 140px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                '>
+                    <div style='font-size: 2.2rem; margin-bottom: 0.8rem;'>📊</div>
+                    <div style='font-weight: bold; font-size: 1rem; color: #E65100; margin-bottom: 0.5rem;'>3. Veja os Resultados</div>
+                    <div style='font-size: 0.85rem; color: #4A4A4A; line-height: 1.3;'>Análise completa<br>em segundos</div>
                 </div>
                 """, unsafe_allow_html=True)
             
