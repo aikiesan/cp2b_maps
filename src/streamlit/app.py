@@ -10,6 +10,7 @@ import pickle
 import re
 import sqlite3
 import sys
+from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 
@@ -1054,8 +1055,8 @@ def render_navigation():
     tabs = st.tabs([
         "🏠 Mapa Principal",
         "🔍 Explorar Dados",
-        "📊 Análises",
-        "ℹ️ Sobre"
+        "📊 Análises Avançadas",
+        "ℹ️ Sobre o CP2B Maps"
     ])
     
     return tabs
@@ -1079,6 +1080,189 @@ def render_sidebar_filters():
         'show_zeros': False,
         'max_count': 50
     }
+
+# ============================================================================
+# HELPER FUNCTIONS FOR RESULTS PAGE
+# ============================================================================
+
+def create_ver_no_mapa_button(analysis_type, selected_municipalities, processed_data, charts=None, summary=None, polygons=None, button_key=None):
+    """Create 'VER NO MAPA' button with analysis results"""
+    
+    if button_key is None:
+        button_key = f"view_map_{analysis_type}_{hash(str(selected_municipalities))}"
+    
+    if st.button("🗺️ VER NO MAPA", key=button_key, use_container_width=True, type="primary"):
+        # Store analysis results in session state
+        st.session_state.analysis_results = {
+            'type': analysis_type,
+            'municipalities': selected_municipalities if isinstance(selected_municipalities, list) else [selected_municipalities],
+            'data': processed_data or {},
+            'charts': charts or [],
+            'summary': summary or {},
+            'polygons': polygons or [],
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        st.session_state.show_results_page = True
+        st.rerun()
+
+def navigate_to_results(data, summary, polygons):
+    """Navigate to results page with provided data"""
+    st.session_state.analysis_results = {
+        'type': 'advanced_analysis',
+        'municipalities': data.get('municipalities', []),
+        'data': data,
+        'charts': [],
+        'summary': summary or {},
+        'polygons': polygons or [],
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
+    st.session_state.show_results_page = True
+    st.rerun()
+
+def clean_data_for_results(data_dict, analysis_context=None):
+    """Clean data dictionary by removing irrelevant technical fields"""
+    
+    # Technical fields to remove
+    fields_to_remove = {
+        'id', 'objectid', 'lat', 'lon', 'latitude', 'longitude', 'geometry', 
+        'cd_mun', 'cd_rgi', 'cd_rgint', 'cd_uf', 'cd_regia', 'cd_concu',
+        'sigla_uf', 'sigla_rg', 'index', 'level_0', 'unnamed'
+    }
+    
+    # Keep only relevant fields
+    cleaned_data = {}
+    for key, value in data_dict.items():
+        key_lower = str(key).lower()
+        
+        # Skip technical fields
+        if any(field in key_lower for field in fields_to_remove):
+            continue
+            
+        # Keep municipality identification
+        if 'nome' in key_lower and 'municipio' in key_lower:
+            cleaned_data[key] = value
+            continue
+            
+        # Keep biogas potential fields
+        if any(term in key_lower for term in ['nm_ano', 'potencial', 'total', 'biogas']):
+            cleaned_data[key] = value
+            continue
+            
+        # Keep area and population
+        if any(term in key_lower for term in ['area', 'km2', 'populacao', 'pop']):
+            cleaned_data[key] = value
+            continue
+            
+        # Keep specific analysis context fields
+        if analysis_context:
+            context_fields = analysis_context.get('relevant_fields', [])
+            if any(field in key_lower for field in context_fields):
+                cleaned_data[key] = value
+                continue
+        
+        # Keep residue-specific fields based on common residue types
+        residue_keywords = [
+            'agricola', 'pecuaria', 'urbano', 'cana', 'soja', 'milho', 'cafe', 
+            'citros', 'bovinos', 'suinos', 'aves', 'piscicultura', 'poda'
+        ]
+        
+        if any(residue in key_lower for residue in residue_keywords):
+            cleaned_data[key] = value
+            continue
+    
+    return cleaned_data
+
+def prepare_analysis_data_for_results(df, selected_municipalities, analysis_type, residue_data=None, culture_data=None, metrics=None, analysis_context=None):
+    """Prepare analysis data for the results page"""
+    
+    # Get municipal polygons if available
+    polygons = []
+    try:
+        # First, try to load from the processed shapefile
+        try:
+            from modules.municipality_loader import get_municipality_geometries
+            polygons = get_municipality_geometries(selected_municipalities)
+            logger.info(f"Loaded {len(polygons)} geometries from municipality loader")
+        except ImportError:
+            # Fallback: Try to get geometries from the dataframe
+            if 'geometry' in df.columns:
+                selected_df = df[df['nome_municipio'].isin(selected_municipalities)]
+                polygons = selected_df['geometry'].tolist()
+                logger.info(f"Loaded {len(polygons)} geometries from dataframe")
+    except Exception as e:
+        logger.warning(f"Could not load geometries: {e}")
+        polygons = []
+    
+    # Prepare data structure
+    data = {}
+    
+    if residue_data is not None:
+        # Clean residue data if it's a list of dictionaries
+        if isinstance(residue_data, list) and residue_data and isinstance(residue_data[0], dict):
+            cleaned_residues = []
+            for item in residue_data:
+                cleaned_item = clean_data_for_results(item, analysis_context)
+                if cleaned_item:  # Only add if there's relevant data
+                    cleaned_residues.append(cleaned_item)
+            data['residues'] = cleaned_residues if cleaned_residues else residue_data
+        else:
+            data['residues'] = residue_data
+    
+    if culture_data is not None:
+        # Clean culture data if it's a list of dictionaries
+        if isinstance(culture_data, list) and culture_data and isinstance(culture_data[0], dict):
+            cleaned_cultures = []
+            for item in culture_data:
+                cleaned_item = clean_data_for_results(item, analysis_context)
+                if cleaned_item:  # Only add if there's relevant data
+                    cleaned_cultures.append(cleaned_item)
+            data['cultures'] = cleaned_cultures if cleaned_cultures else culture_data
+        else:
+            data['cultures'] = culture_data
+    
+    if metrics is not None:
+        data['metrics'] = metrics
+    
+    # Calculate summary metrics
+    summary = {}
+    if isinstance(residue_data, list) and len(residue_data) > 0:
+        try:
+            # Calculate biogas potential from municipalities data
+            total_potential = 0
+            total_area = 0
+            municipalities_with_data = 0
+            
+            for item in residue_data:
+                if isinstance(item, dict):
+                    # Try different potential field names
+                    potential_fields = ['total_final_nm_ano', 'Total (m³)', 'potencial_total', 'Potencial Total']
+                    potential = 0
+                    
+                    for field in potential_fields:
+                        if field in item and isinstance(item[field], (int, float)):
+                            potential = max(potential, item[field])
+                    
+                    if potential > 0:
+                        total_potential += potential
+                        municipalities_with_data += 1
+                    
+                    # Add area if available
+                    if 'area_km2' in item and isinstance(item['area_km2'], (int, float)):
+                        total_area += item['area_km2']
+            
+            summary['biogas_potential'] = total_potential
+            summary['total_area'] = total_area
+            summary['municipalities_with_data'] = municipalities_with_data
+            
+            # Calculate potential density
+            if total_area > 0:
+                summary['potential_density'] = total_potential / total_area
+                
+        except Exception as e:
+            logger.warning(f"Error calculating summary metrics: {e}")
+            pass
+    
+    return data, summary, polygons
 
 def render_compact_filters(page_key="default"):
     """Render compact filters on main page"""
@@ -2547,7 +2731,7 @@ def show_municipality_details_horizontal(df, municipality_id, selected_residues)
                 showlegend=False,
                 font=dict(size=10)
             )
-            st.plotly_chart(fig, width='stretch')
+            st.plotly_chart(fig, use_container_width=True)
         
         # Top residue sources - compact list
         st.markdown("**📋 Principais Fontes:**")
@@ -2614,7 +2798,7 @@ def show_municipality_details_horizontal(df, municipality_id, selected_residues)
                     yaxis=dict(tickfont=dict(size=8))
                 )
                 fig.update_traces(texttemplate='%{x:.1f}M', textposition='outside')
-                st.plotly_chart(fig, width='stretch')
+                st.plotly_chart(fig, use_container_width=True)
             else:
                 st.info("Único município na região")
 
@@ -2738,7 +2922,7 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
                                color_discrete_sequence=px.colors.qualitative.Set3)
                 fig_pie.update_traces(textposition='inside', textinfo='percent+label')
                 fig_pie.update_layout(height=300, showlegend=True)
-                st.plotly_chart(fig_pie, width='stretch')
+                st.plotly_chart(fig_pie, use_container_width=True)
             else:
                 st.info("Sem dados disponíveis para visualização.")
         
@@ -2818,11 +3002,11 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
                                 color_discrete_map={True: '#ff6b6b', False: '#4ecdc4'},
                                 labels={'Potencial': 'Potencial (Nm³/ano)'})
                     fig.update_layout(height=300, showlegend=False)
-                    st.plotly_chart(fig, width='stretch')
+                    st.plotly_chart(fig, use_container_width=True)
                     
                     # Show distance info in a compact table
                     st.dataframe(neighbor_df[['Município', 'Distância']].head(6), 
-                                width='stretch', hide_index=True)
+                                use_container_width=True, hide_index=True)
             else:
                 st.info("Poucos vizinhos encontrados para comparação.")
         except Exception as e:
@@ -2880,7 +3064,7 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
                 color_continuous_scale='RdYlGn'
             )
             fig.update_layout(height=250, showlegend=False)
-            st.plotly_chart(fig, width='stretch')
+            st.plotly_chart(fig, use_container_width=True)
             
         except Exception as e:
             st.warning("Não foi possível calcular rankings.")
@@ -2974,7 +3158,7 @@ def show_municipality_details(df, municipality_id, selected_residues):
         
         if residue_data:
             residue_df = pd.DataFrame(residue_data)
-            st.dataframe(residue_df, width='stretch')
+            st.dataframe(residue_df, use_container_width=True)
             
             # Download button
             csv = residue_df.to_csv(index=False).encode('utf-8')
@@ -3030,7 +3214,7 @@ def show_municipality_details(df, municipality_id, selected_residues):
                 height=400
             )
             fig.update_xaxis(tickangle=45)
-            st.plotly_chart(fig, width='stretch')
+            st.plotly_chart(fig, use_container_width=True)
             
             # Summary statistics
             col1, col2, col3 = st.columns(3)
@@ -3098,7 +3282,7 @@ def show_municipality_details(df, municipality_id, selected_residues):
                 height=500
             )
             
-            st.plotly_chart(fig, width='stretch')
+            st.plotly_chart(fig, use_container_width=True)
             
             # Top 3 residues
             residue_ranking = list(zip(residue_names, residue_values))
@@ -3259,7 +3443,7 @@ def page_main():
         # === 1. EXPANDER PARA CAMADAS (Ação mais comum) ===
         with st.expander("🗺️ Camadas Visíveis", expanded=True):  # Começa expandido
             st.write("**Dados Principais:**")
-            show_municipios_biogas = st.checkbox("📊 Potencial de Biogás", value=False)
+            show_municipios_biogas = st.checkbox("📊 Potencial de Biogás", value=True)
             
             st.write("**Infraestrutura:**")
             show_plantas_biogas = st.checkbox("🏭 Plantas de Biogás", value=False)
@@ -3481,7 +3665,7 @@ def page_main():
                     mun_name = mun_data['nome_municipio']
 
                     # Cabeçalho compacto do painel
-                    if st.button("🔙 Voltar ao Mapa", key="close_details_button", help="Voltar ao mapa principal", width='stretch'):
+                    if st.button("🔙 Voltar ao Mapa", key="close_details_button", help="Voltar ao mapa principal", use_container_width=True):
                         st.session_state.clicked_municipality = None
                         st.rerun()
                     
@@ -3762,7 +3946,7 @@ def page_main():
                 if not melted_df.empty:
                     fig = px.pie(melted_df, names='Tipo', values='Potencial', 
                                title='Composição do Potencial por Tipo de Resíduo', hole=0.4)
-                    st.plotly_chart(fig, width='stretch')
+                    st.plotly_chart(fig, use_container_width=True)
                 
             else: # Múltiplos municípios
                 st.markdown("#### Comparativo entre Municípios Selecionados")
@@ -3794,7 +3978,41 @@ def page_main():
                     color_continuous_scale='Viridis'
                 )
                 fig_bar.update_layout(height=400, xaxis_tickangle=45)
-                st.plotly_chart(fig_bar, width='stretch')
+                st.plotly_chart(fig_bar, use_container_width=True)
+                
+                # Add "VER NO MAPA" button for selected municipalities
+                st.markdown("---")
+                col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+                with col_btn2:
+                    try:
+                        # Get selected municipality names
+                        selected_mun_names = selected_df['nome_municipio'].tolist()
+                        
+                        # Prepare data for results page
+                        municipal_data = selected_df.to_dict('records')
+                        total_selected_potential = selected_df['total_final_nm_ano'].sum()
+                        
+                        data, summary, polygons = prepare_analysis_data_for_results(
+                            df, selected_mun_names, 'municipal_comparison', 
+                            residue_data=municipal_data, 
+                            metrics={'total_selected_potential': total_selected_potential, 'selected_count': len(selected_df)},
+                            analysis_context={'relevant_fields': ['nome_municipio', 'total_final_nm_ano', 'area_km2', 'populacao_2022']}
+                        )
+                        
+                        # Create button
+                        create_ver_no_mapa_button(
+                            'municipal_comparison', 
+                            selected_mun_names, 
+                            data, 
+                            summary=summary, 
+                            polygons=polygons,
+                            button_key="main_page_comparison_map"
+                        )
+                        
+                        st.markdown(f"*Visualizar {len(selected_mun_names)} municípios selecionados no mapa unificado*")
+                        
+                    except Exception as e:
+                        st.info("🗺️ Dados de mapa não disponíveis para esta seleção")
         else:
             # Análise estadual padrão (quando NENHUM município está selecionado)
             st.markdown("### 📊 Análise Estadual: " + display_name)
@@ -3804,13 +4022,13 @@ def page_main():
                 st.markdown("##### 🏆 Top 15 Municípios")
                 chart1 = create_top_chart(df_to_display, display_col, display_name, limit=15)
                 if chart1: 
-                    st.plotly_chart(chart1, width='stretch')
+                    st.plotly_chart(chart1, use_container_width=True)
             
             with col2:
                 st.markdown("##### 📈 Distribuição")
                 chart2 = create_distribution_chart(df_to_display, display_col, display_name)
                 if chart2: 
-                    st.plotly_chart(chart2, width='stretch')
+                    st.plotly_chart(chart2, use_container_width=True)
             
             # Estatísticas resumidas
             col1, col2, col3, col4 = st.columns(4)
@@ -3848,9 +4066,9 @@ def page_main():
                 fig = px.bar(agri_df, x='Tipo', y='Potencial', 
                            title='Líderes por Categoria Agrícola')
                 fig.update_layout(xaxis_tickangle=-45)
-                st.plotly_chart(fig, width='stretch')
+                st.plotly_chart(fig, use_container_width=True)
                 
-                st.dataframe(agri_df, width='stretch')
+                st.dataframe(agri_df, use_container_width=True)
         
         with col2:
             st.markdown("#### 🐄 Resíduos Pecuários")
@@ -3872,9 +4090,9 @@ def page_main():
                 fig = px.bar(pec_df, x='Tipo', y='Potencial',
                            title='Líderes por Categoria Pecuária')
                 fig.update_layout(xaxis_tickangle=-45)
-                st.plotly_chart(fig, width='stretch')
+                st.plotly_chart(fig, use_container_width=True)
                 
-                st.dataframe(pec_df, width='stretch')
+                st.dataframe(pec_df, use_container_width=True)
     
     with analysis_tabs[2]:  # Comparison Tools
         st.markdown("### ⚖️ Ferramentas de Comparação")
@@ -3896,7 +4114,7 @@ def page_main():
             summary_cols = ['nome_municipio', 'total_final_nm_ano', 'total_agricola_nm_ano', 'total_pecuaria_nm_ano']
             available_summary_cols = [col for col in summary_cols if col in comparison_df.columns]
             summary_df = comparison_df[available_summary_cols].round(0)
-            st.dataframe(summary_df, width='stretch')
+            st.dataframe(summary_df, use_container_width=True)
     
     with analysis_tabs[3]:  # Advanced Filters
         st.markdown("### 🎯 Filtros Avançados e Seleção Inteligente")
@@ -3940,7 +4158,7 @@ def page_main():
             
             chart = create_top_chart(filtered_df, display_col, "Municípios Selecionados", limit=10)
             if chart:
-                st.plotly_chart(chart, width='stretch')
+                st.plotly_chart(chart, use_container_width=True)
     
     with analysis_tabs[4]:  # Complete Data
         st.markdown("### 📋 Dados Completos")
@@ -3986,7 +4204,7 @@ def page_main():
         if selected_cols:
             available_selected_cols = [col for col in selected_cols if col in display_df.columns]
             final_display_df = display_df[available_selected_cols].sort_values(by=available_selected_cols[1] if len(available_selected_cols) > 1 else available_selected_cols[0], ascending=False)
-            st.dataframe(final_display_df, width='stretch', height=600)
+            st.dataframe(final_display_df, use_container_width=True, height=600)
 
 def page_explorer():
     """User-Friendly Data Explorer - Designed for Non-Technical Users"""
@@ -4124,7 +4342,7 @@ def page_explorer():
             })
         
         ranking_df = pd.DataFrame(ranking_data)
-        st.dataframe(ranking_df, width='stretch', hide_index=True)
+        st.dataframe(ranking_df, use_container_width=True, hide_index=True)
         
         # Visual ranking chart
         fig_ranking = px.bar(
@@ -4142,7 +4360,7 @@ def page_explorer():
             showlegend=False,
             yaxis={'categoryorder': 'total ascending'}
         )
-        st.plotly_chart(fig_ranking, width='stretch')
+        st.plotly_chart(fig_ranking, use_container_width=True)
         
         # Simple insights
         if top_n >= 3:
@@ -4164,7 +4382,7 @@ def page_explorer():
             color_discrete_sequence=['#2E8B57']
         )
         fig_hist.update_layout(height=400)
-        st.plotly_chart(fig_hist, width='stretch')
+        st.plotly_chart(fig_hist, use_container_width=True)
         
         # Simple explanation of what this means
         median_val = df_filtered[display_col].median()
@@ -4223,7 +4441,7 @@ def page_explorer():
                 })
             
             comparison_df = pd.DataFrame(comparison_data)
-            st.dataframe(comparison_df, width='stretch', hide_index=True)
+            st.dataframe(comparison_df, use_container_width=True, hide_index=True)
             
             # Visual comparison
             if len(selected_municipalities) > 1:
@@ -4246,7 +4464,7 @@ def page_explorer():
                     color_continuous_scale='Greens'
                 )
                 fig_comparison.update_layout(height=400)
-                st.plotly_chart(fig_comparison, width='stretch')
+                st.plotly_chart(fig_comparison, use_container_width=True)
     
     # Step 4: Explore all data
     st.markdown("---")
@@ -4296,7 +4514,7 @@ def page_explorer():
     if '👥 População (2022)' in display_table.columns:
         display_table['👥 População (2022)'] = display_table['👥 População (2022)'].apply(lambda x: f"{x:,.0f}" if pd.notna(x) else "N/A")
     
-    st.dataframe(display_table, width='stretch', hide_index=True, height=400)
+    st.dataframe(display_table, use_container_width=True, hide_index=True, height=400)
     
     # Download section - simplified
     st.markdown("---")
@@ -4368,6 +4586,42 @@ def page_explorer():
         - Use os dados como ponto de partida para estudos mais detalhados
         """)
     
+    # Add "VER NO MAPA" button for explorer results
+    st.markdown("---")
+    st.markdown("### 🗺️ Ver Resultados no Mapa")
+    col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+    with col_btn2:
+        try:
+            # Get top municipalities from filtered data
+            top_municipalities = display_df.head(10)['nome_municipio'].tolist()
+            
+            if top_municipalities:
+                # Prepare data for results page
+                explorer_data = display_df.head(20).to_dict('records')
+                data, summary, polygons = prepare_analysis_data_for_results(
+                    df, top_municipalities, 'municipal_profile', 
+                    residue_data=explorer_data, 
+                    metrics={'selected_type': selected_type, 'total_potential': total_potential},
+                    analysis_context={'relevant_fields': ['nome_municipio'] + [selected_type.lower() if selected_type != 'Total Geral' else 'total_final_nm_ano', 'area_km2', 'populacao_2022']}
+                )
+                
+                # Create button
+                create_ver_no_mapa_button(
+                    'municipal_profile', 
+                    top_municipalities, 
+                    data, 
+                    summary=summary, 
+                    polygons=polygons,
+                    button_key="explorer_map"
+                )
+                
+                st.markdown(f"*Visualizar {len(top_municipalities)} municípios com maior potencial de {selected_type}*")
+            else:
+                st.info("🗺️ Nenhum município encontrado para visualização no mapa")
+                
+        except Exception as e:
+            st.info("🗺️ Dados de mapa não disponíveis para esta seleção")
+    
     # Footer with data source info
     st.markdown("---")
     st.info("""
@@ -4384,9 +4638,9 @@ def page_analysis():
     <div style='background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); 
                 color: white; padding: 2rem; margin: -1rem -1rem 2rem -1rem;
                 text-align: center; border-radius: 0 0 20px 20px;'>
-        <h1 style='margin: 0; font-size: 2.5rem;'>📊 Análise de Resíduos</h1>
+        <h1 style='margin: 0; font-size: 2.5rem;'>📊 Análises Avançadas</h1>
         <p style='margin: 10px 0 0 0; font-size: 1.2rem; opacity: 0.9;'>
-            Compare diferentes tipos de resíduos e descubra padrões interessantes!
+            Análise detalhada por resíduo, comparações e descoberta de padrões!
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -4403,6 +4657,7 @@ def page_analysis():
     analysis_type = st.selectbox(
         "O que você gostaria de analisar?",
         [
+            "🌾 Análise Detalhada por Resíduo/Cultura",
             "🏆 Comparar Tipos de Resíduos",
             "🌍 Analisar por Região",
             "🔍 Encontrar Padrões e Correlações",
@@ -4415,8 +4670,377 @@ def page_analysis():
     
     st.markdown("---")
     
-    # Analysis Type 1: Compare Residue Types
-    if analysis_type == "🏆 Comparar Tipos de Resíduos":
+    # New Analysis Type: Detailed Analysis by Residue/Culture
+    if analysis_type == "🌾 Análise Detalhada por Resíduo/Cultura":
+        st.markdown("### 🌾 Passo 2: Escolha o Tipo de Resíduo")
+        st.markdown("*Análise completa de um resíduo específico em São Paulo*")
+        
+        # Organize residues by category for better UX
+        residue_categories = {
+            "🌾 Resíduos Agrícolas": {
+                "Cana-de-açúcar": "biogas_cana_nm_ano",
+                "Soja": "biogas_soja_nm_ano", 
+                "Milho": "biogas_milho_nm_ano",
+                "Café": "biogas_cafe_nm_ano",
+                "Citros": "biogas_citros_nm_ano"
+            },
+            "🐄 Resíduos Pecuários": {
+                "Bovinos": "biogas_bovinos_nm_ano",
+                "Suínos": "biogas_suino_nm_ano",
+                "Aves": "biogas_aves_nm_ano",
+                "Piscicultura": "biogas_piscicultura_nm_ano"
+            },
+            "🏙️ Resíduos Urbanos": {
+                "Resíduos Urbanos": "rsu_total_nm_ano",
+                "Resíduos de Poda": "rpo_total_nm_ano"
+            }
+        }
+        
+        col1, col2 = st.columns([3, 1])
+        
+        with col1:
+            selected_category = st.selectbox(
+                "Selecione a categoria:",
+                list(residue_categories.keys()),
+                key="detailed_category"
+            )
+            
+            selected_residue = st.selectbox(
+                "Selecione o resíduo específico:",
+                list(residue_categories[selected_category].keys()),
+                key="detailed_residue"
+            )
+        
+        with col2:
+            st.info(f"""
+            💡 **Análise Completa**
+            
+            Você receberá:
+            • Panorama estadual
+            • Mapa com rasters
+            • Top 10 municípios
+            • Análise visual
+            • Exploração detalhada
+            """)
+        
+        residue_col = residue_categories[selected_category][selected_residue]
+        
+        if residue_col in df.columns:
+            # Filter municipalities with data for this residue
+            df_residue = df[df[residue_col] > 0].copy()
+            
+            if not df_residue.empty:
+                st.markdown("---")
+                st.markdown(f"### 📊 Passo 3: Panorama Geral da {selected_residue} no Estado de São Paulo")
+                
+                # Overview metrics
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    total_potential = df_residue[residue_col].sum()
+                    st.metric("🔥 Potencial Total", format_number(total_potential) + " Nm³/ano")
+                with col2:
+                    municipalities_with_data = len(df_residue)
+                    st.metric("🏘️ Municípios com Dados", f"{municipalities_with_data:,}")
+                with col3:
+                    avg_potential = df_residue[residue_col].mean()
+                    st.metric("📊 Potencial Médio", format_number(avg_potential) + " Nm³/ano")
+                with col4:
+                    percentage_state = (municipalities_with_data / len(df)) * 100
+                    st.metric("📍 Cobertura Estadual", f"{percentage_state:.1f}%")
+                
+                # Get top 10 municipalities
+                top_10_municipalities = df_residue.nlargest(10, residue_col)
+                top_10_names = top_10_municipalities['nome_municipio'].tolist()
+                
+                # Passo 4: VER NO MAPA with raster integration suggestion
+                st.markdown("---")
+                st.markdown(f"### 🗺️ Passo 4: Ver no Mapa - {selected_residue}")
+                
+                col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+                with col_btn2:
+                    try:
+                        # Prepare analysis context for this specific residue
+                        relevant_fields = ['nome_municipio', residue_col, 'area_km2', 'populacao_2022']
+                        
+                        # Prepare data for results page
+                        residue_analysis_data = top_10_municipalities.to_dict('records')
+                        
+                        data, summary, polygons = prepare_analysis_data_for_results(
+                            df, top_10_names, 'detailed_residue_analysis', 
+                            residue_data=residue_analysis_data, 
+                            metrics={
+                                'analysis_type': f'Análise Detalhada - {selected_residue}',
+                                'residue_type': selected_residue,
+                                'category': selected_category,
+                                'total_potential': total_potential,
+                                'municipalities_count': municipalities_with_data,
+                                'coverage_percentage': percentage_state
+                            },
+                            analysis_context={'relevant_fields': relevant_fields}
+                        )
+                        
+                        # Create enhanced button
+                        create_ver_no_mapa_button(
+                            'detailed_residue_analysis', 
+                            top_10_names, 
+                            data, 
+                            summary=summary, 
+                            polygons=polygons,
+                            button_key=f"detailed_{selected_residue.lower().replace('-', '_')}_map"
+                        )
+                        
+                        st.markdown(f"*Visualizar Top 10 municípios de {selected_residue} com limites estaduais*")
+                        
+                    except Exception as e:
+                        st.info("🗺️ Dados de mapa não disponíveis para este resíduo")
+                
+                st.info("💡 **Recursos Avançados**: O mapa inclui os 10 principais municípios destacados, limites do Estado de São Paulo, e quando disponível, integração com dados de raster do MapBiomas para visualização de cobertura territorial.")
+                
+                # Passo 5: Visual Data Analysis
+                st.markdown("---")
+                st.markdown(f"### 📈 Passo 5: Veja os Dados de Forma Visual")
+                
+                # Subtabs for different visualizations
+                viz_tabs = st.tabs(["🏆 Ranking dos Melhores", "📊 Como os Valores se Distribuem", "🔍 Compare Municípios"])
+                
+                with viz_tabs[0]:  # Ranking
+                    st.markdown("#### 🏆 Top 15 Municípios")
+                    
+                    # Interactive ranking chart
+                    top_15 = df_residue.nlargest(15, residue_col)
+                    fig_ranking = px.bar(
+                        top_15,
+                        x=residue_col,
+                        y='nome_municipio',
+                        orientation='h',
+                        title=f"Ranking de Potencial - {selected_residue}",
+                        labels={residue_col: f'Potencial (Nm³/ano)', 'nome_municipio': 'Município'},
+                        color=residue_col,
+                        color_continuous_scale='Greens'
+                    )
+                    fig_ranking.update_layout(height=600, yaxis={'categoryorder': 'total ascending'})
+                    st.plotly_chart(fig_ranking, use_container_width=True)
+                    
+                    # Add VER NO MAPA for top 15
+                    col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+                    with col_btn2:
+                        if st.button(f"🗺️ VER TOP 15 NO MAPA", key=f"top15_{selected_residue}_map", type="primary"):
+                            try:
+                                top_15_names = top_15['nome_municipio'].tolist()
+                                top_15_data = top_15.to_dict('records')
+                                
+                                data, summary, polygons = prepare_analysis_data_for_results(
+                                    df, top_15_names, 'top_15_residue_analysis',
+                                    residue_data=top_15_data,
+                                    metrics={
+                                        'analysis_type': f'Top 15 - {selected_residue}',
+                                        'residue_type': selected_residue,
+                                        'total_municipalities': len(top_15_names)
+                                    },
+                                    analysis_context={'relevant_fields': relevant_fields}
+                                )
+                                
+                                navigate_to_results(data, summary, polygons)
+                            except Exception as e:
+                                st.error("Erro ao preparar dados do mapa")
+                
+                with viz_tabs[1]:  # Distribution
+                    st.markdown("#### 📊 Distribuição dos Valores")
+                    
+                    # Histogram
+                    fig_dist = px.histogram(
+                        df_residue,
+                        x=residue_col,
+                        nbins=25,
+                        title=f"Distribuição do Potencial - {selected_residue}",
+                        labels={residue_col: f'Potencial (Nm³/ano)', 'count': 'Número de Municípios'},
+                        color_discrete_sequence=['#2E8B57']
+                    )
+                    fig_dist.update_layout(height=400)
+                    st.plotly_chart(fig_dist, use_container_width=True)
+                    
+                    # Statistical summary
+                    st.markdown("#### 📈 Estatísticas Descritivas")
+                    stats_col1, stats_col2, stats_col3 = st.columns(3)
+                    
+                    with stats_col1:
+                        median_val = df_residue[residue_col].median()
+                        st.metric("📊 Mediana", format_number(median_val))
+                        percentile_75 = df_residue[residue_col].quantile(0.75)
+                        st.metric("📈 75º Percentil", format_number(percentile_75))
+                    
+                    with stats_col2:
+                        std_val = df_residue[residue_col].std()
+                        st.metric("📏 Desvio Padrão", format_number(std_val))
+                        percentile_25 = df_residue[residue_col].quantile(0.25)
+                        st.metric("📉 25º Percentil", format_number(percentile_25))
+                    
+                    with stats_col3:
+                        max_val = df_residue[residue_col].max()
+                        st.metric("🎯 Valor Máximo", format_number(max_val))
+                        min_val = df_residue[residue_col].min()
+                        st.metric("⬇️ Valor Mínimo", format_number(min_val))
+                
+                with viz_tabs[2]:  # Municipality comparison
+                    st.markdown("#### 🔍 Compare Municípios Específicos")
+                    
+                    # Municipality selector
+                    selected_comparison_muns = st.multiselect(
+                        "Selecione municípios para comparar (até 8):",
+                        df_residue['nome_municipio'].tolist(),
+                        default=top_10_names[:5],
+                        max_selections=8,
+                        key=f"comparison_{selected_residue}"
+                    )
+                    
+                    if selected_comparison_muns:
+                        comparison_df = df_residue[df_residue['nome_municipio'].isin(selected_comparison_muns)]
+                        
+                        # Comparison chart
+                        fig_comparison = px.bar(
+                            comparison_df.sort_values(residue_col, ascending=True),
+                            x=residue_col,
+                            y='nome_municipio',
+                            orientation='h',
+                            title=f"Comparação - {selected_residue}",
+                            labels={residue_col: f'Potencial (Nm³/ano)', 'nome_municipio': 'Município'},
+                            color=residue_col,
+                            color_continuous_scale='Blues'
+                        )
+                        fig_comparison.update_layout(height=400)
+                        st.plotly_chart(fig_comparison, use_container_width=True)
+                        
+                        # Add comparison VER NO MAPA
+                        col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+                        with col_btn2:
+                            if st.button(f"🗺️ VER COMPARAÇÃO NO MAPA", key=f"comparison_{selected_residue}_map", type="secondary"):
+                                try:
+                                    comparison_data = comparison_df.to_dict('records')
+                                    
+                                    data, summary, polygons = prepare_analysis_data_for_results(
+                                        df, selected_comparison_muns, 'residue_comparison_analysis',
+                                        residue_data=comparison_data,
+                                        metrics={
+                                            'analysis_type': f'Comparação - {selected_residue}',
+                                            'residue_type': selected_residue,
+                                            'municipalities_compared': len(selected_comparison_muns)
+                                        },
+                                        analysis_context={'relevant_fields': relevant_fields}
+                                    )
+                                    
+                                    navigate_to_results(data, summary, polygons)
+                                except Exception as e:
+                                    st.error("Erro ao preparar dados do mapa")
+                
+                # Passo 6: Individual Municipality Explorer
+                st.markdown("---")
+                st.markdown(f"### 📋 Passo 6: Explore Todos os Dados - Município Individual")
+                
+                selected_municipality = st.selectbox(
+                    "Selecione um município para análise detalhada:",
+                    df_residue['nome_municipio'].tolist(),
+                    index=0,
+                    key=f"individual_{selected_residue}"
+                )
+                
+                if selected_municipality:
+                    mun_data = df_residue[df_residue['nome_municipio'] == selected_municipality].iloc[0]
+                    
+                    # Municipality overview
+                    st.markdown(f"#### 🏘️ Análise Completa: {selected_municipality}")
+                    
+                    # Key metrics for this municipality
+                    mun_col1, mun_col2, mun_col3, mun_col4 = st.columns(4)
+                    
+                    with mun_col1:
+                        st.metric(f"🔥 {selected_residue}", format_number(mun_data[residue_col]) + " Nm³/ano")
+                    
+                    with mun_col2:
+                        if 'populacao_2022' in mun_data:
+                            st.metric("👥 População", f"{mun_data['populacao_2022']:,.0f}")
+                    
+                    with mun_col3:
+                        if 'area_km2' in mun_data:
+                            st.metric("📏 Área", f"{mun_data['area_km2']:,.1f} km²")
+                    
+                    with mun_col4:
+                        # Calculate per capita if possible
+                        if 'populacao_2022' in mun_data and mun_data['populacao_2022'] > 0:
+                            per_capita = mun_data[residue_col] / mun_data['populacao_2022']
+                            st.metric("👤 Per Capita", f"{per_capita:.2f} Nm³/hab/ano")
+                    
+                    # Municipality ranking position
+                    municipality_rank = df_residue[residue_col].rank(method='dense', ascending=False)
+                    mun_rank = municipality_rank[df_residue['nome_municipio'] == selected_municipality].iloc[0]
+                    
+                    st.info(f"🏆 **Ranking Estadual**: {selected_municipality} está na **{mun_rank:.0f}ª posição** de {len(df_residue)} municípios com dados de {selected_residue}")
+                    
+                    # All residue types for this municipality
+                    st.markdown("#### 🌾 Todos os Resíduos deste Município")
+                    
+                    # Create a chart showing all residue types for this municipality
+                    all_residues_data = []
+                    
+                    for category, residues in residue_categories.items():
+                        for res_name, res_col in residues.items():
+                            if res_col in df.columns:
+                                value = mun_data.get(res_col, 0)
+                                if value > 0:
+                                    all_residues_data.append({
+                                        'Tipo': res_name,
+                                        'Categoria': category.split(' ')[1],  # Remove emoji
+                                        'Potencial': value
+                                    })
+                    
+                    if all_residues_data:
+                        residues_df = pd.DataFrame(all_residues_data)
+                        
+                        # Bar chart of all residues
+                        fig_all_residues = px.bar(
+                            residues_df.sort_values('Potencial', ascending=True),
+                            x='Potencial',
+                            y='Tipo',
+                            orientation='h',
+                            color='Categoria',
+                            title=f"Portfólio Completo de Resíduos - {selected_municipality}",
+                            labels={'Potencial': 'Potencial (Nm³/ano)', 'Tipo': 'Tipo de Resíduo'}
+                        )
+                        fig_all_residues.update_layout(height=400)
+                        st.plotly_chart(fig_all_residues, use_container_width=True)
+                        
+                        # Single municipality VER NO MAPA
+                        col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+                        with col_btn2:
+                            if st.button(f"🗺️ VER {selected_municipality.upper()} NO MAPA", key=f"single_{selected_municipality}_map", type="primary"):
+                                try:
+                                    single_mun_data = [mun_data.to_dict()]
+                                    
+                                    data, summary, polygons = prepare_analysis_data_for_results(
+                                        df, [selected_municipality], 'single_municipality_analysis',
+                                        residue_data=single_mun_data,
+                                        metrics={
+                                            'analysis_type': f'Município Individual - {selected_municipality}',
+                                            'focus_residue': selected_residue,
+                                            'municipality_rank': mun_rank,
+                                            'total_residue_types': len(all_residues_data)
+                                        },
+                                        analysis_context={'relevant_fields': ['nome_municipio'] + [res['Tipo'] for res in all_residues_data] + ['area_km2', 'populacao_2022']}
+                                    )
+                                    
+                                    navigate_to_results(data, summary, polygons)
+                                except Exception as e:
+                                    st.error("Erro ao preparar dados do mapa")
+                    
+                    else:
+                        st.warning(f"❌ {selected_municipality} não possui dados para outros tipos de resíduos além de {selected_residue}")
+            
+            else:
+                st.warning(f"❌ Não há dados disponíveis para {selected_residue}")
+        else:
+            st.error(f"❌ Coluna de dados não encontrada para {selected_residue}")
+    
+    # Analysis Type 2: Compare Residue Types
+    elif analysis_type == "🏆 Comparar Tipos de Resíduos":
         st.markdown("### 📊 Passo 2: Compare Diferentes Tipos de Resíduos")
         st.markdown("*Veja qual tipo de resíduo tem maior potencial em São Paulo*")
         
@@ -4528,7 +5152,7 @@ def page_analysis():
                         color_continuous_scale='Oranges'
                     )
                     fig_total.update_layout(height=500, xaxis_tickangle=-45)
-                    st.plotly_chart(fig_total, width='stretch')
+                    st.plotly_chart(fig_total, use_container_width=True)
                     
                     # Add percentage breakdown
                     comp_df_pct = comp_df.copy()
@@ -4549,7 +5173,7 @@ def page_analysis():
                         color_continuous_scale='Blues'
                     )
                     fig_avg.update_layout(height=500, xaxis_tickangle=-45)
-                    st.plotly_chart(fig_avg, width='stretch')
+                    st.plotly_chart(fig_avg, use_container_width=True)
                     
                     st.markdown("**📖 O que isso significa:**")
                     st.markdown("O potencial médio mostra quanto cada município produz em média para cada tipo de resíduo. Valores altos indicam que quando um município tem esse tipo de resíduo, ele tende a ter bastante.")
@@ -4565,7 +5189,7 @@ def page_analysis():
                         color_continuous_scale='Greens'
                     )
                     fig_coverage.update_layout(height=500, xaxis_tickangle=-45)
-                    st.plotly_chart(fig_coverage, width='stretch')
+                    st.plotly_chart(fig_coverage, use_container_width=True)
                     
                     st.markdown("**📍 Cobertura Territorial:**")
                     for _, row in comp_df.iterrows():
@@ -4577,7 +5201,55 @@ def page_analysis():
                 display_comp_df = comp_df.copy()
                 display_comp_df['Potencial Total'] = display_comp_df['Potencial Total'].apply(format_number)
                 display_comp_df['Potencial Médio'] = display_comp_df['Potencial Médio'].apply(format_number)
-                st.dataframe(display_comp_df, width='stretch', hide_index=True)
+                st.dataframe(display_comp_df, use_container_width=True, hide_index=True)
+                
+                # Add "VER NO MAPA" button for residue comparison
+                st.markdown("---")
+                st.markdown("#### 🗺️ Ver Análise no Mapa")
+                col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+                with col_btn2:
+                    try:
+                        # Get municipalities with best performance for selected residues
+                        top_municipalities = []
+                        for residue_type in selected_residues:
+                            col_name = RESIDUE_OPTIONS[residue_type]
+                            if col_name in df.columns:
+                                top_mun = df.nlargest(5, col_name)['nome_municipio'].tolist()
+                                top_municipalities.extend(top_mun)
+                        
+                        # Remove duplicates and keep top 10
+                        selected_municipalities = list(dict.fromkeys(top_municipalities))[:10]
+                        
+                        # Prepare data for results page
+                        residue_data = comparison_data
+                        # Create relevant fields list based on selected residues
+                        relevant_fields = ['nome_municipio', 'area_km2', 'populacao_2022']
+                        for residue_type in selected_residues:
+                            col_name = RESIDUE_OPTIONS.get(residue_type, '').lower()
+                            if col_name:
+                                relevant_fields.append(col_name)
+                        
+                        data, summary, polygons = prepare_analysis_data_for_results(
+                            df, selected_municipalities, 'residue_analysis', 
+                            residue_data=residue_data, 
+                            metrics={'selected_residues': selected_residues},
+                            analysis_context={'relevant_fields': relevant_fields}
+                        )
+                        
+                        # Create button
+                        create_ver_no_mapa_button(
+                            'residue_analysis', 
+                            selected_municipalities, 
+                            data, 
+                            summary=summary, 
+                            polygons=polygons,
+                            button_key="residue_comparison_map"
+                        )
+                        
+                        st.markdown(f"*Visualizar {len(selected_municipalities)} municípios com maior potencial*")
+                        
+                    except Exception as e:
+                        st.info("🗺️ Dados de mapa não disponíveis para esta seleção")
     
     # Analysis Type 2: Regional Analysis
     elif analysis_type == "🌍 Analisar por Região":
@@ -4657,7 +5329,7 @@ def page_analysis():
                         color_continuous_scale='Viridis'
                     )
                     fig_regional.update_layout(height=500)
-                    st.plotly_chart(fig_regional, width='stretch')
+                    st.plotly_chart(fig_regional, use_container_width=True)
                     
                     # Show detailed table
                     display_regional = regional_summary.copy()
@@ -4665,7 +5337,53 @@ def page_analysis():
                     display_regional['Potencial Médio'] = display_regional['Potencial Médio'].apply(format_number)
                     display_regional['População Total'] = display_regional['População Total'].apply(lambda x: f"{x:,.0f}")
                     display_regional.columns = ['Tamanho do Município', 'Potencial Total', 'Potencial Médio', 'Qtd Municípios', 'População Total']
-                    st.dataframe(display_regional, width='stretch', hide_index=True)
+                    st.dataframe(display_regional, use_container_width=True, hide_index=True)
+                    
+                    # Add "VER NO MAPA" button for largest municipalities
+                    st.markdown("---")
+                    st.markdown("### 🗺️ Ver Maiores Municípios no Mapa")
+                    col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+                    with col_btn2:
+                        try:
+                            # Get municipalities from the largest category with data
+                            largest_category = regional_summary.loc[regional_summary['Potencial Total'].idxmax(), 'faixa_pop']
+                            largest_municipalities = df_regional[df_regional['faixa_pop'] == largest_category].nlargest(15, residue_col)
+                            largest_mun_names = largest_municipalities['nome_municipio'].tolist()
+                            
+                            # Prepare data for results page
+                            regional_data = largest_municipalities.to_dict('records')
+                            
+                            # Create relevant fields for the selected residue type
+                            residue_col_name = RESIDUE_OPTIONS.get(selected_residue_regional, '').lower()
+                            relevant_fields = ['nome_municipio', 'area_km2', 'populacao_2022', 'faixa_pop']
+                            if residue_col_name:
+                                relevant_fields.append(residue_col_name)
+                            
+                            data, summary, polygons = prepare_analysis_data_for_results(
+                                df, largest_mun_names, 'regional_analysis', 
+                                residue_data=regional_data, 
+                                metrics={
+                                    'analysis_type': region_analysis_type,
+                                    'residue_type': selected_residue_regional,
+                                    'population_category': largest_category
+                                },
+                                analysis_context={'relevant_fields': relevant_fields}
+                            )
+                            
+                            # Create button
+                            create_ver_no_mapa_button(
+                                'regional_analysis', 
+                                largest_mun_names, 
+                                data, 
+                                summary=summary, 
+                                polygons=polygons,
+                                button_key="regional_size_map"
+                            )
+                            
+                            st.markdown(f"*Visualizar {len(largest_mun_names)} municípios da categoria {largest_category}*")
+                            
+                        except Exception as e:
+                            st.info("🗺️ Dados de mapa não disponíveis para esta seleção")
             
             elif region_analysis_type == "🏆 Top Regiões vs Resto do Estado":
                 # Analysis of top municipalities vs others
@@ -4728,7 +5446,7 @@ def page_analysis():
                     color='Potencial Total',
                     color_continuous_scale='Reds'
                 )
-                st.plotly_chart(fig_comparison, width='stretch')
+                st.plotly_chart(fig_comparison, use_container_width=True)
                 
                 # Show top municipalities
                 st.markdown(f"#### 🏆 Lista dos Top {top_n} Municípios")
@@ -4737,7 +5455,56 @@ def page_analysis():
                 top_display.columns = ['Município', f'{selected_residue_regional} (Nm³/ano)']
                 top_display = top_display.reset_index(drop=True)
                 top_display.index += 1
-                st.dataframe(top_display, width='stretch')
+                st.dataframe(top_display, use_container_width=True)
+                
+                # Add "VER NO MAPA" button for top municipalities
+                st.markdown("---")
+                st.markdown("### 🗺️ Ver Top Municípios no Mapa")
+                col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+                with col_btn2:
+                    try:
+                        # Get top municipality names
+                        top_mun_names = top_municipalities['nome_municipio'].tolist()
+                        
+                        # Prepare data for results page
+                        regional_data = top_municipalities.to_dict('records')
+                        total_top_potential = top_municipalities[residue_col].sum()
+                        
+                        # Create relevant fields for the selected residue type
+                        residue_col_name = RESIDUE_OPTIONS.get(selected_residue_regional, '').lower()
+                        relevant_fields = ['nome_municipio', 'area_km2', 'populacao_2022']
+                        if residue_col_name:
+                            relevant_fields.append(residue_col_name)
+                        
+                        data, summary, polygons = prepare_analysis_data_for_results(
+                            df, top_mun_names, 'regional_analysis', 
+                            residue_data=regional_data, 
+                            metrics={
+                                'analysis_type': region_analysis_type,
+                                'residue_type': selected_residue_regional,
+                                'total_potential': total_top_potential,
+                                'concentration_percentage': top_percentage
+                            },
+                            analysis_context={'relevant_fields': relevant_fields}
+                        )
+                        
+                        # Create button
+                        create_ver_no_mapa_button(
+                            'regional_analysis', 
+                            top_mun_names, 
+                            data, 
+                            summary=summary, 
+                            polygons=polygons,
+                            button_key="regional_top_map"
+                        )
+                        
+                        st.markdown(f"*Visualizar os {len(top_mun_names)} municípios com maior potencial regional*")
+                        
+                    except Exception as e:
+                        st.info("🗺️ Dados de mapa não disponíveis para esta seleção")
+        
+        else:
+            st.warning(f"⚠️ Nenhum município tem dados para {selected_residue_regional}")
     
     # Analysis Type 3: Patterns and Correlations
     elif analysis_type == "🔍 Encontrar Padrões e Correlações":
@@ -4849,7 +5616,7 @@ def page_analysis():
                         plot_bgcolor='rgba(0,0,0,0)',
                         paper_bgcolor='rgba(0,0,0,0)'
                     )
-                    st.plotly_chart(fig_scatter, width='stretch')
+                    st.plotly_chart(fig_scatter, use_container_width=True)
                     
                     # Show municipalities with both high values
                     if correlation > 0.3:
@@ -4865,7 +5632,49 @@ def page_analysis():
                             top_display[col_a_name] = top_display[col_a_name].apply(format_number)
                             top_display[col_b_name] = top_display[col_b_name].apply(format_number)
                             top_display.columns = ['Município', residue_a, residue_b]
-                            st.dataframe(top_display, width='stretch', hide_index=True)
+                            st.dataframe(top_display, use_container_width=True, hide_index=True)
+                            
+                            # Add "VER NO MAPA" button for correlation analysis
+                            st.markdown("---")
+                            col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+                            with col_btn2:
+                                try:
+                                    # Get municipality names from top performers
+                                    top_mun_names = top_both['nome_municipio'].head(10).tolist()
+                                    
+                                    # Prepare analysis context for correlation data
+                                    relevant_fields = ['nome_municipio', col_a_name, col_b_name, 'area_km2', 'populacao_2022']
+                                    
+                                    # Prepare data for results page
+                                    correlation_data = top_both.to_dict('records')
+                                    
+                                    data, summary, polygons = prepare_analysis_data_for_results(
+                                        df, top_mun_names, 'correlation_analysis', 
+                                        residue_data=correlation_data, 
+                                        metrics={
+                                            'analysis_type': 'Análise de Correlação',
+                                            'residue_a': residue_a,
+                                            'residue_b': residue_b,
+                                            'correlation': correlation,
+                                            'interpretation': interpretation.replace('**', '').replace('🔥', '').replace('📊', '').replace('🤷', '').replace('↔️', '').strip()
+                                        },
+                                        analysis_context={'relevant_fields': relevant_fields}
+                                    )
+                                    
+                                    # Create button
+                                    create_ver_no_mapa_button(
+                                        'correlation_analysis', 
+                                        top_mun_names, 
+                                        data, 
+                                        summary=summary, 
+                                        polygons=polygons,
+                                        button_key="correlation_map"
+                                    )
+                                    
+                                    st.markdown(f"*Visualizar {len(top_mun_names)} municípios com alta correlação*")
+                                    
+                                except Exception as e:
+                                    st.info("🗺️ Dados de mapa não disponíveis para esta correlação")
                         else:
                             st.write("Nenhum município se destaca simultaneamente nos dois tipos.")
                 else:
@@ -4946,7 +5755,61 @@ def page_analysis():
                         plot_bgcolor='rgba(0,0,0,0)',
                         paper_bgcolor='rgba(0,0,0,0)'
                     )
-                    st.plotly_chart(fig_pop, width='stretch')
+                    st.plotly_chart(fig_pop, use_container_width=True)
+                    
+                    # Add top municipalities with high per capita potential
+                    st.markdown("#### 🏆 Municípios com Alto Potencial per Capita")
+                    df_pop['potencial_per_capita'] = df_pop[residue_col_pop] / df_pop['populacao_2022']
+                    top_per_capita = df_pop.nlargest(10, 'potencial_per_capita')
+                    
+                    if not top_per_capita.empty:
+                        per_capita_display = top_per_capita[['nome_municipio', 'populacao_2022', residue_col_pop, 'potencial_per_capita']].copy()
+                        per_capita_display['populacao_2022'] = per_capita_display['populacao_2022'].apply(lambda x: f"{x:,.0f}")
+                        per_capita_display[residue_col_pop] = per_capita_display[residue_col_pop].apply(format_number)
+                        per_capita_display['potencial_per_capita'] = per_capita_display['potencial_per_capita'].apply(lambda x: f"{x:.2f}")
+                        per_capita_display.columns = ['Município', 'População', f'{selected_residue_pop} Total', 'Per Capita (Nm³/hab/ano)']
+                        st.dataframe(per_capita_display, use_container_width=True, hide_index=True)
+                        
+                        # Add "VER NO MAPA" button for population correlation analysis
+                        st.markdown("---")
+                        col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+                        with col_btn2:
+                            try:
+                                # Get municipality names from top per capita performers
+                                top_percapita_names = top_per_capita['nome_municipio'].head(10).tolist()
+                                
+                                # Prepare analysis context for population correlation
+                                relevant_fields = ['nome_municipio', residue_col_pop, 'populacao_2022', 'potencial_per_capita', 'area_km2']
+                                
+                                # Prepare data for results page
+                                population_data = top_per_capita.to_dict('records')
+                                
+                                data, summary, polygons = prepare_analysis_data_for_results(
+                                    df, top_percapita_names, 'population_correlation', 
+                                    residue_data=population_data, 
+                                    metrics={
+                                        'analysis_type': 'Relação com População',
+                                        'residue_type': selected_residue_pop,
+                                        'correlation': correlation_pop,
+                                        'average_per_capita': avg_per_capita
+                                    },
+                                    analysis_context={'relevant_fields': relevant_fields}
+                                )
+                                
+                                # Create button
+                                create_ver_no_mapa_button(
+                                    'population_correlation', 
+                                    top_percapita_names, 
+                                    data, 
+                                    summary=summary, 
+                                    polygons=polygons,
+                                    button_key="population_correlation_map"
+                                )
+                                
+                                st.markdown(f"*Visualizar {len(top_percapita_names)} municípios com alto potencial per capita*")
+                                
+                            except Exception as e:
+                                st.info("🗺️ Dados de mapa não disponíveis para esta análise")
         
         elif correlation_type == "🏆 Municípios Multiespecializados":
             st.markdown("#### Descubra quais municípios se destacam em vários tipos de resíduos:")
@@ -5008,7 +5871,51 @@ def page_analysis():
                     })
                 
                 ranking_multi_df = pd.DataFrame(ranking_multi)
-                st.dataframe(ranking_multi_df, width='stretch', hide_index=True)
+                st.dataframe(ranking_multi_df, use_container_width=True, hide_index=True)
+                
+                # Add "VER NO MAPA" button for multi-specialized analysis
+                st.markdown("---")
+                col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+                with col_btn2:
+                    try:
+                        # Get municipality names from top multi-specialized
+                        multi_mun_names = top_multi['nome_municipio'].head(10).tolist()
+                        
+                        # Prepare analysis context for multi-specialized municipalities
+                        relevant_fields = ['nome_municipio', 'score_especializacao', 'tipos_destacados', 'total_potencial', 'area_km2', 'populacao_2022']
+                        # Add all residue columns that are relevant
+                        for col in RESIDUE_OPTIONS.values():
+                            if col in df.columns:
+                                relevant_fields.append(col)
+                        
+                        # Prepare data for results page
+                        multi_data = top_multi.to_dict('records')
+                        
+                        data, summary, polygons = prepare_analysis_data_for_results(
+                            df, multi_mun_names, 'multi_specialized_analysis', 
+                            residue_data=multi_data, 
+                            metrics={
+                                'analysis_type': 'Municípios Multiespecializados',
+                                'max_specializations': max_score,
+                                'avg_specializations': specialization_df['score_especializacao'].mean()
+                            },
+                            analysis_context={'relevant_fields': relevant_fields}
+                        )
+                        
+                        # Create button
+                        create_ver_no_mapa_button(
+                            'multi_specialized_analysis', 
+                            multi_mun_names, 
+                            data, 
+                            summary=summary, 
+                            polygons=polygons,
+                            button_key="multi_specialized_map"
+                        )
+                        
+                        st.markdown(f"*Visualizar {len(multi_mun_names)} municípios multiespecializados*")
+                        
+                    except Exception as e:
+                        st.info("🗺️ Dados de mapa não disponíveis para esta análise")
                 
                 # Visualization
                 fig_multi = px.histogram(
@@ -5018,7 +5925,7 @@ def page_analysis():
                     labels={'score_especializacao': 'Número de Especializações', 'count': 'Quantidade de Municípios'},
                     nbins=max_score
                 )
-                st.plotly_chart(fig_multi, width='stretch')
+                st.plotly_chart(fig_multi, use_container_width=True)
             else:
                 st.info("Nenhum município se destaca significativamente em múltiplos tipos de resíduos.")
     
@@ -5078,7 +5985,7 @@ def page_analysis():
                 })
             
             ranking_df = pd.DataFrame(ranking_data)
-            st.dataframe(ranking_df, width='stretch', hide_index=True)
+            st.dataframe(ranking_df, use_container_width=True, hide_index=True)
             
             # Visualization
             fig_diversity = px.scatter(
@@ -5095,7 +6002,51 @@ def page_analysis():
                 color='diversidade_score',
                 color_continuous_scale='Viridis'
             )
-            st.plotly_chart(fig_diversity, width='stretch')
+            st.plotly_chart(fig_diversity, use_container_width=True)
+            
+            # Add "VER NO MAPA" button for diversified municipalities
+            st.markdown("---")
+            col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+            with col_btn2:
+                try:
+                    # Get municipality names from top diversified
+                    diversified_mun_names = top_diversified['nome_municipio'].head(10).tolist()
+                    
+                    # Prepare analysis context for portfolio analysis
+                    relevant_fields = ['nome_municipio', 'tipos_com_dados', 'diversidade_score', 'potencial_total_real', 'area_km2', 'populacao_2022']
+                    # Add key residue columns
+                    for col in residue_columns[:5]:  # Top 5 most important residue types
+                        relevant_fields.append(col)
+                    
+                    # Prepare data for results page
+                    portfolio_data = top_diversified.to_dict('records')
+                    
+                    data, summary, polygons = prepare_analysis_data_for_results(
+                        df, diversified_mun_names, 'portfolio_analysis', 
+                        residue_data=portfolio_data, 
+                        metrics={
+                            'analysis_type': 'Portfólio Municipal - Mais Diversificados',
+                            'max_types': max_types,
+                            'avg_diversity': avg_diversity,
+                            'total_municipalities': total_municipalities
+                        },
+                        analysis_context={'relevant_fields': relevant_fields}
+                    )
+                    
+                    # Create button
+                    create_ver_no_mapa_button(
+                        'portfolio_analysis', 
+                        diversified_mun_names, 
+                        data, 
+                        summary=summary, 
+                        polygons=polygons,
+                        button_key="portfolio_diversified_map"
+                    )
+                    
+                    st.markdown(f"*Visualizar {len(diversified_mun_names)} municípios mais diversificados*")
+                    
+                except Exception as e:
+                    st.info("🗺️ Dados de mapa não disponíveis para esta análise")
         
         elif portfolio_analysis == "🎯 Municípios Especializados":
             # Municipalities specialized in few types but with high potential
@@ -5130,7 +6081,51 @@ def page_analysis():
                     })
                 
                 specialized_df = pd.DataFrame(specialized_ranking)
-                st.dataframe(specialized_df, width='stretch', hide_index=True)
+                st.dataframe(specialized_df, use_container_width=True, hide_index=True)
+                
+                # Add "VER NO MAPA" button for specialized municipalities
+                st.markdown("---")
+                col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+                with col_btn2:
+                    try:
+                        # Get municipality names from top specialized
+                        specialized_mun_names = specialized['nome_municipio'].head(10).tolist()
+                        
+                        # Prepare analysis context for specialized portfolio analysis
+                        relevant_fields = ['nome_municipio', 'tipos_com_dados', 'diversidade_score', 'potencial_total_real', 'area_km2', 'populacao_2022']
+                        # Add the most relevant residue columns for specialized municipalities
+                        for col in residue_columns:
+                            if col in specialized.columns and specialized[col].sum() > 0:
+                                relevant_fields.append(col)
+                        
+                        # Prepare data for results page
+                        specialized_data = specialized.to_dict('records')
+                        
+                        data, summary, polygons = prepare_analysis_data_for_results(
+                            df, specialized_mun_names, 'portfolio_specialized_analysis', 
+                            residue_data=specialized_data, 
+                            metrics={
+                                'analysis_type': 'Portfólio Municipal - Especializados',
+                                'avg_types': specialized['tipos_com_dados'].mean(),
+                                'avg_potential': specialized['potencial_total_real'].mean()
+                            },
+                            analysis_context={'relevant_fields': relevant_fields}
+                        )
+                        
+                        # Create button
+                        create_ver_no_mapa_button(
+                            'portfolio_specialized_analysis', 
+                            specialized_mun_names, 
+                            data, 
+                            summary=summary, 
+                            polygons=polygons,
+                            button_key="portfolio_specialized_map"
+                        )
+                        
+                        st.markdown(f"*Visualizar {len(specialized_mun_names)} municípios especializados*")
+                        
+                    except Exception as e:
+                        st.info("🗺️ Dados de mapa não disponíveis para esta análise")
             else:
                 st.info("Não há municípios com especialização em poucos tipos.")
         
@@ -5189,7 +6184,7 @@ def page_analysis():
                 plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)'
             )
-            st.plotly_chart(fig_div_pot, width='stretch')
+            st.plotly_chart(fig_div_pot, use_container_width=True)
             
             # Interpretation
             if correlation_div > 0.3:
@@ -5198,6 +6193,65 @@ def page_analysis():
                 st.info("📊 **Correlação fraca** - Há alguma relação entre diversificação e potencial.")
             else:
                 st.warning("🤷 **Pouca correlação** - Diversificação e potencial total são independentes.")
+            
+            # Show municipalities with high diversification AND high potential
+            st.markdown("#### 🌟 Municípios com Alta Diversificação E Alto Potencial")
+            high_both = df_portfolio[
+                (df_portfolio['diversidade_score'] > df_portfolio['diversidade_score'].quantile(0.75)) &
+                (df_portfolio['potencial_total_real'] > df_portfolio['potencial_total_real'].quantile(0.75))
+            ]
+            
+            if not high_both.empty:
+                high_both_display = high_both[['nome_municipio', 'tipos_com_dados', 'diversidade_score', 'potencial_total_real']].copy()
+                high_both_display['diversidade_score'] = high_both_display['diversidade_score'].apply(lambda x: f"{x:.1%}")
+                high_both_display['potencial_total_real'] = high_both_display['potencial_total_real'].apply(format_number)
+                high_both_display.columns = ['Município', 'Tipos de Resíduos', 'Score Diversidade', 'Potencial Total']
+                st.dataframe(high_both_display, use_container_width=True, hide_index=True)
+                
+                # Add "VER NO MAPA" button for high diversification and potential
+                st.markdown("---")
+                col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+                with col_btn2:
+                    try:
+                        # Get municipality names from high both categories
+                        high_both_names = high_both['nome_municipio'].head(10).tolist()
+                        
+                        # Prepare analysis context for diversification vs potential analysis
+                        relevant_fields = ['nome_municipio', 'tipos_com_dados', 'diversidade_score', 'potencial_total_real', 'area_km2', 'populacao_2022']
+                        # Add all residue columns for comprehensive analysis
+                        relevant_fields.extend(residue_columns)
+                        
+                        # Prepare data for results page
+                        div_potential_data = high_both.to_dict('records')
+                        
+                        data, summary, polygons = prepare_analysis_data_for_results(
+                            df, high_both_names, 'portfolio_div_potential_analysis', 
+                            residue_data=div_potential_data, 
+                            metrics={
+                                'analysis_type': 'Portfólio - Alta Diversificação e Alto Potencial',
+                                'correlation': correlation_div,
+                                'high_div_high_pot_count': high_div_high_pot,
+                                'avg_potential_high_div': avg_potential_high_div
+                            },
+                            analysis_context={'relevant_fields': relevant_fields}
+                        )
+                        
+                        # Create button
+                        create_ver_no_mapa_button(
+                            'portfolio_div_potential_analysis', 
+                            high_both_names, 
+                            data, 
+                            summary=summary, 
+                            polygons=polygons,
+                            button_key="portfolio_div_potential_map"
+                        )
+                        
+                        st.markdown(f"*Visualizar {len(high_both_names)} municípios com alta diversificação e potencial*")
+                        
+                    except Exception as e:
+                        st.info("🗺️ Dados de mapa não disponíveis para esta análise")
+            else:
+                st.info("Nenhum município se destaca simultaneamente em diversificação e potencial.")
 
     # Analysis Type 5: Advanced Opportunities
     elif analysis_type == "🚀 Análise Avançada de Oportunidades":
@@ -5256,7 +6310,7 @@ def page_analysis():
             
             st.markdown("#### 🏆 Top 15 Oportunidades de Investimento")
             ranking_opp_df = pd.DataFrame(opportunities_ranking)
-            st.dataframe(ranking_opp_df, width='stretch', hide_index=True)
+            st.dataframe(ranking_opp_df, use_container_width=True, hide_index=True)
             
             # Opportunity matrix visualization
             fig_matrix = px.scatter(
@@ -5289,7 +6343,7 @@ def page_analysis():
                                     showarrow=False, font=dict(size=12, color="red"))
             
             fig_matrix.update_layout(height=600)
-            st.plotly_chart(fig_matrix, width='stretch')
+            st.plotly_chart(fig_matrix, use_container_width=True)
             
         elif opportunity_type == "🎯 Clusters de Sinergia Regional":
             st.markdown("#### 🌍 Análise de Clusters Regionais para Sinergia")
@@ -5320,7 +6374,7 @@ def page_analysis():
                     })
                 
                 cluster_df = pd.DataFrame(cluster_ranking)
-                st.dataframe(cluster_df, width='stretch', hide_index=True)
+                st.dataframe(cluster_df, use_container_width=True, hide_index=True)
                 
                 # Regional potential visualization
                 fig_regional = px.bar(
@@ -5334,7 +6388,7 @@ def page_analysis():
                 )
                 fig_regional.update_xaxes(tickangle=45)
                 fig_regional.update_layout(height=500)
-                st.plotly_chart(fig_regional, width='stretch')
+                st.plotly_chart(fig_regional, use_container_width=True)
 
     # Analysis Type 6: Intelligent Insights
     elif analysis_type == "💡 Insights Inteligentes e Recomendações":
@@ -5431,7 +6485,7 @@ def page_analysis():
                         "🎯 Tipo Principal": "Agrícola" if inv['total_agricola_nm_ano'] > inv['total_pecuaria_nm_ano'] else "Pecuário"
                     })
                 
-                st.dataframe(pd.DataFrame(investment_table), width='stretch', hide_index=True)
+                st.dataframe(pd.DataFrame(investment_table), use_container_width=True, hide_index=True)
                 
                 st.markdown("**💡 Recomendações Estratégicas:**")
                 col1, col2 = st.columns(2)
@@ -5528,7 +6582,7 @@ def page_about():
             "Unidade": ["cabeça", "cabeça", "ave", "ton cana", "ton soja", "ton milho", "ton café", "m³ madeira", "habitante", "habitante"]
         })
         
-        st.dataframe(fatores_conversao, width='stretch')
+        st.dataframe(fatores_conversao, use_container_width=True)
         
         st.subheader("🧮 Exemplo de Cálculo: Dejetos Bovinos")
         st.markdown("""
@@ -5644,8 +6698,8 @@ def page_about():
         st.markdown("""
         1. **🏠 Mapa Principal**: Explore o potencial por município usando filtros
         2. **🔍 Explorar Dados**: Analise dados com gráficos e tabelas interativas
-        3. **📊 Análises**: Realize análises avançadas e comparações
-        4. **ℹ️ Sobre**: Consulte informações técnicas e institucionais
+        3. **📊 Análises Avançadas**: Realize análises avançadas e comparações
+        4. **ℹ️ Sobre o CP2B Maps**: Consulte informações técnicas e institucionais
         """)
     
     # Footer da página
@@ -5660,6 +6714,19 @@ def page_about():
 
 def main():
     """Main application"""
+    
+    # Check if we should show results page
+    if st.session_state.get('show_results_page', False):
+        try:
+            from modules.results_page import render_results_page
+            render_results_page()
+            return
+        except ImportError as e:
+            logger.error(f"Erro ao importar módulo de resultados: {e}")
+            st.error("❌ Erro ao carregar página de resultados. Retornando à navegação principal.")
+            st.session_state.show_results_page = False
+    
+    # Normal navigation flow
     render_header()
     
     # Navigation
