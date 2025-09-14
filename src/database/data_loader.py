@@ -36,7 +36,14 @@ COLUMN_MAPPING = {
     'Biogás Bovino (Nm³/ano)': 'biogas_bovinos_nm_ano',
     'Biogás Suínos (Nm³/ano)': 'biogas_suino_nm_ano',
     'Biogás Aves (Nm³/ano)': 'biogas_aves_nm_ano',
-    'Biogás Piscicultura (Nm³/ano)': 'biogas_piscicultura_nm_ano'
+    'Biogás Piscicultura (Nm³/ano)': 'biogas_piscicultura_nm_ano',
+    # Urban waste columns
+    'RSU Potencial CH4 (m³/ano)': 'rsu_potencial_nm_habitante_ano',
+    'RPO Potencial CH4 (m³/ano)': 'rpo_potencial_nm_habitante_ano',
+    'Total CH4 RSU+RPO (m³/ano)': 'rsu_total_nm_ano',
+    'Total Urbano CH4 (m³/ano)': 'total_urbano_nm_ano',
+    'RSU Orgânicos (ton/ano)': 'rsu_organicos_ton_ano',
+    'RPO Podas (ton/ano)': 'rpo_podas_ton_ano'
 }
 
 def find_data_file():
