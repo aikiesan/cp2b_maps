@@ -366,8 +366,9 @@ def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only
                             if col != 'geometry' and col != 'nome_municipio' and col != 'nome_municipio_x' and col != 'nome_municipio_y' and df_merged[col].dtype in ['int32', 'int64', 'float32', 'float64']:
                                 try:
                                     df_merged[col] = df_merged[col].astype(float)
-                                except:
-                                    pass  # Pular se não conseguir converter
+                                except (ValueError, TypeError) as e:
+                                    logger.warning(f"Could not convert column {col} to float: {e}")
+                                    continue
                         
                         if not df_merged.empty and display_col in df_merged.columns:
                             # Adicionar círculos dos municípios de forma otimizada
@@ -975,11 +976,8 @@ RASTER_LAYERS = {
     }
 }
 
-# Database functions
-@st.cache_data
-def get_database_path():
-    """Get database path"""
-    return Path(__file__).parent.parent.parent / "data" / "cp2b_maps.db"
+# Database functions - import from migrations module to avoid duplication
+from database.migrations import get_database_path
 
 @st.cache_data
 def load_municipalities():
@@ -1032,7 +1030,8 @@ def format_number(value, unit="Nm³/ano", scale=1):
             return f"{scaled_value:.0f}K {unit}"
         else:
             return f"{value:,.0f} {unit}"
-    except:
+    except (ValueError, TypeError, AttributeError) as e:
+        logger.warning(f"Error formatting value {value}: {e}")
         return f"0 {unit}"
 
 # Navigation functions
@@ -1541,9 +1540,9 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                         popup="Rodovias Estaduais de São Paulo"
                     ).add_to(rodovias_group)
                     rodovias_group.add_to(m)
-                    print("[SUCESSO] Camada de rodovias (FeatureGroup) adicionada.")
+                    logger.info("Camada de rodovias (FeatureGroup) adicionada.")
             except Exception as e:
-                print(f"[ERRO] Erro ao carregar rodovias: {e}")
+                logger.error(f"Erro ao carregar rodovias: {e}")
         
         # Camada de rios principais (estrutura preparada para futuro)
         if show_rios:
@@ -1565,11 +1564,11 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                         popup="Rios Principais de São Paulo"
                     ).add_to(rios_group)
                     rios_group.add_to(m)
-                    print("[SUCESSO] Camada de rios (FeatureGroup) adicionada.")
+                    logger.info("Camada de rios (FeatureGroup) adicionada.")
                 else:
-                    print("[INFO] Shapefile de rios não encontrado - funcionalidade preparada para futuro.")
+                    logger.info("Shapefile de rios não encontrado - funcionalidade preparada para futuro.")
             except Exception as e:
-                print(f"[ERRO] Erro ao carregar rios: {e}")
+                logger.error(f"Erro ao carregar rios: {e}")
         
         # --- CAMADAS DE INFRAESTRUTURA DE BIOGÁS ---
         # Camada de plantas de biogás
@@ -1649,11 +1648,11 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                     
                     plantas_group.add_to(m)
                     st.success(f"✅ **SUCESSO:** Camada de plantas de biogás adicionada: {len(plantas_gdf)} plantas.")
-                    print(f"[SUCESSO] Camada de plantas de biogás adicionada: {len(plantas_gdf)} plantas.")
+                    logger.info(f"Camada de plantas de biogás adicionada: {len(plantas_gdf)} plantas.")
                 else:
-                    print("[ERRO] Shapefile de plantas de biogás não encontrado.")
+                    logger.warning("Shapefile de plantas de biogás não encontrado.")
             except Exception as e:
-                print(f"[ERRO] Erro ao carregar plantas de biogás: {e}")
+                logger.error(f"Erro ao carregar plantas de biogás: {e}")
         
         # Camada de gasodutos - distribuição
         if show_gasodutos_dist:
@@ -1674,11 +1673,11 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                         popup="Rede de Distribuição de Gás Natural"
                     ).add_to(gasodutos_dist_group)
                     gasodutos_dist_group.add_to(m)
-                    print(f"[SUCESSO] Camada de gasodutos de distribuição adicionada: {len(gasodutos_gdf)} trechos.")
+                    logger.info(f"Camada de gasodutos de distribuição adicionada: {len(gasodutos_gdf)} trechos.")
                 else:
-                    print("[ERRO] Shapefile de gasodutos de distribuição não encontrado.")
+                    logger.warning("Shapefile de gasodutos de distribuição não encontrado.")
             except Exception as e:
-                print(f"[ERRO] Erro ao carregar gasodutos de distribuição: {e}")
+                logger.error(f"Erro ao carregar gasodutos de distribuição: {e}")
         
         # Camada de gasodutos - transporte
         if show_gasodutos_transp:
@@ -1700,11 +1699,11 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                                                 labels=['Nome:', 'Origem:', 'Destino:'])
                     ).add_to(gasodutos_transp_group)
                     gasodutos_transp_group.add_to(m)
-                    print(f"[SUCESSO] Camada de gasodutos de transporte adicionada: {len(gasodutos_gdf)} trechos.")
+                    logger.info(f"Camada de gasodutos de transporte adicionada: {len(gasodutos_gdf)} trechos.")
                 else:
-                    print("[ERRO] Shapefile de gasodutos de transporte não encontrado.")
+                    logger.warning("Shapefile de gasodutos de transporte não encontrado.")
             except Exception as e:
-                print(f"[ERRO] Erro ao carregar gasodutos de transporte: {e}")
+                logger.error(f"Erro ao carregar gasodutos de transporte: {e}")
         
         # --- ÁREAS URBANAS LAYER (FROM GEOPARQUET) ---
         if show_areas_urbanas:
@@ -1727,11 +1726,11 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                                                 labels=['Área (ha):'])
                     ).add_to(areas_group)
                     areas_group.add_to(m)
-                    print(f"[SUCESSO] Camada de áreas urbanas adicionada: {len(areas_gdf)} polígonos.")
+                    logger.info(f"Camada de áreas urbanas adicionada: {len(areas_gdf)} polígonos.")
                 else:
-                    print("[ERRO] Arquivo GeoParquet de áreas urbanas não encontrado.")
+                    logger.warning("Arquivo GeoParquet de áreas urbanas não encontrado.")
             except Exception as e:
-                print(f"[ERRO] Erro ao carregar áreas urbanas: {e}")
+                logger.error(f"Erro ao carregar áreas urbanas: {e}")
         
         # --- REGIÕES ADMINISTRATIVAS LAYER ---
         if show_regioes_admin:
@@ -1762,11 +1761,11 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                         ).add_to(regioes_group)
                     
                     regioes_group.add_to(m)
-                    print(f"[SUCESSO] Camada de regiões administrativas adicionada: {len(regioes_gdf)} regiões.")
+                    logger.info(f"Camada de regiões administrativas adicionada: {len(regioes_gdf)} regiões.")
                 else:
-                    print("[ERRO] Shapefile de regiões administrativas não encontrado.")
+                    logger.warning("Shapefile de regiões administrativas não encontrado.")
             except Exception as e:
-                print(f"[ERRO] Erro ao carregar regiões administrativas: {e}")
+                logger.error(f"Erro ao carregar regiões administrativas: {e}")
         # ------------------------------------------
         
         # Load municipality centroids
@@ -1987,10 +1986,10 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                     ).add_to(m)
                     
                     # Debug info
-                    print(f"Balanced Heatmap - Radius: {final_radius}, Blur: {final_blur}")
-                    print(f"Original range: {data_min:,.0f} - {data_max:,.0f}")
-                    print(f"Effective range: {effective_min:,.0f} - {effective_max:,.0f}")
-                    print(f"Median: {data_median:,.0f}, IQR: {iqr:,.0f}")
+                    logger.debug(f"Balanced Heatmap - Radius: {final_radius}, Blur: {final_blur}")
+                    logger.debug(f"Original range: {data_min:,.0f} - {data_max:,.0f}")
+                    logger.debug(f"Effective range: {effective_min:,.0f} - {effective_max:,.0f}")
+                    logger.debug(f"Median: {data_median:,.0f}, IQR: {iqr:,.0f}")
 
             elif viz_type == "Agrupamentos (Clusters)":
                 # Marker clustering visualization

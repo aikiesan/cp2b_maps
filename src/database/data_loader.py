@@ -36,15 +36,30 @@ COLUMN_MAPPING = {
     'Biogás Bovino (Nm³/ano)': 'biogas_bovinos_nm_ano',
     'Biogás Suínos (Nm³/ano)': 'biogas_suino_nm_ano',
     'Biogás Aves (Nm³/ano)': 'biogas_aves_nm_ano',
-    'Biogás Piscicultura (Nm³/ano)': 'biogas_piscicultura_nm_ano'
+    'Biogás Piscicultura (Nm³/ano)': 'biogas_piscicultura_nm_ano',
+    # Urban waste columns
+    'RSU Potencial CH4 (m³/ano)': 'rsu_potencial_nm_habitante_ano',
+    'RPO Potencial CH4 (m³/ano)': 'rpo_potencial_nm_habitante_ano',
+    'Total CH4 RSU+RPO (m³/ano)': 'rsu_total_nm_ano',
+    'Total Urbano CH4 (m³/ano)': 'total_urbano_nm_ano',
+    'RSU Orgânicos (ton/ano)': 'rsu_organicos_ton_ano',
+    'RPO Podas (ton/ano)': 'rpo_podas_ton_ano'
 }
 
 def find_data_file():
     """Find available data files"""
+    project_root = Path(__file__).parent.parent.parent
     possible_paths = [
-        Path("/c/Users/Lucas/Documents/CP2B/Dados_Por_Municipios_SP.xls"),
-        Path(__file__).parent.parent.parent / "data" / "Dados_Por_Municipios_SP.xls",
-        Path(__file__).parent.parent.parent / "data" / "municipal_data.csv"
+        # Check project data directory first
+        project_root / "data" / "Dados_Por_Municipios_SP.xls",
+        project_root / "Banco_De_Dados_Residuos_Biogas_Municipios_SP.xlsx",
+        project_root / "data" / "municipal_data.csv",
+        project_root / "data" / "municipal_data.xlsx",
+        # Check common data directories
+        Path.home() / "Documents" / "CP2B" / "Dados_Por_Municipios_SP.xls",
+        Path.home() / "Downloads" / "Dados_Por_Municipios_SP.xls",
+        # Current directory fallback
+        Path.cwd() / "Dados_Por_Municipios_SP.xls"
     ]
     
     for path in possible_paths:
@@ -164,35 +179,76 @@ def create_sample_data():
 
 def load_data_to_database(df):
     """Load data into SQLite database"""
+    if df is None or df.empty:
+        logger.error("❌ Cannot load empty dataframe to database")
+        return False
+
     try:
         db_path = get_database_path()
-        
-        with sqlite3.connect(db_path) as conn:
+
+        if not db_path or not Path(db_path).exists():
+            logger.error("❌ Database file not found or invalid path")
+            return False
+
+        with sqlite3.connect(db_path, timeout=30) as conn:
             # Get the actual database columns
             cursor = conn.cursor()
             cursor.execute("PRAGMA table_info(municipalities)")
-            db_columns = [row[1] for row in cursor.fetchall()]
+            db_info = cursor.fetchall()
+
+            if not db_info:
+                logger.error("❌ Table 'municipalities' not found in database")
+                return False
+
+            db_columns = [row[1] for row in db_info]
             logger.info(f"Database columns: {db_columns}")
-            
+
             # Filter dataframe to only include columns that exist in the database
             available_columns = [col for col in df.columns if col in db_columns]
+            if not available_columns:
+                logger.error("❌ No matching columns found between data and database schema")
+                return False
+
             df_filtered = df[available_columns].copy()
             logger.info(f"Filtered columns: {available_columns}")
-            
-            # Clear existing data
-            conn.execute("DELETE FROM municipalities")
-            
-            # Insert new data
-            df_filtered.to_sql('municipalities', conn, if_exists='append', index=False)
-            
-            # Get count
-            count = conn.execute("SELECT COUNT(*) FROM municipalities").fetchone()[0]
-            logger.info(f"✅ Successfully loaded {count} municipalities into database")
-            
-            return True
-            
+
+            # Validate required columns
+            required_cols = ['cd_mun', 'nome_municipio']
+            missing_required = [col for col in required_cols if col not in available_columns]
+            if missing_required:
+                logger.warning(f"⚠️ Missing required columns: {missing_required}")
+
+            # Clear existing data and insert new data
+            try:
+                cursor.execute("DELETE FROM municipalities")
+
+                # Insert new data (to_sql handles its own transactions)
+                df_filtered.to_sql('municipalities', conn, if_exists='append', index=False)
+
+                # Verify insertion
+                count = cursor.execute("SELECT COUNT(*) FROM municipalities").fetchone()[0]
+                if count == 0:
+                    raise ValueError("No data was inserted into the database")
+
+                logger.info(f"✅ Successfully loaded {count} municipalities into database")
+                return True
+
+            except Exception as e:
+                # Clear any partial data on error
+                try:
+                    cursor.execute("DELETE FROM municipalities")
+                except:
+                    pass  # If this fails, we'll catch it in the outer exception handler
+                raise e
+
+    except sqlite3.OperationalError as e:
+        logger.error(f"❌ Database operation error: {e}")
+        return False
+    except sqlite3.DatabaseError as e:
+        logger.error(f"❌ Database error: {e}")
+        return False
     except Exception as e:
-        logger.error(f"❌ Error loading data to database: {e}")
+        logger.error(f"❌ Unexpected error loading data to database: {e}")
         return False
 
 def load_municipal_data():
@@ -205,18 +261,51 @@ def load_municipal_data():
     if data_file:
         try:
             logger.info(f"📄 Loading from file: {data_file}")
-            
-            # Load based on file type
+
+            # Load based on file type with better error handling
             if data_file.suffix.lower() in ['.xls', '.xlsx']:
-                df = pd.read_excel(data_file)
+                try:
+                    df = pd.read_excel(data_file, engine='openpyxl')
+                except Exception as e:
+                    logger.warning(f"Failed with openpyxl engine: {e}. Trying xlrd...")
+                    df = pd.read_excel(data_file, engine='xlrd')
+            elif data_file.suffix.lower() == '.csv':
+                # Try different encodings for CSV files
+                encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+                df = None
+                for encoding in encodings:
+                    try:
+                        df = pd.read_csv(data_file, encoding=encoding)
+                        logger.info(f"Successfully loaded CSV with {encoding} encoding")
+                        break
+                    except UnicodeDecodeError:
+                        continue
+
+                if df is None:
+                    raise ValueError(f"Could not decode CSV file with any of these encodings: {encodings}")
             else:
-                df = pd.read_csv(data_file)
-            
+                raise ValueError(f"Unsupported file type: {data_file.suffix}")
+
+            if df.empty:
+                raise ValueError("Loaded file contains no data")
+
             logger.info(f"📊 Loaded {len(df)} records from file")
-            
+
             # Clean data
             df = clean_data(df)
-            
+
+            if df.empty:
+                raise ValueError("No data remaining after cleaning")
+
+        except FileNotFoundError:
+            logger.error(f"❌ File not found: {data_file}")
+            df = create_sample_data()
+        except pd.errors.EmptyDataError:
+            logger.error(f"❌ File is empty: {data_file}")
+            df = create_sample_data()
+        except PermissionError:
+            logger.error(f"❌ Permission denied accessing file: {data_file}")
+            df = create_sample_data()
         except Exception as e:
             logger.warning(f"⚠️ Error loading file data: {e}. Using sample data instead.")
             df = create_sample_data()
