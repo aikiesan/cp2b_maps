@@ -1081,9 +1081,52 @@ def render_navigation():
         "🔍 Explorar Dados",
         "📊 Análises Avançadas",
         "🎯 Análise de Proximidade",
-        "📚 Referências",
+        "📚 Referências Científicas",
         "ℹ️ Sobre o CP2B Maps"
     ])
+
+    # Add custom CSS for improved tab design and usability
+    st.markdown("""
+        <style>
+        /* Improve main navigation tabs */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 12px;
+            background-color: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stTabs [data-baseweb="tab"] {
+            margin-right: 6px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .stTabs [data-baseweb="tab"]:hover {
+            background-color: #e3f2fd;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .stTabs [aria-selected="true"] {
+            background-color: #2E8B57 !important;
+            color: white !important;
+            border-color: #2E8B57;
+            box-shadow: 0 3px 10px rgba(46,139,87,0.3);
+        }
+        .stTabs [aria-selected="true"]:hover {
+            background-color: #257a4a !important;
+        }
+        /* Improve text contrast and readability */
+        .stTabs [data-baseweb="tab"] p {
+            font-size: 14px;
+            margin: 0;
+            font-weight: 600;
+        }
+        </style>
+        """, unsafe_allow_html=True)
 
     return tabs
 
