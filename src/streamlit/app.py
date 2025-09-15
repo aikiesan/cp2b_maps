@@ -4195,13 +4195,18 @@ def page_main():
             agri_types = ['Cana-de-açúcar', 'Soja', 'Milho', 'Café', 'Citros']
             for res_type in agri_types:
                 col_name = RESIDUE_OPTIONS[res_type]
-                top_mun = df.nlargest(1, col_name).iloc[0] if not df[col_name].isna().all() else None
-                if top_mun is not None:
-                    agri_data.append({
-                        'Tipo': res_type,
-                        'Líder': top_mun['nome_municipio'],
-                        'Potencial': top_mun[col_name]
-                    })
+                # Check if column exists before accessing it
+                if col_name in df.columns:
+                    top_mun = df.nlargest(1, col_name).iloc[0] if not df[col_name].isna().all() else None
+                    if top_mun is not None:
+                        agri_data.append({
+                            'Tipo': res_type,
+                            'Líder': top_mun['nome_municipio'],
+                            'Potencial': top_mun[col_name]
+                        })
+                else:
+                    # Column doesn't exist, skip this residue type
+                    continue
             
             if agri_data:
                 import pandas as pd  # Import local para garantir disponibilidade
@@ -4219,13 +4224,18 @@ def page_main():
             pec_types = ['Bovinos', 'Suínos', 'Aves', 'Piscicultura']
             for res_type in pec_types:
                 col_name = RESIDUE_OPTIONS[res_type]
-                top_mun = df.nlargest(1, col_name).iloc[0] if not df[col_name].isna().all() else None
-                if top_mun is not None:
-                    pec_data.append({
-                        'Tipo': res_type,
-                        'Líder': top_mun['nome_municipio'],
-                        'Potencial': top_mun[col_name]
-                    })
+                # Check if column exists before accessing it
+                if col_name in df.columns:
+                    top_mun = df.nlargest(1, col_name).iloc[0] if not df[col_name].isna().all() else None
+                    if top_mun is not None:
+                        pec_data.append({
+                            'Tipo': res_type,
+                            'Líder': top_mun['nome_municipio'],
+                            'Potencial': top_mun[col_name]
+                        })
+                else:
+                    # Column doesn't exist, skip this residue type
+                    continue
             
             if pec_data:
                 import pandas as pd  # Import local para garantir disponibilidade
@@ -7300,7 +7310,7 @@ def page_references():
                         st.markdown(f"**Aplicação:** {ref.description}")
                 with col2:
                     if ref.url:
-                        st.link_button("🔗 Acessar Artigo", ref.url, type="primary", key=f"link_substrate_{ref.id}")
+                        st.markdown(f"[🔗 **Acessar Artigo**]({ref.url})")
 
                 if ref.citation_abnt:
                     with st.expander("📝 Citação ABNT"):
@@ -7329,7 +7339,7 @@ def page_references():
             st.markdown(f"**{methodology_ref.title}**")
             st.markdown(f"*{methodology_ref.authors}* ({methodology_ref.year})")
             if methodology_ref.url:
-                st.link_button("🔗 Ver Metodologia", methodology_ref.url)
+                st.markdown(f"[🔗 **Ver Metodologia**]({methodology_ref.url})")
 
     with ref_tabs[2]:  # Co-digestion
         st.markdown("### ⚗️ Co-digestão")
@@ -7347,7 +7357,7 @@ def page_references():
                     st.markdown(f"**Benefício:** {ref.description}")
             with col2:
                 if ref.url:
-                    st.link_button("🔗 Acessar Artigo", ref.url, type="primary", key=f"link_codigestion_{ref.id}")
+                    st.markdown(f"[🔗 **Acessar Artigo**]({ref.url})")
 
             if ref.citation_abnt:
                 with st.expander("📝 Citação ABNT"):
@@ -7371,7 +7381,7 @@ def page_references():
                     st.markdown(f"**Dados:** {ref.description}")
             with col2:
                 if ref.url:
-                    st.link_button("🔗 Acessar Base", ref.url, type="secondary")
+                    st.markdown(f"[🔗 **Acessar Base**]({ref.url})")
 
             st.markdown("---")
 
@@ -7391,7 +7401,7 @@ def page_references():
                     st.markdown(f"**Aplicação:** {ref.description}")
             with col2:
                 if ref.url:
-                    st.link_button("🔗 Ver Método", ref.url, type="primary", key=f"link_method_{ref.id}")
+                    st.markdown(f"[🔗 **Ver Método**]({ref.url})")
 
             if ref.citation_abnt:
                 with st.expander("📝 Citação ABNT"):
@@ -7441,9 +7451,7 @@ def page_references():
             for i, ref in enumerate(results):
                 st.markdown(f"- **{ref.title}** ({ref.authors}, {ref.year})")
                 if ref.url:
-                    import time
-                    search_key = f"search_{ref.id}_{i}_{int(time.time() * 1000) % 10000}"
-                    st.link_button("🔗 Acessar", ref.url, key=search_key)
+                    st.markdown(f"  [🔗 **Acessar**]({ref.url})")
         else:
             st.warning("Nenhuma referência encontrada para os termos pesquisados.")
 
