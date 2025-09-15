@@ -43,6 +43,12 @@ sys.path.insert(0, str(root_dir))
 # Import custom modules
 from modules.raster_simulation import simulate_raster_analysis, get_classification_label, find_neighboring_municipalities
 from modules.memory_utils import cleanup_memory, get_memory_usage
+from modules.ui_components import (render_header, render_navigation, render_sidebar_filters,
+                                  render_layer_controls, render_export_controls,
+                                  show_municipality_details_compact, render_municipality_comparison,
+                                  render_search_interface, render_quick_stats, render_memory_info,
+                                  render_academic_footer, render_substrate_info_panel,
+                                  render_value_with_reference)
 
 # Configure logging with environment-based level
 LOG_LEVEL = os.getenv('CP2B_LOG_LEVEL', 'INFO').upper()
@@ -1071,12 +1077,13 @@ def render_navigation():
     """Simple tab-based navigation"""
     tabs = st.tabs([
         "🏠 Mapa Principal",
-        "🔍 Explorar Dados", 
+        "🔍 Explorar Dados",
         "📊 Análises Avançadas",
         "🎯 Análise de Proximidade",
+        "📚 Referências",
         "ℹ️ Sobre o CP2B Maps"
     ])
-    
+
     return tabs
 
 # Filter functions
@@ -7203,6 +7210,199 @@ def page_proximity_analysis():
             </div>
             """, unsafe_allow_html=True)
 
+def page_references():
+    """Dedicated references page with all scientific citations"""
+    st.title("📚 Referências Científicas")
+
+    # Import reference system
+    from modules.reference_system import get_reference_database
+
+    db = get_reference_database()
+
+    # Header information
+    st.markdown("""
+    ### 🎯 Base Científica do CP2B Maps
+
+    Esta página compila todas as **referências acadêmicas** utilizadas no sistema CP2B Maps.
+    Cada valor, fator de conversão e metodologia apresentada possui respaldo científico de
+    **pesquisas revisadas por pares**.
+
+    **📖 Categorias de Referências:**
+    """)
+
+    # Category tabs
+    ref_tabs = st.tabs([
+        "🌾 Substratos Agrícolas",
+        "🐄 Resíduos Pecuários",
+        "⚗️ Co-digestão",
+        "🗺️ Fontes de Dados",
+        "🔬 Metodologias",
+        "📋 Todas as Referências"
+    ])
+
+    with ref_tabs[0]:  # Agricultural substrates
+        st.markdown("### 🌾 Substratos Agrícolas")
+        st.markdown("Pesquisas sobre potencial de biogás de resíduos de culturas:")
+
+        substrate_refs = db.get_references_by_category("substrate")
+        for ref in substrate_refs:
+            if any(keyword in ref.description.lower() for keyword in ['cana', 'soja', 'milho', 'café', 'citros'] if ref.description):
+                st.markdown(f"#### 📄 {ref.title}")
+
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    st.markdown(f"**Autores:** {ref.authors}")
+                    st.markdown(f"**Revista:** {ref.journal} ({ref.year})")
+                    if ref.description:
+                        st.markdown(f"**Aplicação:** {ref.description}")
+                with col2:
+                    if ref.url:
+                        st.link_button("🔗 Acessar Artigo", ref.url, type="primary")
+
+                if ref.citation_abnt:
+                    with st.expander("📝 Citação ABNT"):
+                        st.text(ref.citation_abnt)
+
+                st.markdown("---")
+
+    with ref_tabs[1]:  # Livestock substrates
+        st.markdown("### 🐄 Resíduos Pecuários")
+        st.markdown("Estudos sobre dejetos animais e produção de metano:")
+
+        # Add general livestock methodology
+        st.markdown("""
+        #### 📊 Metodologia Geral - Resíduos Pecuários
+
+        **Parâmetros Base:**
+        - **Dejetos Bovinos**: 150-300 m³ CH₄/ton MS, 60-68% CH₄
+        - **Dejetos Suínos**: 450-650 m³ CH₄/ton MS, 65-70% CH₄
+        - **Cama de Frango**: 180-280 m³ CH₄/ton MS, 60-65% CH₄
+
+        **Referência Metodológica:**
+        """)
+
+        methodology_ref = db.get_reference("biogas_calculation")
+        if methodology_ref:
+            st.markdown(f"**{methodology_ref.title}**")
+            st.markdown(f"*{methodology_ref.authors}* ({methodology_ref.year})")
+            if methodology_ref.url:
+                st.link_button("🔗 Ver Metodologia", methodology_ref.url)
+
+    with ref_tabs[2]:  # Co-digestion
+        st.markdown("### ⚗️ Co-digestão")
+        st.markdown("Pesquisas sobre misturas ótimas de substratos:")
+
+        codigestion_refs = db.get_references_by_category("codigestion")
+        for ref in codigestion_refs:
+            st.markdown(f"#### 📄 {ref.title}")
+
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.markdown(f"**Autores:** {ref.authors}")
+                st.markdown(f"**Revista:** {ref.journal} ({ref.year})")
+                if ref.description:
+                    st.markdown(f"**Benefício:** {ref.description}")
+            with col2:
+                if ref.url:
+                    st.link_button("🔗 Acessar Artigo", ref.url, type="primary")
+
+            if ref.citation_abnt:
+                with st.expander("📝 Citação ABNT"):
+                    st.text(ref.citation_abnt)
+
+            st.markdown("---")
+
+    with ref_tabs[3]:  # Data sources
+        st.markdown("### 🗺️ Fontes de Dados")
+        st.markdown("Instituições e bancos de dados oficiais:")
+
+        data_refs = db.get_references_by_category("data_source")
+        for ref in data_refs:
+            st.markdown(f"#### 🏛️ {ref.title}")
+
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.markdown(f"**Instituição:** {ref.authors}")
+                st.markdown(f"**Ano de Referência:** {ref.year}")
+                if ref.description:
+                    st.markdown(f"**Dados:** {ref.description}")
+            with col2:
+                if ref.url:
+                    st.link_button("🔗 Acessar Base", ref.url, type="secondary")
+
+            st.markdown("---")
+
+    with ref_tabs[4]:  # Methodologies
+        st.markdown("### 🔬 Metodologias")
+        st.markdown("Métodos de cálculo e avaliação:")
+
+        method_refs = db.get_references_by_category("methodology")
+        for ref in method_refs:
+            st.markdown(f"#### 🧮 {ref.title}")
+
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.markdown(f"**Autores:** {ref.authors}")
+                st.markdown(f"**Revista:** {ref.journal} ({ref.year})")
+                if ref.description:
+                    st.markdown(f"**Aplicação:** {ref.description}")
+            with col2:
+                if ref.url:
+                    st.link_button("🔗 Ver Método", ref.url, type="primary")
+
+            if ref.citation_abnt:
+                with st.expander("📝 Citação ABNT"):
+                    st.text(ref.citation_abnt)
+
+            st.markdown("---")
+
+    with ref_tabs[5]:  # All references
+        st.markdown("### 📋 Todas as Referências")
+        st.markdown("Lista completa ordenada alfabeticamente:")
+
+        all_refs = sorted(db.references.values(), key=lambda x: x.title)
+
+        for i, ref in enumerate(all_refs, 1):
+            with st.expander(f"{i}. {ref.title}"):
+                col1, col2 = st.columns([2, 1])
+
+                with col1:
+                    st.markdown(f"**Autores:** {ref.authors}")
+                    st.markdown(f"**Revista/Fonte:** {ref.journal}")
+                    st.markdown(f"**Ano:** {ref.year}")
+                    st.markdown(f"**Categoria:** {ref.category}")
+
+                    if ref.description:
+                        st.markdown(f"**Descrição:** {ref.description}")
+
+                with col2:
+                    if ref.url:
+                        st.link_button("🔗 Acessar", ref.url, key=f"link_{ref.id}")
+
+                if ref.citation_abnt:
+                    st.markdown("**Citação ABNT:**")
+                    st.text(ref.citation_abnt)
+
+    # Search functionality
+    st.markdown("---")
+    st.markdown("### 🔍 Buscar Referências")
+
+    search_query = st.text_input(
+        "Digite palavras-chave para buscar:",
+        placeholder="Ex: cana, metano, digestão anaeróbia..."
+    )
+
+    if search_query:
+        results = db.search_references(search_query)
+        if results:
+            st.markdown(f"**{len(results)} referência(s) encontrada(s):**")
+            for ref in results:
+                st.markdown(f"- **{ref.title}** ({ref.authors}, {ref.year})")
+                if ref.url:
+                    st.link_button("🔗 Acessar", ref.url, key=f"search_{ref.id}")
+        else:
+            st.warning("Nenhuma referência encontrada para os termos pesquisados.")
+
 def page_about():
     """About page with institutional context and technical details"""
     st.title("ℹ️ Sobre o CP2B Maps")
@@ -7251,15 +7451,55 @@ def page_about():
         Os fatores de conversão são calibrados com base em literatura científica e dados empíricos, considerando as condições específicas do Estado de São Paulo.
         """)
         
-        # Tabela de fatores de conversão principais
-        fatores_conversao = pd.DataFrame({
-            "Fonte": ["Pecuária", "Pecuária", "Pecuária", "Cultura", "Cultura", "Cultura", "Cultura", "Silvicultura", "RSU", "RSU"],
-            "Resíduo": ["Dejetos Bovinos", "Dejetos Suínos", "Cama de Frango", "Bagaço de Cana", "Palha de Soja", "Palha de Milho", "Casca de Café", "Eucalipto", "Resíduo Alimentício", "Poda Urbana"],
-            "Potencial (Nm³/ano)": [225, 210, 34, 94, 215, 225, 310, 10, 117, 7],
-            "Unidade": ["cabeça", "cabeça", "ave", "ton cana", "ton soja", "ton milho", "ton café", "m³ madeira", "habitante", "habitante"]
-        })
-        
-        st.dataframe(fatores_conversao, use_container_width=True)
+        # Tabela de fatores de conversão principais com referências
+        st.markdown("#### 📊 Principais Fatores de Conversão")
+
+        col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
+        col1.markdown("**Substrato**")
+        col2.markdown("**Potencial**")
+        col3.markdown("**Unidade**")
+        col4.markdown("**Ref.**")
+
+        # Pecuária
+        st.markdown("**🐄 Pecuária**")
+        substrates_pecuaria = [
+            ("Dejetos Bovinos", "225 Nm³/ano", "cabeça", "biogas_calculation"),
+            ("Dejetos Suínos", "450-650 m³/ton", "ton MS", "biogas_calculation"),
+            ("Cama de Frango", "180-280 m³/ton", "ton MS", "biogas_calculation")
+        ]
+
+        for substrate, potential, unit, ref_id in substrates_pecuaria:
+            col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
+            with col1:
+                st.write(f"• {substrate}")
+            with col2:
+                st.write(potential)
+            with col3:
+                st.write(unit)
+            with col4:
+                render_reference_button(ref_id, compact=True)
+
+        # Agricultura
+        st.markdown("**🌾 Agricultura**")
+        substrates_agricultura = [
+            ("Bagaço de Cana", "175 m³/ton", "ton MS", "sugarcane_bagasse"),
+            ("Palha de Cana", "200 m³/ton", "ton MS", "sugarcane_straw"),
+            ("Palha de Soja", "160-220 m³/ton", "ton MS", "soybean_straw"),
+            ("Palha de Milho", "200-260 m³/ton", "ton MS", "corn_straw"),
+            ("Casca de Café", "150-200 m³/ton", "ton MS", "coffee_husk"),
+            ("Bagaço de Citros", "80-150 m³/ton", "ton MS", "citrus_bagasse")
+        ]
+
+        for substrate, potential, unit, ref_id in substrates_agricultura:
+            col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
+            with col1:
+                st.write(f"• {substrate}")
+            with col2:
+                st.write(potential)
+            with col3:
+                st.write(unit)
+            with col4:
+                render_reference_button(ref_id, compact=True)
         
         st.subheader("🧮 Exemplo de Cálculo: Dejetos Bovinos")
         st.markdown("""
@@ -7282,7 +7522,10 @@ def page_about():
         4. Fator calibrado final: 225 Nm³ biogás/cabeça/ano
         ```
         """)
-    
+
+    # Add substrate information panel
+    render_substrate_info_panel()
+
     # Seção de Referências
     with st.expander("📚 Referências Bibliográficas"):
         st.markdown("""
@@ -7420,15 +7663,21 @@ def main():
     
     with tabs[3]:
         page_proximity_analysis()
-    
+
     with tabs[4]:
+        page_references()
+
+    with tabs[5]:
         page_about()
     
+    # Academic references footer
+    render_academic_footer()
+
     # Footer
     st.markdown("---")
     st.markdown(
         "<div style='text-align: center; color: gray; padding: 1rem;'>"
-        "<small>CP2B Maps - Análise de Potencial de Biogás</small>"
+        "<small>CP2B Maps - Análise de Potencial de Biogás • Baseado em Pesquisas Científicas</small>"
         "</div>",
         unsafe_allow_html=True
     )
