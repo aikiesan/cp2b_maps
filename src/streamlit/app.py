@@ -3539,7 +3539,7 @@ def page_main():
         # CP2B Logo no topo da sidebar
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            st.image("logotipo-full-black.png", width=480)
+            st.image("logotipo-full-black.png", width=960)
 
         st.markdown("""
         <div style='background: #2E8B57; color: white; padding: 0.8rem; margin: -1rem -1rem 1rem -1rem;
