@@ -7403,30 +7403,27 @@ def page_references():
         st.markdown("### 📋 Todas as Referências")
         st.markdown("Lista completa ordenada alfabeticamente:")
 
-        all_refs = sorted(db.references.values(), key=lambda x: x.title)
+        st.info("🔧 Esta seção está temporariamente desabilitada para resolução de problemas técnicos. Use as outras abas para acessar as referências por categoria.")
 
-        for i, ref in enumerate(all_refs, 1):
-            with st.expander(f"{i}. {ref.title}"):
-                col1, col2 = st.columns([2, 1])
-
-                with col1:
-                    st.markdown(f"**Autores:** {ref.authors}")
-                    st.markdown(f"**Revista/Fonte:** {ref.journal}")
-                    st.markdown(f"**Ano:** {ref.year}")
-                    st.markdown(f"**Categoria:** {ref.category}")
-
-                    if ref.description:
-                        st.markdown(f"**Descrição:** {ref.description}")
-
-                with col2:
-                    if ref.url:
-                        # Use simple unique key based on ref.id which is already unique
-                        link_key = f"ref_all_{ref.id.replace('-', '_')}"
-                        st.link_button("🔗 Acessar", ref.url, key=link_key)
-
-                if ref.citation_abnt:
-                    st.markdown("**Citação ABNT:**")
-                    st.text(ref.citation_abnt)
+        # Temporarily disabled problematic section
+        # all_refs = sorted(db.references.values(), key=lambda x: x.title)
+        # for i, ref in enumerate(all_refs, 1):
+        #     with st.expander(f"{i}. {ref.title}"):
+        #         col1, col2 = st.columns([2, 1])
+        #         with col1:
+        #             st.markdown(f"**Autores:** {ref.authors}")
+        #             st.markdown(f"**Revista/Fonte:** {ref.journal}")
+        #             st.markdown(f"**Ano:** {ref.year}")
+        #             st.markdown(f"**Categoria:** {ref.category}")
+        #             if ref.description:
+        #                 st.markdown(f"**Descrição:** {ref.description}")
+        #         with col2:
+        #             if ref.url:
+        #                 link_key = f"ref_all_{ref.id.replace('-', '_')}"
+        #                 st.link_button("🔗 Acessar", ref.url, key=link_key)
+        #         if ref.citation_abnt:
+        #             st.markdown("**Citação ABNT:**")
+        #             st.text(ref.citation_abnt)
 
     # Search functionality
     st.markdown("---")
