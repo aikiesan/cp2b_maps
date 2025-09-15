@@ -15,7 +15,11 @@
       "Bash(copy app.py app_backup.py)",
       "Bash(tasklist)",
       "Bash(dir cp2b_maps.db)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(sqlite3:*)",
+      "Bash(timeout 10 streamlit run:*)",
+      "Bash(timeout 5 streamlit run:*)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": []
