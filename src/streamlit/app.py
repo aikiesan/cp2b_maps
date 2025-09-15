@@ -80,7 +80,7 @@ try:
 
     from raster import RasterLoader, get_raster_loader, create_mapbiomas_legend, analyze_raster_in_radius
     HAS_RASTER_SYSTEM = True
-    logger.info("✅ Raster system loaded successfully")
+    logger.info("Raster system loaded successfully")
 except ImportError as e:
     HAS_RASTER_SYSTEM = False
     RasterLoader = None
