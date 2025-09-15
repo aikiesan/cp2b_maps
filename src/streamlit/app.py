@@ -7420,8 +7420,10 @@ def page_references():
 
                 with col2:
                     if ref.url:
-                        # Use unique key with index to avoid conflicts
-                        link_key = f"link_all_refs_{ref.id}_{i}"
+                        # Use unique key with hash to avoid conflicts
+                        import hashlib
+                        key_source = f"link_all_refs_{ref.id}_{i}_{ref.title}"
+                        link_key = f"link_{hashlib.md5(key_source.encode()).hexdigest()[:8]}"
                         st.link_button("🔗 Acessar", ref.url, key=link_key)
 
                 if ref.citation_abnt:

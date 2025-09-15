@@ -352,8 +352,10 @@ def render_reference_button(ref_id: str, compact: bool = True, label: str = "ðŸ“
             return
 
         # Create unique key for this reference button
+        import hashlib
         import time
-        button_key = f"ref_btn_{ref_id}_{int(time.time() * 1000) % 10000}"
+        key_source = f"ref_btn_{ref_id}_{int(time.time() * 1000000)}"
+        button_key = f"ref_{hashlib.md5(key_source.encode()).hexdigest()[:8]}"
 
         with st.popover(label, help=f"Ver referÃªncia: {ref.title}", use_container_width=False):
             st.markdown(f"**{ref.title}**")
@@ -369,7 +371,10 @@ def render_reference_button(ref_id: str, compact: bool = True, label: str = "ðŸ“
 
             if ref.url:
                 # Use unique key for link button to avoid conflicts
-                link_key = f"link_{ref_id}_{int(time.time() * 1000) % 10000}"
+                import hashlib
+                import time
+                link_source = f"link_{ref_id}_{int(time.time() * 1000000)}"
+                link_key = f"lnk_{hashlib.md5(link_source.encode()).hexdigest()[:8]}"
                 st.link_button("ðŸ”— Acessar Artigo", ref.url, type="primary", key=link_key)
     except Exception as e:
         # Graceful fallback if reference system fails
