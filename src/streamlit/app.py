@@ -1064,124 +1064,36 @@ def format_number(value, unit="Nm³/ano", scale=1):
 def render_header():
     """Render application header"""
     st.markdown("""
-    <div style='
-        background: linear-gradient(135deg, #1a5d3a 0%, #2E8B57 30%, #228B22 70%, #32CD32 100%);
-        color: white;
-        padding: 2rem 1.5rem;
-        margin: -1rem -1rem 1.5rem -1rem;
-        text-align: center;
-        border-radius: 0 0 20px 20px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-        position: relative;
-        overflow: hidden;
-    '>
-        <!-- Decorative elements -->
-        <div style='
-            position: absolute;
-            top: -50px;
-            right: -50px;
-            width: 100px;
-            height: 100px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 50%;
-        '></div>
-        <div style='
-            position: absolute;
-            bottom: -30px;
-            left: -30px;
-            width: 60px;
-            height: 60px;
-            background: rgba(255,255,255,0.08);
-            border-radius: 50%;
-        '></div>
-
-        <!-- Main content -->
-        <div style='position: relative; z-index: 10;'>
-            <div style='
-                display: inline-block;
-                background: rgba(255,255,255,0.15);
-                padding: 0.8rem 1.2rem;
-                border-radius: 50px;
-                margin-bottom: 1rem;
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255,255,255,0.2);
-            '>
-                <span style='font-size: 1.5rem; margin-right: 0.5rem;'>🗺️</span>
-                <span style='font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;'>
-                    CP2B Maps
-                </span>
-            </div>
-
-            <h1 style='
-                margin: 0 0 0.8rem 0;
-                font-size: 2.8rem;
-                font-weight: 800;
-                background: linear-gradient(45deg, #ffffff, #e8f5e8);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-                text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                line-height: 1.2;
-            '>
-                Análise de Potencial de Biogás
-            </h1>
-
-            <div style='
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                gap: 1.5rem;
-                flex-wrap: wrap;
-                margin-top: 1rem;
-            '>
-                <div style='
-                    background: rgba(255,255,255,0.2);
-                    padding: 0.6rem 1.2rem;
-                    border-radius: 25px;
-                    border: 1px solid rgba(255,255,255,0.3);
-                    backdrop-filter: blur(5px);
-                '>
-                    <span style='font-size: 1.1rem; margin-right: 0.5rem;'>📍</span>
-                    <strong style='font-size: 1.1rem; font-weight: 600;'>645</strong>
-                    <span style='font-size: 0.95rem; margin-left: 0.3rem; opacity: 0.9;'>municípios</span>
-                </div>
-
-                <div style='
-                    background: rgba(255,255,255,0.2);
-                    padding: 0.6rem 1.2rem;
-                    border-radius: 25px;
-                    border: 1px solid rgba(255,255,255,0.3);
-                    backdrop-filter: blur(5px);
-                '>
-                    <span style='font-size: 1.1rem; margin-right: 0.5rem;'>🌱</span>
-                    <strong style='font-size: 1.1rem; font-weight: 600;'>São Paulo</strong>
-                </div>
-
-                <div style='
-                    background: rgba(255,255,255,0.2);
-                    padding: 0.6rem 1.2rem;
-                    border-radius: 25px;
-                    border: 1px solid rgba(255,255,255,0.3);
-                    backdrop-filter: blur(5px);
-                '>
-                    <span style='font-size: 1.1rem; margin-right: 0.5rem;'>⚡</span>
-                    <span style='font-size: 0.95rem; font-weight: 600;'>Energia Renovável</span>
+    <div style='background: linear-gradient(135deg, #2E8B57 0%, #228B22 50%, #32CD32 100%);
+                color: white; padding: 1.2rem 1.5rem; margin: -1rem -1rem 1rem -1rem;
+                text-align: center; border-radius: 0 0 15px 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.2);'>
+        <div style='display: flex; align-items: center; justify-content: center; gap: 2rem; flex-wrap: wrap;'>
+            <div style='display: flex; align-items: center; gap: 0.5rem;'>
+                <span style='font-size: 1.8rem;'>🗺️</span>
+                <div>
+                    <div style='font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; margin-bottom: 0.2rem;'>CP2B Maps</div>
+                    <h1 style='margin: 0; font-size: 1.8rem; font-weight: 700; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3); line-height: 1.1;'>
+                        Análise de Potencial de Biogás
+                    </h1>
                 </div>
             </div>
-
-            <p style='
-                margin: 1.2rem 0 0 0;
-                font-size: 1rem;
-                opacity: 0.85;
-                font-weight: 400;
-                line-height: 1.4;
-                max-width: 600px;
-                margin-left: auto;
-                margin-right: auto;
-            '>
-                Plataforma científica para análise do potencial de produção de biogás<br>
-                com base em dados reais de resíduos agrícolas, pecuários e urbanos
-            </p>
+            <div style='display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;'>
+                <div style='text-align: center;'>
+                    <div style='font-size: 1.4rem; margin-bottom: 0.2rem;'>📍</div>
+                    <div style='font-size: 0.85rem; font-weight: 600;'>645 municípios</div>
+                    <div style='font-size: 0.7rem; opacity: 0.8;'>São Paulo</div>
+                </div>
+                <div style='text-align: center;'>
+                    <div style='font-size: 1.4rem; margin-bottom: 0.2rem;'>⚡</div>
+                    <div style='font-size: 0.85rem; font-weight: 600;'>Energia</div>
+                    <div style='font-size: 0.7rem; opacity: 0.8;'>Renovável</div>
+                </div>
+                <div style='text-align: center;'>
+                    <div style='font-size: 1.4rem; margin-bottom: 0.2rem;'>🌱</div>
+                    <div style='font-size: 0.85rem; font-weight: 600;'>Científico</div>
+                    <div style='font-size: 0.7rem; opacity: 0.8;'>Base Real</div>
+                </div>
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
