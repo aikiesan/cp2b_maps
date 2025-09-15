@@ -49,6 +49,7 @@ from modules.ui_components import (render_header, render_navigation, render_side
                                   render_search_interface, render_quick_stats, render_memory_info,
                                   render_academic_footer, render_substrate_info_panel,
                                   render_value_with_reference)
+from modules.reference_system import render_reference_button, get_substrate_reference_map
 
 # Configure logging with environment-based level
 LOG_LEVEL = os.getenv('CP2B_LOG_LEVEL', 'INFO').upper()
@@ -4396,8 +4397,6 @@ def page_explorer():
         display_col = RESIDUE_OPTIONS[selected_type]
     
     with col2:
-        from modules.reference_system import render_reference_button, get_substrate_reference_map
-
         st.info("""
         💡 **Dica:**
 
