@@ -1064,17 +1064,22 @@ def format_number(value, unit="Nm³/ano", scale=1):
 def render_header():
     """Render application header"""
     st.markdown("""
-    <div style='background: linear-gradient(135deg, #2E8B57 0%, #228B22 50%, #32CD32 100%);
+    <div style='background: linear-gradient(135deg, #2E8B57 0%, #3ba068 50%, #48b879 100%);
                 color: white; padding: 1.5rem; margin: -1rem -1rem 1rem -1rem;
-                text-align: center; border-radius: 0 0 15px 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.2);'>
-        <h1 style='margin: 0 0 0.5rem 0; font-size: 2.2rem; font-weight: 700; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3);'>
-            🗺️ Análise de Potencial de Biogás
+                text-align: center; border-radius: 0 0 15px 15px; box-shadow: 0 3px 10px rgba(46,139,87,0.3);'>
+        <h1 style='margin: 0 0 0.5rem 0; font-size: 2.2rem; font-weight: 700; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                   font-family: Montserrat, system-ui, sans-serif;'>
+            🗺️ CP2B Maps
         </h1>
-        <p style='margin: 0.5rem 0; font-size: 1rem; opacity: 0.9;'>
+        <h2 style='margin: 0 0 0.6rem 0; font-size: 1.4rem; font-weight: 400; color: #fff2e6;
+                   font-family: Montserrat, system-ui, sans-serif;'>
+            Análise de Potencial de Biogás
+        </h2>
+        <p style='margin: 0.5rem 0; font-size: 1rem; opacity: 0.95; font-family: Montserrat, system-ui, sans-serif;'>
             📍 <strong>645 municípios</strong> de São Paulo • ⚡ <strong>Energia Renovável</strong> • 🌱 <strong>Base Científica</strong>
         </p>
-        <p style='margin: 0.5rem 0 0 0; font-size: 0.9rem; opacity: 0.8; font-style: italic;'>
-            CP2B Maps - Plataforma científica para análise do potencial de produção de biogás
+        <p style='margin: 0.3rem 0 0 0; font-size: 0.85rem; opacity: 0.85; font-style: italic; font-family: Montserrat, system-ui, sans-serif;'>
+            Centro Paulista de Estudos em Biogás e Bioprodutos
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -3486,6 +3491,11 @@ def page_main():
     
     # --- 3. SIDEBAR DE FILTROS (ESQUERDA) ---
     with st.sidebar:
+        # CP2B Logo no topo da sidebar
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.image("logotipo-full-black.png", width=120)
+
         st.markdown("""
         <div style='background: #2E8B57; color: white; padding: 0.8rem; margin: -1rem -1rem 1rem -1rem;
                     text-align: center; border-radius: 8px;'>
@@ -7506,7 +7516,7 @@ def page_references():
 def page_about():
     """About page with institutional context and technical details"""
     st.title("ℹ️ Sobre o CP2B Maps")
-    
+
     # Seção Institucional
     with st.expander("🏛️ Contexto Institucional do CP2B", expanded=True):
         st.subheader("Missão, Visão e Valores")
@@ -7774,13 +7784,24 @@ def main():
     render_academic_footer()
 
     # Footer
+    # Footer with CP2B branding
     st.markdown("---")
-    st.markdown(
-        "<div style='text-align: center; color: gray; padding: 1rem;'>"
-        "<small>CP2B Maps - Análise de Potencial de Biogás • Baseado em Pesquisas Científicas</small>"
-        "</div>",
-        unsafe_allow_html=True
-    )
+
+    footer_col1, footer_col2, footer_col3 = st.columns([1, 2, 1])
+
+    with footer_col2:
+        st.markdown("""
+        <div style='text-align: center; color: #666; padding: 1rem; font-family: Montserrat, system-ui, sans-serif;'>
+            <div style='margin-bottom: 0.5rem;'>
+                <span style='color: #2E8B57; font-weight: 600; font-size: 0.9rem;'>CP2B Maps</span>
+                <span style='font-size: 0.8rem;'> - Análise de Potencial de Biogás</span>
+            </div>
+            <div style='font-size: 0.75rem; opacity: 0.8;'>
+                Centro Paulista de Estudos em Biogás e Bioprodutos • UNICAMP<br>
+                Baseado em Pesquisas Científicas • FAPESP 2024/01112-1
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
