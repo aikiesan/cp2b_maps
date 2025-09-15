@@ -7300,7 +7300,7 @@ def page_references():
                         st.markdown(f"**Aplicação:** {ref.description}")
                 with col2:
                     if ref.url:
-                        st.link_button("🔗 Acessar Artigo", ref.url, type="primary")
+                        st.link_button("🔗 Acessar Artigo", ref.url, type="primary", key=f"link_substrate_{ref.id}")
 
                 if ref.citation_abnt:
                     with st.expander("📝 Citação ABNT"):
@@ -7347,7 +7347,7 @@ def page_references():
                     st.markdown(f"**Benefício:** {ref.description}")
             with col2:
                 if ref.url:
-                    st.link_button("🔗 Acessar Artigo", ref.url, type="primary")
+                    st.link_button("🔗 Acessar Artigo", ref.url, type="primary", key=f"link_codigestion_{ref.id}")
 
             if ref.citation_abnt:
                 with st.expander("📝 Citação ABNT"):
@@ -7391,7 +7391,7 @@ def page_references():
                     st.markdown(f"**Aplicação:** {ref.description}")
             with col2:
                 if ref.url:
-                    st.link_button("🔗 Ver Método", ref.url, type="primary")
+                    st.link_button("🔗 Ver Método", ref.url, type="primary", key=f"link_method_{ref.id}")
 
             if ref.citation_abnt:
                 with st.expander("📝 Citação ABNT"):
@@ -7420,9 +7420,8 @@ def page_references():
 
                 with col2:
                     if ref.url:
-                        # Use unique key with timestamp to avoid conflicts
-                        import time
-                        link_key = f"link_{ref.id}_{int(time.time() * 1000) % 10000}"
+                        # Use unique key with index to avoid conflicts
+                        link_key = f"link_all_refs_{ref.id}_{i}"
                         st.link_button("🔗 Acessar", ref.url, key=link_key)
 
                 if ref.citation_abnt:
