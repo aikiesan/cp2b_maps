@@ -1065,33 +1065,33 @@ def render_header():
     """Render application header"""
     st.markdown("""
     <div style='background: linear-gradient(135deg, #2E8B57 0%, #228B22 50%, #32CD32 100%);
-                color: white; padding: 1.2rem 1.5rem; margin: -1rem -1rem 1rem -1rem;
+                color: white; padding: 1.5rem 2rem; margin: -1rem -1rem 1.2rem -1rem;
                 text-align: center; border-radius: 0 0 15px 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.2);'>
-        <div style='display: flex; align-items: center; justify-content: center; gap: 2rem; flex-wrap: wrap;'>
-            <div style='display: flex; align-items: center; gap: 0.5rem;'>
-                <span style='font-size: 1.8rem;'>🗺️</span>
-                <div>
-                    <div style='font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; margin-bottom: 0.2rem;'>CP2B Maps</div>
-                    <h1 style='margin: 0; font-size: 1.8rem; font-weight: 700; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3); line-height: 1.1;'>
+        <div style='display: flex; align-items: center; justify-content: space-between; max-width: 1000px; margin: 0 auto; flex-wrap: wrap; gap: 2rem;'>
+            <div style='display: flex; align-items: center; gap: 1rem;'>
+                <span style='font-size: 2.2rem;'>🗺️</span>
+                <div style='text-align: left;'>
+                    <div style='font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; margin-bottom: 0.3rem;'>CP2B Maps</div>
+                    <h1 style='margin: 0; font-size: 2.1rem; font-weight: 700; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3); line-height: 1.2;'>
                         Análise de Potencial de Biogás
                     </h1>
                 </div>
             </div>
-            <div style='display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;'>
-                <div style='text-align: center;'>
-                    <div style='font-size: 1.4rem; margin-bottom: 0.2rem;'>📍</div>
-                    <div style='font-size: 0.85rem; font-weight: 600;'>645 municípios</div>
-                    <div style='font-size: 0.7rem; opacity: 0.8;'>São Paulo</div>
+            <div style='display: flex; align-items: center; gap: 2rem;'>
+                <div style='text-align: center; padding: 0.5rem;'>
+                    <div style='font-size: 1.6rem; margin-bottom: 0.3rem;'>📍</div>
+                    <div style='font-size: 0.9rem; font-weight: 600; line-height: 1.1;'>645 municípios</div>
+                    <div style='font-size: 0.75rem; opacity: 0.85;'>São Paulo</div>
                 </div>
-                <div style='text-align: center;'>
-                    <div style='font-size: 1.4rem; margin-bottom: 0.2rem;'>⚡</div>
-                    <div style='font-size: 0.85rem; font-weight: 600;'>Energia</div>
-                    <div style='font-size: 0.7rem; opacity: 0.8;'>Renovável</div>
+                <div style='text-align: center; padding: 0.5rem;'>
+                    <div style='font-size: 1.6rem; margin-bottom: 0.3rem;'>⚡</div>
+                    <div style='font-size: 0.9rem; font-weight: 600; line-height: 1.1;'>Energia</div>
+                    <div style='font-size: 0.75rem; opacity: 0.85;'>Renovável</div>
                 </div>
-                <div style='text-align: center;'>
-                    <div style='font-size: 1.4rem; margin-bottom: 0.2rem;'>🌱</div>
-                    <div style='font-size: 0.85rem; font-weight: 600;'>Científico</div>
-                    <div style='font-size: 0.7rem; opacity: 0.8;'>Base Real</div>
+                <div style='text-align: center; padding: 0.5rem;'>
+                    <div style='font-size: 1.6rem; margin-bottom: 0.3rem;'>🌱</div>
+                    <div style='font-size: 0.9rem; font-weight: 600; line-height: 1.1;'>Científico</div>
+                    <div style='font-size: 0.75rem; opacity: 0.85;'>Base Real</div>
                 </div>
             </div>
         </div>
