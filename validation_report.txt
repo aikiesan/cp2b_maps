@@ -1,0 +1,3232 @@
+DATABASE VALIDATION AND CORRECTION REPORT
+==================================================
+
+Total municipalities updated: 645
+
+DETAILED CHANGES:
+------------------------------
+
+Municipality: Adamantina (Code: 3500105)
+  Name Database: Adamantina
+  Population: 20,599 -> 34,687 (diff: 14,088)
+  Area: 411.987 -> 411.987 (diff: 0.000)
+
+Municipality: Adolfo (Code: 3500204)
+  Name Database: Adolfo
+  Population: 10,553 -> 4,351 (diff: 6,202)
+  Area: 211.055 -> 211.055 (diff: 0.000)
+
+Municipality: Aguaí (Code: 3500303)
+  Name Database: Aguaí
+  Population: 23,728 -> 32,072 (diff: 8,344)
+  Area: 474.554 -> 474.554 (diff: 0.000)
+
+Municipality: Águas da Prata (Code: 3500402)
+  Name Database: Águas da Prata
+  Population: 7,134 -> 7,369 (diff: 235)
+  Area: 142.673 -> 142.673 (diff: 0.000)
+
+Municipality: Águas de Lindóia (Code: 3500501)
+  Name Database: Águas de Lindóia
+  Population: 3,006 -> 17,930 (diff: 14,924)
+  Area: 60.126 -> 60.126 (diff: 0.000)
+
+Municipality: Águas de Santa Bárbara (Code: 3500550)
+  Name Database: Águas de Santa Bárbara
+  Population: 20,223 -> 7,177 (diff: 13,046)
+  Area: 404.463 -> 404.463 (diff: 0.000)
+
+Municipality: Águas de São Pedro (Code: 3500600)
+  Name Database: Águas de São Pedro
+  Population: 181 -> 2,780 (diff: 2,599)
+  Area: 3.612 -> 3.612 (diff: 0.000)
+
+Municipality: Agudos (Code: 3500709)
+  Name Database: Agudos
+  Population: 48,335 -> 37,680 (diff: 10,655)
+  Area: 966.708 -> 966.708 (diff: 0.000)
+
+Municipality: Alambari (Code: 3500758)
+  Name Database: Alambari
+  Population: 7,980 -> 6,141 (diff: 1,839)
+  Area: 159.600 -> 159.600 (diff: 0.000)
+
+Municipality: Alfredo Marcondes (Code: 3500808)
+  Name Database: Alfredo Marcondes
+  Population: 5,946 -> 4,445 (diff: 1,501)
+  Area: 118.915 -> 118.915 (diff: 0.000)
+
+Municipality: Altair (Code: 3500907)
+  Name Database: Altair
+  Population: 15,650 -> 3,451 (diff: 12,199)
+  Area: 313.007 -> 313.007 (diff: 0.000)
+
+Municipality: Altinópolis (Code: 3501004)
+  Name Database: Altinópolis
+  Population: 46,448 -> 16,818 (diff: 29,630)
+  Area: 928.956 -> 928.956 (diff: 0.000)
+
+Municipality: Alto Alegre (Code: 3501103)
+  Name Database: Alto Alegre
+  Population: 15,929 -> 3,841 (diff: 12,088)
+  Area: 318.574 -> 318.574 (diff: 0.000)
+
+Municipality: Alumínio (Code: 3501152)
+  Name Database: Alumínio
+  Population: 4,181 -> 17,301 (diff: 13,120)
+  Area: 83.619 -> 83.619 (diff: 0.000)
+
+Municipality: Álvares Florence (Code: 3501202)
+  Name Database: Álvares Florence
+  Population: 18,121 -> 3,915 (diff: 14,206)
+  Area: 362.411 -> 362.411 (diff: 0.000)
+
+Municipality: Álvares Machado (Code: 3501301)
+  Name Database: Álvares Machado
+  Population: 17,382 -> 27,255 (diff: 9,873)
+  Area: 347.647 -> 347.647 (diff: 0.000)
+
+Municipality: Álvaro de Carvalho (Code: 3501400)
+  Name Database: Álvaro de Carvalho
+  Population: 7,683 -> 4,808 (diff: 2,875)
+  Area: 153.662 -> 153.662 (diff: 0.000)
+
+Municipality: Alvinlândia (Code: 3501509)
+  Name Database: Alvinlândia
+  Population: 4,244 -> 2,885 (diff: 1,359)
+  Area: 84.879 -> 84.879 (diff: 0.000)
+
+Municipality: Americana (Code: 3501608)
+  Name Database: Americana
+  Population: 6,696 -> 237,240 (diff: 230,544)
+  Area: 133.912 -> 133.912 (diff: 0.000)
+
+Municipality: Américo Brasiliense (Code: 3501707)
+  Name Database: Américo Brasiliense
+  Population: 6,148 -> 33,019 (diff: 26,871)
+  Area: 122.958 -> 122.958 (diff: 0.000)
+
+Municipality: Américo de Campos (Code: 3501806)
+  Name Database: Américo de Campos
+  Population: 12,644 -> 5,870 (diff: 6,774)
+  Area: 252.876 -> 252.876 (diff: 0.000)
+
+Municipality: Amparo (Code: 3501905)
+  Name Database: Amparo
+  Population: 22,266 -> 68,008 (diff: 45,742)
+  Area: 445.323 -> 445.323 (diff: 0.000)
+
+Municipality: Analândia (Code: 3502002)
+  Name Database: Analândia
+  Population: 16,298 -> 4,589 (diff: 11,709)
+  Area: 325.953 -> 325.953 (diff: 0.000)
+
+Municipality: Andradina (Code: 3502101)
+  Name Database: Andradina
+  Population: 48,211 -> 59,783 (diff: 11,572)
+  Area: 964.226 -> 964.226 (diff: 0.000)
+
+Municipality: Angatuba (Code: 3502200)
+  Name Database: Angatuba
+  Population: 51,364 -> 24,022 (diff: 27,342)
+  Area: 1027.288 -> 1027.288 (diff: 0.000)
+
+Municipality: Anhembi (Code: 3502309)
+  Name Database: Anhembi
+  Population: 36,828 -> 5,674 (diff: 31,154)
+  Area: 736.557 -> 736.557 (diff: 0.000)
+
+Municipality: Anhumas (Code: 3502408)
+  Name Database: Anhumas
+  Population: 16,042 -> 4,023 (diff: 12,019)
+  Area: 320.840 -> 320.840 (diff: 0.000)
+
+Municipality: Aparecida (Code: 3502507)
+  Name Database: Aparecida
+  Population: 6,044 -> 32,569 (diff: 26,524)
+  Area: 120.890 -> 120.890 (diff: 0.000)
+
+Municipality: Aparecida d'Oeste (Code: 3502606)
+  Name Database: Aparecida d'Oeste
+  Population: 8,950 -> 4,086 (diff: 4,864)
+  Area: 179.004 -> 179.004 (diff: 0.000)
+
+Municipality: Apiaí (Code: 3502705)
+  Name Database: Apiaí
+  Population: 48,716 -> 24,585 (diff: 24,131)
+  Area: 974.322 -> 974.322 (diff: 0.000)
+
+Municipality: Araçariguama (Code: 3502754)
+  Name Database: Araçariguama
+  Population: 7,260 -> 21,522 (diff: 14,262)
+  Area: 145.204 -> 145.204 (diff: 0.000)
+
+Municipality: Araçatuba (Code: 3502804)
+  Name Database: Araçatuba
+  Population: 58,356 -> 200,124 (diff: 141,768)
+  Area: 1167.126 -> 1167.126 (diff: 0.000)
+
+Municipality: Araçoiaba da Serra (Code: 3502903)
+  Name Database: Araçoiaba da Serra
+  Population: 12,765 -> 32,443 (diff: 19,678)
+  Area: 255.305 -> 255.305 (diff: 0.000)
+
+Municipality: Aramina (Code: 3503000)
+  Name Database: Aramina
+  Population: 10,141 -> 5,420 (diff: 4,721)
+  Area: 202.829 -> 202.829 (diff: 0.000)
+
+Municipality: Arandu (Code: 3503109)
+  Name Database: Arandu
+  Population: 14,295 -> 6,885 (diff: 7,410)
+  Area: 285.908 -> 285.908 (diff: 0.000)
+
+Municipality: Arapeí (Code: 3503158)
+  Name Database: Arapeí
+  Population: 7,845 -> 2,330 (diff: 5,515)
+  Area: 156.903 -> 156.903 (diff: 0.000)
+
+Municipality: Araraquara (Code: 3503208)
+  Name Database: Araraquara
+  Population: 50,181 -> 242,228 (diff: 192,047)
+  Area: 1003.625 -> 1003.625 (diff: 0.000)
+
+Municipality: Araras (Code: 3503307)
+  Name Database: Araras
+  Population: 32,242 -> 130,866 (diff: 98,624)
+  Area: 644.831 -> 644.831 (diff: 0.000)
+
+Municipality: Arco-Íris (Code: 3503356)
+  Name Database: Arco-Íris
+  Population: 13,245 -> 2,044 (diff: 11,201)
+  Area: 264.904 -> 264.904 (diff: 0.000)
+
+Municipality: Arealva (Code: 3503406)
+  Name Database: Arealva
+  Population: 25,311 -> 8,130 (diff: 17,181)
+  Area: 506.226 -> 506.226 (diff: 0.000)
+
+Municipality: Areias (Code: 3503505)
+  Name Database: Areias
+  Population: 15,261 -> 3,577 (diff: 11,684)
+  Area: 305.227 -> 305.227 (diff: 0.000)
+
+Municipality: Areiópolis (Code: 3503604)
+  Name Database: Areiópolis
+  Population: 4,295 -> 10,130 (diff: 5,835)
+  Area: 85.907 -> 85.907 (diff: 0.000)
+
+Municipality: Ariranha (Code: 3503703)
+  Name Database: Ariranha
+  Population: 6,631 -> 7,602 (diff: 971)
+  Area: 132.624 -> 132.624 (diff: 0.000)
+
+Municipality: Artur Nogueira (Code: 3503802)
+  Name Database: Artur Nogueira
+  Population: 8,901 -> 51,456 (diff: 42,555)
+  Area: 178.026 -> 178.026 (diff: 0.000)
+
+Municipality: Arujá (Code: 3503901)
+  Name Database: Arujá
+  Population: 4,808 -> 86,678 (diff: 81,870)
+  Area: 96.167 -> 96.167 (diff: 0.000)
+
+Municipality: Aspásia (Code: 3503950)
+  Name Database: Aspásia
+  Population: 3,469 -> 1,842 (diff: 1,627)
+  Area: 69.373 -> 69.373 (diff: 0.000)
+
+Municipality: Assis (Code: 3504008)
+  Name Database: Assis
+  Population: 23,030 -> 101,409 (diff: 78,379)
+  Area: 460.609 -> 460.609 (diff: 0.000)
+
+Municipality: Atibaia (Code: 3504107)
+  Name Database: Atibaia
+  Population: 23,926 -> 158,647 (diff: 134,721)
+  Area: 478.521 -> 478.521 (diff: 0.000)
+
+Municipality: Auriflama (Code: 3504206)
+  Name Database: Auriflama
+  Population: 21,725 -> 13,692 (diff: 8,033)
+  Area: 434.498 -> 434.498 (diff: 0.000)
+
+Municipality: Avaí (Code: 3504305)
+  Name Database: Avaí
+  Population: 27,034 -> 4,483 (diff: 22,551)
+  Area: 540.689 -> 540.689 (diff: 0.000)
+
+Municipality: Avanhandava (Code: 3504404)
+  Name Database: Avanhandava
+  Population: 16,918 -> 11,263 (diff: 5,656)
+  Area: 338.370 -> 338.370 (diff: 0.000)
+
+Municipality: Avaré (Code: 3504503)
+  Name Database: Avaré
+  Population: 60,653 -> 92,805 (diff: 32,152)
+  Area: 1213.055 -> 1213.055 (diff: 0.000)
+
+Municipality: Bady Bassitt (Code: 3504602)
+  Name Database: Bady Bassitt
+  Population: 5,519 -> 27,260 (diff: 21,741)
+  Area: 110.372 -> 110.372 (diff: 0.000)
+
+Municipality: Balbinos (Code: 3504701)
+  Name Database: Balbinos
+  Population: 4,582 -> 3,887 (diff: 695)
+  Area: 91.635 -> 91.635 (diff: 0.000)
+
+Municipality: Bálsamo (Code: 3504800)
+  Name Database: Bálsamo
+  Population: 7,494 -> 9,596 (diff: 2,102)
+  Area: 149.881 -> 149.881 (diff: 0.000)
+
+Municipality: Bananal (Code: 3504909)
+  Name Database: Bananal
+  Population: 30,821 -> 9,969 (diff: 20,852)
+  Area: 616.429 -> 616.429 (diff: 0.000)
+
+Municipality: Barão de Antonina (Code: 3505005)
+  Name Database: Barão de Antonina
+  Population: 7,657 -> 3,531 (diff: 4,126)
+  Area: 153.142 -> 153.142 (diff: 0.000)
+
+Municipality: Barbosa (Code: 3505104)
+  Name Database: Barbosa
+  Population: 10,261 -> 5,640 (diff: 4,621)
+  Area: 205.212 -> 205.212 (diff: 0.000)
+
+Municipality: Bariri (Code: 3505203)
+  Name Database: Bariri
+  Population: 22,220 -> 31,595 (diff: 9,375)
+  Area: 444.405 -> 444.405 (diff: 0.000)
+
+Municipality: Barra Bonita (Code: 3505302)
+  Name Database: Barra Bonita
+  Population: 7,506 -> 34,346 (diff: 26,840)
+  Area: 150.121 -> 150.121 (diff: 0.000)
+
+Municipality: Barra do Chapéu (Code: 3505351)
+  Name Database: Barra do Chapéu
+  Population: 20,284 -> 5,179 (diff: 15,105)
+  Area: 405.681 -> 405.681 (diff: 0.000)
+
+Municipality: Barra do Turvo (Code: 3505401)
+  Name Database: Barra do Turvo
+  Population: 50,384 -> 6,876 (diff: 43,508)
+  Area: 1007.684 -> 1007.684 (diff: 0.000)
+
+Municipality: Barretos (Code: 3505500)
+  Name Database: Barretos
+  Population: 78,308 -> 122,485 (diff: 44,177)
+  Area: 1566.161 -> 1566.161 (diff: 0.000)
+
+Municipality: Barrinha (Code: 3505609)
+  Name Database: Barrinha
+  Population: 7,301 -> 32,092 (diff: 24,791)
+  Area: 146.025 -> 146.025 (diff: 0.000)
+
+Municipality: Barueri (Code: 3505708)
+  Name Database: Barueri
+  Population: 3,285 -> 316,473 (diff: 313,188)
+  Area: 65.701 -> 65.701 (diff: 0.000)
+
+Municipality: Bastos (Code: 3505807)
+  Name Database: Bastos
+  Population: 8,546 -> 21,503 (diff: 12,957)
+  Area: 170.912 -> 170.912 (diff: 0.000)
+
+Municipality: Batatais (Code: 3505906)
+  Name Database: Batatais
+  Population: 42,476 -> 58,402 (diff: 15,926)
+  Area: 849.526 -> 849.526 (diff: 0.000)
+
+Municipality: Bauru (Code: 3506003)
+  Name Database: Bauru
+  Population: 33,384 -> 379,146 (diff: 345,762)
+  Area: 667.684 -> 667.684 (diff: 0.000)
+
+Municipality: Bebedouro (Code: 3506102)
+  Name Database: Bebedouro
+  Population: 34,160 -> 76,373 (diff: 42,213)
+  Area: 683.192 -> 683.192 (diff: 0.000)
+
+Municipality: Bento de Abreu (Code: 3506201)
+  Name Database: Bento de Abreu
+  Population: 15,084 -> 2,606 (diff: 12,478)
+  Area: 301.687 -> 301.687 (diff: 0.000)
+
+Municipality: Bernardino de Campos (Code: 3506300)
+  Name Database: Bernardino de Campos
+  Population: 12,208 -> 11,607 (diff: 601)
+  Area: 244.158 -> 244.158 (diff: 0.000)
+
+Municipality: Bertioga (Code: 3506359)
+  Name Database: Bertioga
+  Population: 24,577 -> 64,188 (diff: 39,611)
+  Area: 491.546 -> 491.546 (diff: 0.000)
+
+Municipality: Bilac (Code: 3506409)
+  Name Database: Bilac
+  Population: 7,901 -> 7,319 (diff: 582)
+  Area: 158.025 -> 158.025 (diff: 0.000)
+
+Municipality: Birigui (Code: 3506508)
+  Name Database: Birigui
+  Population: 26,502 -> 118,979 (diff: 92,477)
+  Area: 530.031 -> 530.031 (diff: 0.000)
+
+Municipality: Biritiba Mirim (Code: 3506607)
+  Name Database: Biritiba Mirim
+  Population: 15,870 -> 29,683 (diff: 13,813)
+  Area: 317.406 -> 317.406 (diff: 0.000)
+
+Municipality: Boa Esperança do Sul (Code: 3506706)
+  Name Database: Boa Esperança do Sul
+  Population: 34,537 -> 12,978 (diff: 21,559)
+  Area: 690.748 -> 690.748 (diff: 0.000)
+
+Municipality: Bocaina (Code: 3506805)
+  Name Database: Bocaina
+  Population: 18,196 -> 11,259 (diff: 6,937)
+  Area: 363.926 -> 363.926 (diff: 0.000)
+
+Municipality: Bofete (Code: 3506904)
+  Name Database: Bofete
+  Population: 32,677 -> 10,460 (diff: 22,217)
+  Area: 653.541 -> 653.541 (diff: 0.000)
+
+Municipality: Boituva (Code: 3507001)
+  Name Database: Boituva
+  Population: 12,448 -> 61,081 (diff: 48,633)
+  Area: 248.954 -> 248.954 (diff: 0.000)
+
+Municipality: Bom Jesus dos Perdões (Code: 3507100)
+  Name Database: Bom Jesus dos Perdões
+  Population: 5,418 -> 22,006 (diff: 16,588)
+  Area: 108.366 -> 108.366 (diff: 0.000)
+
+Municipality: Bom Sucesso de Itararé (Code: 3507159)
+  Name Database: Bom Sucesso de Itararé
+  Population: 6,679 -> 3,555 (diff: 3,124)
+  Area: 133.578 -> 133.578 (diff: 0.000)
+
+Municipality: Borá (Code: 3507209)
+  Name Database: Borá
+  Population: 5,948 -> 907 (diff: 5,041)
+  Area: 118.951 -> 118.951 (diff: 0.000)
+
+Municipality: Boracéia (Code: 3507308)
+  Name Database: Boracéia
+  Population: 6,106 -> 4,715 (diff: 1,390)
+  Area: 122.110 -> 122.110 (diff: 0.000)
+
+Municipality: Borborema (Code: 3507407)
+  Name Database: Borborema
+  Population: 27,613 -> 14,226 (diff: 13,387)
+  Area: 552.256 -> 552.256 (diff: 0.000)
+
+Municipality: Borebi (Code: 3507456)
+  Name Database: Borebi
+  Population: 17,399 -> 2,713 (diff: 14,686)
+  Area: 347.989 -> 347.989 (diff: 0.000)
+
+Municipality: Botucatu (Code: 3507506)
+  Name Database: Botucatu
+  Population: 74,132 -> 145,155 (diff: 71,023)
+  Area: 1482.642 -> 1482.642 (diff: 0.000)
+
+Municipality: Bragança Paulista (Code: 3507605)
+  Name Database: Bragança Paulista
+  Population: 25,629 -> 176,811 (diff: 151,182)
+  Area: 512.584 -> 512.584 (diff: 0.000)
+
+Municipality: Braúna (Code: 3507704)
+  Name Database: Braúna
+  Population: 9,759 -> 5,356 (diff: 4,403)
+  Area: 195.176 -> 195.176 (diff: 0.000)
+
+Municipality: Brejo Alegre (Code: 3507753)
+  Name Database: Brejo Alegre
+  Population: 5,284 -> 2,565 (diff: 2,719)
+  Area: 105.689 -> 105.689 (diff: 0.000)
+
+Municipality: Brodowski (Code: 3507803)
+  Name Database: Brodowski
+  Population: 13,923 -> 25,201 (diff: 11,278)
+  Area: 278.458 -> 278.458 (diff: 0.000)
+
+Municipality: Brotas (Code: 3507902)
+  Name Database: Brotas
+  Population: 55,069 -> 23,898 (diff: 31,171)
+  Area: 1101.373 -> 1101.373 (diff: 0.000)
+
+Municipality: Buri (Code: 3508009)
+  Name Database: Buri
+  Population: 59,823 -> 20,250 (diff: 39,573)
+  Area: 1196.463 -> 1196.463 (diff: 0.000)
+
+Municipality: Buritama (Code: 3508108)
+  Name Database: Buritama
+  Population: 16,346 -> 17,210 (diff: 864)
+  Area: 326.921 -> 326.921 (diff: 0.000)
+
+Municipality: Buritizal (Code: 3508207)
+  Name Database: Buritizal
+  Population: 13,321 -> 4,356 (diff: 8,965)
+  Area: 266.420 -> 266.420 (diff: 0.000)
+
+Municipality: Cabrália Paulista (Code: 3508306)
+  Name Database: Cabrália Paulista
+  Population: 11,999 -> 4,299 (diff: 7,700)
+  Area: 239.974 -> 239.974 (diff: 0.000)
+
+Municipality: Cabreúva (Code: 3508405)
+  Name Database: Cabreúva
+  Population: 13,012 -> 47,011 (diff: 33,999)
+  Area: 260.234 -> 260.234 (diff: 0.000)
+
+Municipality: Caçapava (Code: 3508504)
+  Name Database: Caçapava
+  Population: 18,450 -> 96,202 (diff: 77,752)
+  Area: 368.990 -> 368.990 (diff: 0.000)
+
+Municipality: Cachoeira Paulista (Code: 3508603)
+  Name Database: Cachoeira Paulista
+  Population: 14,400 -> 31,564 (diff: 17,164)
+  Area: 287.990 -> 287.990 (diff: 0.000)
+
+Municipality: Caconde (Code: 3508702)
+  Name Database: Caconde
+  Population: 23,411 -> 17,101 (diff: 6,310)
+  Area: 468.214 -> 468.214 (diff: 0.000)
+
+Municipality: Cafelândia (Code: 3508801)
+  Name Database: Cafelândia
+  Population: 46,014 -> 16,654 (diff: 29,360)
+  Area: 920.280 -> 920.280 (diff: 0.000)
+
+Municipality: Caiabu (Code: 3508900)
+  Name Database: Caiabu
+  Population: 12,668 -> 3,712 (diff: 8,956)
+  Area: 253.352 -> 253.352 (diff: 0.000)
+
+Municipality: Caieiras (Code: 3509007)
+  Name Database: Caieiras
+  Population: 4,882 -> 95,032 (diff: 90,150)
+  Area: 97.642 -> 97.642 (diff: 0.000)
+
+Municipality: Caiuá (Code: 3509106)
+  Name Database: Caiuá
+  Population: 27,558 -> 5,466 (diff: 22,092)
+  Area: 551.159 -> 551.159 (diff: 0.000)
+
+Municipality: Cajamar (Code: 3509205)
+  Name Database: Cajamar
+  Population: 6,569 -> 92,689 (diff: 86,120)
+  Area: 131.386 -> 131.386 (diff: 0.000)
+
+Municipality: Cajati (Code: 3509254)
+  Name Database: Cajati
+  Population: 22,724 -> 28,515 (diff: 5,791)
+  Area: 454.489 -> 454.436 (diff: 0.053)
+
+Municipality: Cajobi (Code: 3509304)
+  Name Database: Cajobi
+  Population: 8,846 -> 9,133 (diff: 287)
+  Area: 176.929 -> 176.929 (diff: 0.000)
+
+Municipality: Cajuru (Code: 3509403)
+  Name Database: Cajuru
+  Population: 33,004 -> 23,830 (diff: 9,174)
+  Area: 660.088 -> 660.088 (diff: 0.000)
+
+Municipality: Campina do Monte Alegre (Code: 3509452)
+  Name Database: Campina do Monte Alegre
+  Population: 9,224 -> 5,954 (diff: 3,270)
+  Area: 184.479 -> 184.479 (diff: 0.000)
+
+Municipality: Campinas (Code: 3509502)
+  Name Database: Campinas
+  Population: 39,729 -> 1,139,047 (diff: 1,099,318)
+  Area: 794.571 -> 794.571 (diff: 0.000)
+
+Municipality: Campo Limpo Paulista (Code: 3509601)
+  Name Database: Campo Limpo Paulista
+  Population: 3,970 -> 77,632 (diff: 73,662)
+  Area: 79.403 -> 79.403 (diff: 0.000)
+
+Municipality: Campos do Jordão (Code: 3509700)
+  Name Database: Campos do Jordão
+  Population: 14,499 -> 46,974 (diff: 32,475)
+  Area: 289.981 -> 289.981 (diff: 0.000)
+
+Municipality: Campos Novos Paulista (Code: 3509809)
+  Name Database: Campos Novos Paulista
+  Population: 24,210 -> 4,888 (diff: 19,322)
+  Area: 484.199 -> 484.199 (diff: 0.000)
+
+Municipality: Cananéia (Code: 3509908)
+  Name Database: Cananéia
+  Population: 61,868 -> 12,289 (diff: 49,579)
+  Area: 1237.354 -> 1237.354 (diff: 0.000)
+
+Municipality: Canas (Code: 3509957)
+  Name Database: Canas
+  Population: 2,663 -> 4,931 (diff: 2,268)
+  Area: 53.261 -> 53.261 (diff: 0.000)
+
+Municipality: Cândido Mota (Code: 3510005)
+  Name Database: Cândido Mota
+  Population: 29,791 -> 29,449 (diff: 342)
+  Area: 595.811 -> 595.811 (diff: 0.000)
+
+Municipality: Cândido Rodrigues (Code: 3510104)
+  Name Database: Cândido Rodrigues
+  Population: 3,545 -> 2,889 (diff: 656)
+  Area: 70.892 -> 70.892 (diff: 0.000)
+
+Municipality: Canitar (Code: 3510153)
+  Name Database: Canitar
+  Population: 2,873 -> 6,283 (diff: 3,410)
+  Area: 57.459 -> 57.459 (diff: 0.000)
+
+Municipality: Capão Bonito (Code: 3510203)
+  Name Database: Capão Bonito
+  Population: 82,011 -> 46,337 (diff: 35,674)
+  Area: 1640.229 -> 1640.229 (diff: 0.000)
+
+Municipality: Capela do Alto (Code: 3510302)
+  Name Database: Capela do Alto
+  Population: 8,494 -> 22,866 (diff: 14,372)
+  Area: 169.890 -> 169.890 (diff: 0.000)
+
+Municipality: Capivari (Code: 3510401)
+  Name Database: Capivari
+  Population: 16,144 -> 50,068 (diff: 33,924)
+  Area: 322.878 -> 322.878 (diff: 0.000)
+
+Municipality: Caraguatatuba (Code: 3510500)
+  Name Database: Caraguatatuba
+  Population: 24,247 -> 134,873 (diff: 110,626)
+  Area: 484.947 -> 484.947 (diff: 0.000)
+
+Municipality: Carapicuíba (Code: 3510609)
+  Name Database: Carapicuíba
+  Population: 1,727 -> 386,984 (diff: 385,257)
+  Area: 34.546 -> 34.546 (diff: 0.000)
+
+Municipality: Cardoso (Code: 3510708)
+  Name Database: Cardoso
+  Population: 31,962 -> 11,345 (diff: 20,617)
+  Area: 639.248 -> 639.248 (diff: 0.000)
+
+Municipality: Casa Branca (Code: 3510807)
+  Name Database: Casa Branca
+  Population: 43,211 -> 28,083 (diff: 15,128)
+  Area: 864.225 -> 864.225 (diff: 0.000)
+
+Municipality: Cássia dos Coqueiros (Code: 3510906)
+  Name Database: Cássia dos Coqueiros
+  Population: 9,584 -> 2,799 (diff: 6,785)
+  Area: 191.683 -> 191.683 (diff: 0.000)
+
+Municipality: Castilho (Code: 3511003)
+  Name Database: Castilho
+  Population: 53,266 -> 19,977 (diff: 33,289)
+  Area: 1065.318 -> 1065.318 (diff: 0.000)
+
+Municipality: Catanduva (Code: 3511102)
+  Name Database: Catanduva
+  Population: 14,530 -> 115,791 (diff: 101,261)
+  Area: 290.596 -> 290.596 (diff: 0.000)
+
+Municipality: Catiguá (Code: 3511201)
+  Name Database: Catiguá
+  Population: 7,420 -> 7,003 (diff: 417)
+  Area: 148.393 -> 148.393 (diff: 0.000)
+
+Municipality: Cedral (Code: 3511300)
+  Name Database: Cedral
+  Population: 9,892 -> 12,618 (diff: 2,726)
+  Area: 197.838 -> 197.838 (diff: 0.000)
+
+Municipality: Cerqueira César (Code: 3511409)
+  Name Database: Cerqueira César
+  Population: 25,581 -> 21,469 (diff: 4,112)
+  Area: 511.621 -> 511.621 (diff: 0.000)
+
+Municipality: Cerquilho (Code: 3511508)
+  Name Database: Cerquilho
+  Population: 6,390 -> 44,695 (diff: 38,305)
+  Area: 127.803 -> 127.803 (diff: 0.000)
+
+Municipality: Cesário Lange (Code: 3511607)
+  Name Database: Cesário Lange
+  Population: 9,520 -> 19,048 (diff: 9,528)
+  Area: 190.392 -> 190.392 (diff: 0.000)
+
+Municipality: Charqueada (Code: 3511706)
+  Name Database: Charqueada
+  Population: 8,792 -> 15,535 (diff: 6,743)
+  Area: 175.846 -> 175.846 (diff: 0.000)
+
+Municipality: Clementina (Code: 3511904)
+  Name Database: Clementina
+  Population: 8,430 -> 6,982 (diff: 1,448)
+  Area: 168.590 -> 168.590 (diff: 0.000)
+
+Municipality: Colina (Code: 3512001)
+  Name Database: Colina
+  Population: 21,115 -> 18,486 (diff: 2,629)
+  Area: 422.303 -> 422.303 (diff: 0.000)
+
+Municipality: Colômbia (Code: 3512100)
+  Name Database: Colômbia
+  Population: 36,432 -> 6,629 (diff: 29,803)
+  Area: 728.648 -> 728.648 (diff: 0.000)
+
+Municipality: Conchal (Code: 3512209)
+  Name Database: Conchal
+  Population: 9,140 -> 28,101 (diff: 18,961)
+  Area: 182.793 -> 182.793 (diff: 0.000)
+
+Municipality: Conchas (Code: 3512308)
+  Name Database: Conchas
+  Population: 23,306 -> 15,232 (diff: 8,074)
+  Area: 466.120 -> 466.120 (diff: 0.000)
+
+Municipality: Cordeirópolis (Code: 3512407)
+  Name Database: Cordeirópolis
+  Population: 6,879 -> 24,514 (diff: 17,635)
+  Area: 137.579 -> 137.579 (diff: 0.000)
+
+Municipality: Coroados (Code: 3512506)
+  Name Database: Coroados
+  Population: 12,341 -> 5,400 (diff: 6,941)
+  Area: 246.825 -> 246.825 (diff: 0.000)
+
+Municipality: Coronel Macedo (Code: 3512605)
+  Name Database: Coronel Macedo
+  Population: 15,192 -> 4,280 (diff: 10,912)
+  Area: 303.830 -> 303.830 (diff: 0.000)
+
+Municipality: Corumbataí (Code: 3512704)
+  Name Database: Corumbataí
+  Population: 13,931 -> 4,195 (diff: 9,736)
+  Area: 278.622 -> 278.622 (diff: 0.000)
+
+Municipality: Cosmópolis (Code: 3512803)
+  Name Database: Cosmópolis
+  Population: 7,733 -> 59,773 (diff: 52,040)
+  Area: 154.665 -> 154.665 (diff: 0.000)
+
+Municipality: Cosmorama (Code: 3512902)
+  Name Database: Cosmorama
+  Population: 22,084 -> 8,719 (diff: 13,365)
+  Area: 441.680 -> 441.680 (diff: 0.000)
+
+Municipality: Cotia (Code: 3513009)
+  Name Database: Cotia
+  Population: 16,200 -> 274,413 (diff: 258,213)
+  Area: 323.994 -> 323.994 (diff: 0.000)
+
+Municipality: Cravinhos (Code: 3513108)
+  Name Database: Cravinhos
+  Population: 15,571 -> 33,281 (diff: 17,710)
+  Area: 311.423 -> 311.423 (diff: 0.000)
+
+Municipality: Cristais Paulista (Code: 3513207)
+  Name Database: Cristais Paulista
+  Population: 19,262 -> 9,272 (diff: 9,990)
+  Area: 385.230 -> 385.230 (diff: 0.000)
+
+Municipality: Cruzália (Code: 3513306)
+  Name Database: Cruzália
+  Population: 7,467 -> 2,108 (diff: 5,359)
+  Area: 149.330 -> 149.330 (diff: 0.000)
+
+Municipality: Cruzeiro (Code: 3513405)
+  Name Database: Cruzeiro
+  Population: 15,285 -> 74,961 (diff: 59,676)
+  Area: 305.699 -> 305.699 (diff: 0.000)
+
+Municipality: Cubatão (Code: 3513504)
+  Name Database: Cubatão
+  Population: 7,144 -> 112,476 (diff: 105,332)
+  Area: 142.879 -> 142.879 (diff: 0.000)
+
+Municipality: Cunha (Code: 3513603)
+  Name Database: Cunha
+  Population: 70,362 -> 22,110 (diff: 48,252)
+  Area: 1407.250 -> 1407.250 (diff: 0.000)
+
+Municipality: Descalvado (Code: 3513702)
+  Name Database: Descalvado
+  Population: 37,685 -> 31,756 (diff: 5,929)
+  Area: 753.706 -> 753.706 (diff: 0.000)
+
+Municipality: Diadema (Code: 3513801)
+  Name Database: Diadema
+  Population: 1,537 -> 393,237 (diff: 391,700)
+  Area: 30.732 -> 30.732 (diff: 0.000)
+
+Municipality: Dirce Reis (Code: 3513850)
+  Name Database: Dirce Reis
+  Population: 4,407 -> 1,620 (diff: 2,787)
+  Area: 88.133 -> 88.133 (diff: 0.000)
+
+Municipality: Divinolândia (Code: 3513900)
+  Name Database: Divinolândia
+  Population: 11,187 -> 11,158 (diff: 29)
+  Area: 223.749 -> 223.749 (diff: 0.000)
+
+Municipality: Dobrada (Code: 3514007)
+  Name Database: Dobrada
+  Population: 7,486 -> 8,759 (diff: 1,273)
+  Area: 149.729 -> 149.729 (diff: 0.000)
+
+Municipality: Dois Córregos (Code: 3514106)
+  Name Database: Dois Córregos
+  Population: 31,649 -> 24,510 (diff: 7,139)
+  Area: 632.972 -> 632.972 (diff: 0.000)
+
+Municipality: Dolcinópolis (Code: 3514205)
+  Name Database: Dolcinópolis
+  Population: 3,897 -> 2,207 (diff: 1,690)
+  Area: 77.939 -> 77.939 (diff: 0.000)
+
+Municipality: Dourado (Code: 3514304)
+  Name Database: Dourado
+  Population: 10,294 -> 8,096 (diff: 2,198)
+  Area: 205.874 -> 205.874 (diff: 0.000)
+
+Municipality: Dracena (Code: 3514403)
+  Name Database: Dracena
+  Population: 24,384 -> 45,474 (diff: 21,090)
+  Area: 487.688 -> 487.688 (diff: 0.000)
+
+Municipality: Duartina (Code: 3514502)
+  Name Database: Duartina
+  Population: 13,228 -> 12,328 (diff: 900)
+  Area: 264.557 -> 264.557 (diff: 0.000)
+
+Municipality: Dumont (Code: 3514601)
+  Name Database: Dumont
+  Population: 5,569 -> 9,471 (diff: 3,902)
+  Area: 111.376 -> 111.376 (diff: 0.000)
+
+Municipality: Echaporã (Code: 3514700)
+  Name Database: Echaporã
+  Population: 25,763 -> 6,205 (diff: 19,558)
+  Area: 515.258 -> 515.258 (diff: 0.000)
+
+Municipality: Eldorado (Code: 3514809)
+  Name Database: Eldorado
+  Population: 82,713 -> 13,069 (diff: 69,644)
+  Area: 1654.256 -> 1654.256 (diff: 0.000)
+
+Municipality: Elias Fausto (Code: 3514908)
+  Name Database: Elias Fausto
+  Population: 10,118 -> 17,699 (diff: 7,581)
+  Area: 202.360 -> 202.360 (diff: 0.000)
+
+Municipality: Elisiário (Code: 3514924)
+  Name Database: Elisiário
+  Population: 4,699 -> 3,138 (diff: 1,561)
+  Area: 93.980 -> 93.980 (diff: 0.000)
+
+Municipality: Embaúba (Code: 3514957)
+  Name Database: Embaúba
+  Population: 4,156 -> 2,323 (diff: 1,833)
+  Area: 83.129 -> 83.129 (diff: 0.000)
+
+Municipality: Embu das Artes (Code: 3515004)
+  Name Database: Embu das Artes
+  Population: 3,520 -> 250,691 (diff: 247,171)
+  Area: 70.398 -> 70.398 (diff: 0.000)
+
+Municipality: Embu-Guaçu (Code: 3515103)
+  Name Database: Embu-Guaçu
+  Population: 7,782 -> 66,970 (diff: 59,188)
+  Area: 155.641 -> 155.641 (diff: 0.000)
+
+Municipality: Emilianópolis (Code: 3515129)
+  Name Database: Emilianópolis
+  Population: 11,258 -> 3,014 (diff: 8,244)
+  Area: 225.167 -> 225.167 (diff: 0.000)
+
+Municipality: Engenheiro Coelho (Code: 3515152)
+  Name Database: Engenheiro Coelho
+  Population: 5,497 -> 19,566 (diff: 14,069)
+  Area: 109.941 -> 109.941 (diff: 0.000)
+
+Municipality: Espírito Santo do Pinhal (Code: 3515186)
+  Name Database: Espírito Santo do Pinhal
+  Population: 19,462 -> 39,816 (diff: 20,354)
+  Area: 389.235 -> 389.235 (diff: 0.000)
+
+Municipality: Espírito Santo do Turvo (Code: 3515194)
+  Name Database: Espírito Santo do Turvo
+  Population: 9,683 -> 4,157 (diff: 5,526)
+  Area: 193.666 -> 193.666 (diff: 0.000)
+
+Municipality: Estrela d'Oeste (Code: 3515202)
+  Name Database: Estrela d'Oeste
+  Population: 14,814 -> 9,417 (diff: 5,397)
+  Area: 296.281 -> 296.281 (diff: 0.000)
+
+Municipality: Estrela do Norte (Code: 3515301)
+  Name Database: Estrela do Norte
+  Population: 13,249 -> 2,703 (diff: 10,546)
+  Area: 264.987 -> 264.987 (diff: 0.000)
+
+Municipality: Euclides da Cunha Paulista (Code: 3515350)
+  Name Database: Euclides da Cunha Paulista
+  Population: 28,695 -> 7,924 (diff: 20,771)
+  Area: 573.894 -> 573.894 (diff: 0.000)
+
+Municipality: Fartura (Code: 3515400)
+  Name Database: Fartura
+  Population: 21,459 -> 16,641 (diff: 4,818)
+  Area: 429.171 -> 429.171 (diff: 0.000)
+
+Municipality: Fernandópolis (Code: 3515509)
+  Name Database: Fernandópolis
+  Population: 27,490 -> 71,186 (diff: 43,696)
+  Area: 549.797 -> 549.797 (diff: 0.000)
+
+Municipality: Fernando Prestes (Code: 3515608)
+  Name Database: Fernando Prestes
+  Population: 8,500 -> 5,942 (diff: 2,558)
+  Area: 169.990 -> 169.990 (diff: 0.000)
+
+Municipality: Fernão (Code: 3515657)
+  Name Database: Fernão
+  Population: 5,025 -> 1,656 (diff: 3,369)
+  Area: 100.504 -> 100.504 (diff: 0.000)
+
+Municipality: Ferraz de Vasconcelos (Code: 3515707)
+  Name Database: Ferraz de Vasconcelos
+  Population: 1,477 -> 179,198 (diff: 177,721)
+  Area: 29.547 -> 29.547 (diff: 0.000)
+
+Municipality: Flora Rica (Code: 3515806)
+  Name Database: Flora Rica
+  Population: 11,236 -> 1,487 (diff: 9,749)
+  Area: 224.711 -> 224.711 (diff: 0.000)
+
+Municipality: Floreal (Code: 3515905)
+  Name Database: Floreal
+  Population: 10,212 -> 2,733 (diff: 7,479)
+  Area: 204.236 -> 204.236 (diff: 0.000)
+
+Municipality: Flórida Paulista (Code: 3516002)
+  Name Database: Flórida Paulista
+  Population: 26,207 -> 12,958 (diff: 13,249)
+  Area: 524.138 -> 524.138 (diff: 0.000)
+
+Municipality: Florínea (Code: 3516101)
+  Name Database: Florínea
+  Population: 11,294 -> 3,851 (diff: 7,443)
+  Area: 225.886 -> 225.886 (diff: 0.000)
+
+Municipality: Franca (Code: 3516200)
+  Name Database: Franca
+  Population: 30,284 -> 352,536 (diff: 322,252)
+  Area: 605.679 -> 605.679 (diff: 0.000)
+
+Municipality: Francisco Morato (Code: 3516309)
+  Name Database: Francisco Morato
+  Population: 2,450 -> 165,139 (diff: 162,689)
+  Area: 49.001 -> 49.001 (diff: 0.000)
+
+Municipality: Franco da Rocha (Code: 3516408)
+  Name Database: Franco da Rocha
+  Population: 6,639 -> 144,849 (diff: 138,210)
+  Area: 132.775 -> 132.775 (diff: 0.000)
+
+Municipality: Gabriel Monteiro (Code: 3516507)
+  Name Database: Gabriel Monteiro
+  Population: 6,934 -> 2,763 (diff: 4,171)
+  Area: 138.681 -> 138.681 (diff: 0.000)
+
+Municipality: Gália (Code: 3516606)
+  Name Database: Gália
+  Population: 17,796 -> 6,380 (diff: 11,416)
+  Area: 355.914 -> 355.914 (diff: 0.000)
+
+Municipality: Garça (Code: 3516705)
+  Name Database: Garça
+  Population: 27,790 -> 42,110 (diff: 14,320)
+  Area: 555.807 -> 555.807 (diff: 0.000)
+
+Municipality: Gastão Vidigal (Code: 3516804)
+  Name Database: Gastão Vidigal
+  Population: 9,028 -> 3,252 (diff: 5,776)
+  Area: 180.569 -> 180.569 (diff: 0.000)
+
+Municipality: Gavião Peixoto (Code: 3516853)
+  Name Database: Gavião Peixoto
+  Population: 12,188 -> 4,702 (diff: 7,486)
+  Area: 243.766 -> 243.766 (diff: 0.000)
+
+Municipality: General Salgado (Code: 3516903)
+  Name Database: General Salgado
+  Population: 24,719 -> 10,312 (diff: 14,407)
+  Area: 494.376 -> 494.376 (diff: 0.000)
+
+Municipality: Getulina (Code: 3517000)
+  Name Database: Getulina
+  Population: 33,838 -> 10,232 (diff: 23,606)
+  Area: 676.755 -> 676.755 (diff: 0.000)
+
+Municipality: Glicério (Code: 3517109)
+  Name Database: Glicério
+  Population: 13,640 -> 4,138 (diff: 9,502)
+  Area: 272.800 -> 272.800 (diff: 0.000)
+
+Municipality: Guaiçara (Code: 3517208)
+  Name Database: Guaiçara
+  Population: 13,858 -> 11,239 (diff: 2,619)
+  Area: 277.154 -> 277.154 (diff: 0.000)
+
+Municipality: Guaimbê (Code: 3517307)
+  Name Database: Guaimbê
+  Population: 10,891 -> 5,512 (diff: 5,379)
+  Area: 217.811 -> 217.811 (diff: 0.000)
+
+Municipality: Guaíra (Code: 3517406)
+  Name Database: Guaíra
+  Population: 62,923 -> 39,279 (diff: 23,644)
+  Area: 1258.465 -> 1258.465 (diff: 0.000)
+
+Municipality: Guapiaçu (Code: 3517505)
+  Name Database: Guapiaçu
+  Population: 16,256 -> 21,711 (diff: 5,455)
+  Area: 325.126 -> 325.126 (diff: 0.000)
+
+Municipality: Guapiara (Code: 3517604)
+  Name Database: Guapiara
+  Population: 20,415 -> 17,071 (diff: 3,344)
+  Area: 408.292 -> 408.292 (diff: 0.000)
+
+Municipality: Guará (Code: 3517703)
+  Name Database: Guará
+  Population: 18,109 -> 18,606 (diff: 497)
+  Area: 362.183 -> 362.183 (diff: 0.000)
+
+Municipality: Guaraçaí (Code: 3517802)
+  Name Database: Guaraçaí
+  Population: 28,460 -> 7,441 (diff: 21,019)
+  Area: 569.197 -> 569.197 (diff: 0.000)
+
+Municipality: Guaraci (Code: 3517901)
+  Name Database: Guaraci
+  Population: 32,075 -> 10,350 (diff: 21,725)
+  Area: 641.501 -> 641.501 (diff: 0.000)
+
+Municipality: Guarani d'Oeste (Code: 3518008)
+  Name Database: Guarani d'Oeste
+  Population: 4,285 -> 1,968 (diff: 2,317)
+  Area: 85.700 -> 85.700 (diff: 0.000)
+
+Municipality: Guarantã (Code: 3518107)
+  Name Database: Guarantã
+  Population: 23,087 -> 6,427 (diff: 16,660)
+  Area: 461.746 -> 461.746 (diff: 0.000)
+
+Municipality: Guararapes (Code: 3518206)
+  Name Database: Guararapes
+  Population: 47,782 -> 31,043 (diff: 16,739)
+  Area: 955.637 -> 955.637 (diff: 0.000)
+
+Municipality: Guararema (Code: 3518305)
+  Name Database: Guararema
+  Population: 13,541 -> 31,236 (diff: 17,695)
+  Area: 270.816 -> 270.816 (diff: 0.000)
+
+Municipality: Guaratinguetá (Code: 3518404)
+  Name Database: Guaratinguetá
+  Population: 37,632 -> 118,044 (diff: 80,412)
+  Area: 752.636 -> 752.636 (diff: 0.000)
+
+Municipality: Guareí (Code: 3518503)
+  Name Database: Guareí
+  Population: 28,394 -> 15,013 (diff: 13,381)
+  Area: 567.884 -> 567.884 (diff: 0.000)
+
+Municipality: Guariba (Code: 3518602)
+  Name Database: Guariba
+  Population: 13,514 -> 37,498 (diff: 23,984)
+  Area: 270.289 -> 270.289 (diff: 0.000)
+
+Municipality: Guarujá (Code: 3518701)
+  Name Database: Guarujá
+  Population: 7,240 -> 287,634 (diff: 280,394)
+  Area: 144.794 -> 144.794 (diff: 0.000)
+
+Municipality: Guarulhos (Code: 3518800)
+  Name Database: Guarulhos
+  Population: 15,934 -> 1,291,771 (diff: 1,275,837)
+  Area: 318.675 -> 318.675 (diff: 0.000)
+
+Municipality: Guatapará (Code: 3518859)
+  Name Database: Guatapará
+  Population: 20,678 -> 7,320 (diff: 13,358)
+  Area: 413.567 -> 413.567 (diff: 0.000)
+
+Municipality: Guzolândia (Code: 3518909)
+  Name Database: Guzolândia
+  Population: 12,624 -> 4,246 (diff: 8,378)
+  Area: 252.477 -> 252.477 (diff: 0.000)
+
+Municipality: Herculândia (Code: 3519006)
+  Name Database: Herculândia
+  Population: 18,213 -> 9,125 (diff: 9,088)
+  Area: 364.252 -> 364.252 (diff: 0.000)
+
+Municipality: Holambra (Code: 3519055)
+  Name Database: Holambra
+  Population: 3,279 -> 15,094 (diff: 11,815)
+  Area: 65.577 -> 65.577 (diff: 0.000)
+
+Municipality: Hortolândia (Code: 3519071)
+  Name Database: Hortolândia
+  Population: 3,121 -> 236,641 (diff: 233,520)
+  Area: 62.416 -> 62.416 (diff: 0.000)
+
+Municipality: Iacanga (Code: 3519105)
+  Name Database: Iacanga
+  Population: 27,370 -> 10,437 (diff: 16,933)
+  Area: 547.393 -> 547.393 (diff: 0.000)
+
+Municipality: Iacri (Code: 3519204)
+  Name Database: Iacri
+  Population: 16,097 -> 6,131 (diff: 9,966)
+  Area: 321.948 -> 321.948 (diff: 0.000)
+
+Municipality: Iaras (Code: 3519253)
+  Name Database: Iaras
+  Population: 20,069 -> 8,010 (diff: 12,059)
+  Area: 401.381 -> 401.381 (diff: 0.000)
+
+Municipality: Ibaté (Code: 3519303)
+  Name Database: Ibaté
+  Population: 14,549 -> 32,178 (diff: 17,629)
+  Area: 290.977 -> 290.978 (diff: 0.001)
+
+Municipality: Ibirá (Code: 3519402)
+  Name Database: Ibirá
+  Population: 13,596 -> 11,690 (diff: 1,906)
+  Area: 271.912 -> 271.912 (diff: 0.000)
+
+Municipality: Ibirarema (Code: 3519501)
+  Name Database: Ibirarema
+  Population: 11,412 -> 6,385 (diff: 5,026)
+  Area: 228.230 -> 228.230 (diff: 0.000)
+
+Municipality: Ibitinga (Code: 3519600)
+  Name Database: Ibitinga
+  Population: 34,470 -> 60,033 (diff: 25,563)
+  Area: 689.391 -> 689.391 (diff: 0.000)
+
+Municipality: Ibiúna (Code: 3519709)
+  Name Database: Ibiúna
+  Population: 52,904 -> 75,605 (diff: 22,701)
+  Area: 1058.082 -> 1058.082 (diff: 0.000)
+
+Municipality: Icém (Code: 3519808)
+  Name Database: Icém
+  Population: 18,118 -> 7,819 (diff: 10,299)
+  Area: 362.355 -> 362.355 (diff: 0.000)
+
+Municipality: Iepê (Code: 3519907)
+  Name Database: Iepê
+  Population: 29,749 -> 7,619 (diff: 22,130)
+  Area: 594.974 -> 594.974 (diff: 0.000)
+
+Municipality: Igaraçu do Tietê (Code: 3520004)
+  Name Database: Igaraçu do Tietê
+  Population: 4,887 -> 23,106 (diff: 18,219)
+  Area: 97.747 -> 97.747 (diff: 0.000)
+
+Municipality: Igarapava (Code: 3520103)
+  Name Database: Igarapava
+  Population: 23,418 -> 26,212 (diff: 2,794)
+  Area: 468.355 -> 468.355 (diff: 0.000)
+
+Municipality: Igaratá (Code: 3520202)
+  Name Database: Igaratá
+  Population: 14,648 -> 10,605 (diff: 4,043)
+  Area: 292.953 -> 292.953 (diff: 0.000)
+
+Municipality: Iguape (Code: 3520301)
+  Name Database: Iguape
+  Population: 98,940 -> 29,115 (diff: 69,825)
+  Area: 1978.795 -> 1978.795 (diff: 0.000)
+
+Municipality: Ilhabela (Code: 3520400)
+  Name Database: Ilhabela
+  Population: 17,319 -> 34,934 (diff: 17,615)
+  Area: 346.389 -> 346.389 (diff: 0.000)
+
+Municipality: Ilha Comprida (Code: 3520426)
+  Name Database: Ilha Comprida
+  Population: 9,828 -> 13,419 (diff: 3,591)
+  Area: 196.567 -> 196.567 (diff: 0.000)
+
+Municipality: Ilha Solteira (Code: 3520442)
+  Name Database: Ilha Solteira
+  Population: 32,632 -> 25,549 (diff: 7,083)
+  Area: 652.641 -> 652.641 (diff: 0.000)
+
+Municipality: Indaiatuba (Code: 3520509)
+  Name Database: Indaiatuba
+  Population: 15,577 -> 255,748 (diff: 240,171)
+  Area: 311.545 -> 311.545 (diff: 0.000)
+
+Municipality: Indiana (Code: 3520608)
+  Name Database: Indiana
+  Population: 6,468 -> 5,090 (diff: 1,378)
+  Area: 129.367 -> 129.367 (diff: 0.000)
+
+Municipality: Indiaporã (Code: 3520707)
+  Name Database: Indiaporã
+  Population: 13,980 -> 4,035 (diff: 9,945)
+  Area: 279.606 -> 279.606 (diff: 0.000)
+
+Municipality: Inúbia Paulista (Code: 3520806)
+  Name Database: Inúbia Paulista
+  Population: 4,356 -> 3,615 (diff: 741)
+  Area: 87.119 -> 87.119 (diff: 0.000)
+
+Municipality: Ipaussu (Code: 3520905)
+  Name Database: Ipaussu
+  Population: 10,478 -> 13,712 (diff: 3,234)
+  Area: 209.554 -> 209.554 (diff: 0.000)
+
+Municipality: Iperó (Code: 3521002)
+  Name Database: Iperó
+  Population: 8,514 -> 36,459 (diff: 27,945)
+  Area: 170.289 -> 170.289 (diff: 0.000)
+
+Municipality: Ipeúna (Code: 3521101)
+  Name Database: Ipeúna
+  Population: 9,500 -> 6,831 (diff: 2,670)
+  Area: 190.010 -> 190.010 (diff: 0.000)
+
+Municipality: Ipiguá (Code: 3521150)
+  Name Database: Ipiguá
+  Population: 6,801 -> 6,761 (diff: 40)
+  Area: 136.028 -> 136.028 (diff: 0.000)
+
+Municipality: Iporanga (Code: 3521200)
+  Name Database: Iporanga
+  Population: 57,603 -> 4,046 (diff: 53,557)
+  Area: 1152.059 -> 1152.059 (diff: 0.000)
+
+Municipality: Ipuã (Code: 3521309)
+  Name Database: Ipuã
+  Population: 23,323 -> 14,454 (diff: 8,869)
+  Area: 466.461 -> 466.461 (diff: 0.000)
+
+Municipality: Iracemápolis (Code: 3521408)
+  Name Database: Iracemápolis
+  Population: 5,756 -> 21,967 (diff: 16,211)
+  Area: 115.118 -> 115.118 (diff: 0.000)
+
+Municipality: Irapuã (Code: 3521507)
+  Name Database: Irapuã
+  Population: 12,881 -> 6,867 (diff: 6,014)
+  Area: 257.612 -> 257.612 (diff: 0.000)
+
+Municipality: Irapuru (Code: 3521606)
+  Name Database: Irapuru
+  Population: 10,723 -> 7,085 (diff: 3,638)
+  Area: 214.461 -> 214.461 (diff: 0.000)
+
+Municipality: Itaberá (Code: 3521705)
+  Name Database: Itaberá
+  Population: 55,012 -> 17,983 (diff: 37,029)
+  Area: 1100.247 -> 1100.247 (diff: 0.000)
+
+Municipality: Itaí (Code: 3521804)
+  Name Database: Itaí
+  Population: 54,644 -> 25,180 (diff: 29,464)
+  Area: 1092.884 -> 1092.884 (diff: 0.000)
+
+Municipality: Itajobi (Code: 3521903)
+  Name Database: Itajobi
+  Population: 25,103 -> 16,989 (diff: 8,114)
+  Area: 502.066 -> 502.066 (diff: 0.000)
+
+Municipality: Itaju (Code: 3522000)
+  Name Database: Itaju
+  Population: 11,518 -> 3,618 (diff: 7,900)
+  Area: 230.355 -> 230.355 (diff: 0.000)
+
+Municipality: Itanhaém (Code: 3522109)
+  Name Database: Itanhaém
+  Population: 30,086 -> 112,476 (diff: 82,390)
+  Area: 601.711 -> 601.711 (diff: 0.000)
+
+Municipality: Itaoca (Code: 3522158)
+  Name Database: Itaoca
+  Population: 9,151 -> 3,422 (diff: 5,729)
+  Area: 183.015 -> 183.015 (diff: 0.000)
+
+Municipality: Itapecerica da Serra (Code: 3522208)
+  Name Database: Itapecerica da Serra
+  Population: 7,537 -> 158,522 (diff: 150,985)
+  Area: 150.742 -> 150.742 (diff: 0.000)
+
+Municipality: Itapetininga (Code: 3522307)
+  Name Database: Itapetininga
+  Population: 89,468 -> 157,790 (diff: 68,322)
+  Area: 1789.350 -> 1789.350 (diff: 0.000)
+
+Municipality: Itapeva (Code: 3522406)
+  Name Database: Itapeva
+  Population: 91,313 -> 89,728 (diff: 1,585)
+  Area: 1826.258 -> 1826.258 (diff: 0.000)
+
+Municipality: Itapevi (Code: 3522505)
+  Name Database: Itapevi
+  Population: 4,133 -> 232,297 (diff: 228,164)
+  Area: 82.658 -> 82.658 (diff: 0.000)
+
+Municipality: Itapira (Code: 3522604)
+  Name Database: Itapira
+  Population: 25,921 -> 72,022 (diff: 46,101)
+  Area: 518.416 -> 518.416 (diff: 0.000)
+
+Municipality: Itapirapuã Paulista (Code: 3522653)
+  Name Database: Itapirapuã Paulista
+  Population: 20,324 -> 4,306 (diff: 16,018)
+  Area: 406.478 -> 406.478 (diff: 0.000)
+
+Municipality: Itápolis (Code: 3522703)
+  Name Database: Itápolis
+  Population: 49,837 -> 39,493 (diff: 10,344)
+  Area: 996.747 -> 996.747 (diff: 0.000)
+
+Municipality: Itaporanga (Code: 3522802)
+  Name Database: Itaporanga
+  Population: 25,400 -> 14,085 (diff: 11,315)
+  Area: 507.997 -> 507.997 (diff: 0.000)
+
+Municipality: Itapuí (Code: 3522901)
+  Name Database: Itapuí
+  Population: 7,001 -> 13,659 (diff: 6,658)
+  Area: 140.023 -> 140.023 (diff: 0.000)
+
+Municipality: Itapura (Code: 3523008)
+  Name Database: Itapura
+  Population: 15,083 -> 3,979 (diff: 11,104)
+  Area: 301.653 -> 301.653 (diff: 0.000)
+
+Municipality: Itaquaquecetuba (Code: 3523107)
+  Name Database: Itaquaquecetuba
+  Population: 4,131 -> 369,275 (diff: 365,144)
+  Area: 82.622 -> 82.622 (diff: 0.000)
+
+Municipality: Itararé (Code: 3523206)
+  Name Database: Itararé
+  Population: 50,193 -> 44,438 (diff: 5,755)
+  Area: 1003.860 -> 1003.860 (diff: 0.000)
+
+Municipality: Itariri (Code: 3523305)
+  Name Database: Itariri
+  Population: 13,683 -> 15,528 (diff: 1,845)
+  Area: 273.667 -> 273.667 (diff: 0.000)
+
+Municipality: Itatiba (Code: 3523404)
+  Name Database: Itatiba
+  Population: 16,113 -> 121,590 (diff: 105,477)
+  Area: 322.269 -> 322.269 (diff: 0.000)
+
+Municipality: Itatinga (Code: 3523503)
+  Name Database: Itatinga
+  Population: 48,991 -> 19,070 (diff: 29,921)
+  Area: 979.817 -> 979.817 (diff: 0.000)
+
+Municipality: Itirapina (Code: 3523602)
+  Name Database: Itirapina
+  Population: 28,230 -> 16,148 (diff: 12,082)
+  Area: 564.603 -> 564.603 (diff: 0.000)
+
+Municipality: Itirapuã (Code: 3523701)
+  Name Database: Itirapuã
+  Population: 8,056 -> 5,779 (diff: 2,277)
+  Area: 161.118 -> 161.118 (diff: 0.000)
+
+Municipality: Itobi (Code: 3523800)
+  Name Database: Itobi
+  Population: 6,949 -> 8,046 (diff: 1,097)
+  Area: 138.986 -> 138.986 (diff: 0.000)
+
+Municipality: Itu (Code: 3523909)
+  Name Database: Itu
+  Population: 32,036 -> 168,240 (diff: 136,204)
+  Area: 640.719 -> 640.719 (diff: 0.000)
+
+Municipality: Itupeva (Code: 3524006)
+  Name Database: Itupeva
+  Population: 10,044 -> 70,616 (diff: 60,572)
+  Area: 200.876 -> 200.876 (diff: 0.000)
+
+Municipality: Ituverava (Code: 3524105)
+  Name Database: Ituverava
+  Population: 35,233 -> 37,571 (diff: 2,338)
+  Area: 704.659 -> 704.659 (diff: 0.000)
+
+Municipality: Jaborandi (Code: 3524204)
+  Name Database: Jaborandi
+  Population: 13,672 -> 6,221 (diff: 7,451)
+  Area: 273.438 -> 273.438 (diff: 0.000)
+
+Municipality: Jaboticabal (Code: 3524303)
+  Name Database: Jaboticabal
+  Population: 35,330 -> 71,821 (diff: 36,491)
+  Area: 706.602 -> 706.602 (diff: 0.000)
+
+Municipality: Jacareí (Code: 3524402)
+  Name Database: Jacareí
+  Population: 23,214 -> 240,275 (diff: 217,061)
+  Area: 464.272 -> 464.272 (diff: 0.000)
+
+Municipality: Jaci (Code: 3524501)
+  Name Database: Jaci
+  Population: 7,257 -> 7,613 (diff: 356)
+  Area: 145.133 -> 145.133 (diff: 0.000)
+
+Municipality: Jacupiranga (Code: 3524600)
+  Name Database: Jacupiranga
+  Population: 35,207 -> 16,097 (diff: 19,110)
+  Area: 704.136 -> 704.189 (diff: 0.053)
+
+Municipality: Jaguariúna (Code: 3524709)
+  Name Database: Jaguariúna
+  Population: 7,070 -> 59,347 (diff: 52,277)
+  Area: 141.391 -> 141.391 (diff: 0.000)
+
+Municipality: Jales (Code: 3524808)
+  Name Database: Jales
+  Population: 18,429 -> 48,776 (diff: 30,347)
+  Area: 368.574 -> 368.574 (diff: 0.000)
+
+Municipality: Jambeiro (Code: 3524907)
+  Name Database: Jambeiro
+  Population: 9,221 -> 6,397 (diff: 2,824)
+  Area: 184.413 -> 184.413 (diff: 0.000)
+
+Municipality: Jandira (Code: 3525003)
+  Name Database: Jandira
+  Population: 872 -> 118,045 (diff: 117,173)
+  Area: 17.449 -> 17.449 (diff: 0.000)
+
+Municipality: Jardinópolis (Code: 3525102)
+  Name Database: Jardinópolis
+  Population: 25,094 -> 45,282 (diff: 20,188)
+  Area: 501.870 -> 501.870 (diff: 0.000)
+
+Municipality: Jarinu (Code: 3525201)
+  Name Database: Jarinu
+  Population: 10,377 -> 37,535 (diff: 27,158)
+  Area: 207.549 -> 207.549 (diff: 0.000)
+
+Municipality: Jaú (Code: 3525300)
+  Name Database: Jaú
+  Population: 34,355 -> 133,497 (diff: 99,142)
+  Area: 687.103 -> 687.103 (diff: 0.000)
+
+Municipality: Jeriquara (Code: 3525409)
+  Name Database: Jeriquara
+  Population: 7,099 -> 3,863 (diff: 3,236)
+  Area: 141.971 -> 141.971 (diff: 0.000)
+
+Municipality: Joanópolis (Code: 3525508)
+  Name Database: Joanópolis
+  Population: 18,715 -> 12,815 (diff: 5,900)
+  Area: 374.293 -> 374.293 (diff: 0.000)
+
+Municipality: João Ramalho (Code: 3525607)
+  Name Database: João Ramalho
+  Population: 20,773 -> 4,371 (diff: 16,402)
+  Area: 415.452 -> 415.452 (diff: 0.000)
+
+Municipality: José Bonifácio (Code: 3525706)
+  Name Database: José Bonifácio
+  Population: 43,010 -> 36,633 (diff: 6,377)
+  Area: 860.200 -> 860.200 (diff: 0.000)
+
+Municipality: Júlio Mesquita (Code: 3525805)
+  Name Database: Júlio Mesquita
+  Population: 6,409 -> 4,254 (diff: 2,155)
+  Area: 128.183 -> 128.183 (diff: 0.000)
+
+Municipality: Jumirim (Code: 3525854)
+  Name Database: Jumirim
+  Population: 2,834 -> 3,056 (diff: 222)
+  Area: 56.685 -> 56.685 (diff: 0.000)
+
+Municipality: Jundiaí (Code: 3525904)
+  Name Database: Jundiaí
+  Population: 21,560 -> 443,221 (diff: 421,661)
+  Area: 431.204 -> 431.204 (diff: 0.000)
+
+Municipality: Junqueirópolis (Code: 3526001)
+  Name Database: Junqueirópolis
+  Population: 29,128 -> 20,448 (diff: 8,680)
+  Area: 582.565 -> 582.565 (diff: 0.000)
+
+Municipality: Juquiá (Code: 3526100)
+  Name Database: Juquiá
+  Population: 40,640 -> 17,154 (diff: 23,486)
+  Area: 812.799 -> 812.799 (diff: 0.000)
+
+Municipality: Juquitiba (Code: 3526209)
+  Name Database: Juquitiba
+  Population: 26,108 -> 27,404 (diff: 1,296)
+  Area: 522.169 -> 522.169 (diff: 0.000)
+
+Municipality: Lagoinha (Code: 3526308)
+  Name Database: Lagoinha
+  Population: 12,774 -> 5,083 (diff: 7,691)
+  Area: 255.472 -> 255.472 (diff: 0.000)
+
+Municipality: Laranjal Paulista (Code: 3526407)
+  Name Database: Laranjal Paulista
+  Population: 19,214 -> 26,261 (diff: 7,047)
+  Area: 384.274 -> 384.274 (diff: 0.000)
+
+Municipality: Lavínia (Code: 3526506)
+  Name Database: Lavínia
+  Population: 26,884 -> 9,689 (diff: 17,195)
+  Area: 537.675 -> 537.675 (diff: 0.000)
+
+Municipality: Lavrinhas (Code: 3526605)
+  Name Database: Lavrinhas
+  Population: 8,353 -> 7,171 (diff: 1,182)
+  Area: 167.067 -> 167.067 (diff: 0.000)
+
+Municipality: Leme (Code: 3526704)
+  Name Database: Leme
+  Population: 20,144 -> 98,161 (diff: 78,017)
+  Area: 402.871 -> 402.871 (diff: 0.000)
+
+Municipality: Lençóis Paulista (Code: 3526803)
+  Name Database: Lençóis Paulista
+  Population: 40,477 -> 66,505 (diff: 26,028)
+  Area: 809.541 -> 809.541 (diff: 0.000)
+
+Municipality: Limeira (Code: 3526902)
+  Name Database: Limeira
+  Population: 29,036 -> 291,869 (diff: 262,833)
+  Area: 580.711 -> 580.711 (diff: 0.000)
+
+Municipality: Lindóia (Code: 3527009)
+  Name Database: Lindóia
+  Population: 2,438 -> 7,014 (diff: 4,576)
+  Area: 48.756 -> 48.756 (diff: 0.000)
+
+Municipality: Lins (Code: 3527108)
+  Name Database: Lins
+  Population: 28,503 -> 74,779 (diff: 46,276)
+  Area: 570.058 -> 570.058 (diff: 0.000)
+
+Municipality: Lorena (Code: 3527207)
+  Name Database: Lorena
+  Population: 20,708 -> 84,855 (diff: 64,147)
+  Area: 414.160 -> 414.160 (diff: 0.000)
+
+Municipality: Lourdes (Code: 3527256)
+  Name Database: Lourdes
+  Population: 5,697 -> 1,950 (diff: 3,747)
+  Area: 113.940 -> 113.940 (diff: 0.000)
+
+Municipality: Louveira (Code: 3527306)
+  Name Database: Louveira
+  Population: 2,787 -> 51,847 (diff: 49,060)
+  Area: 55.738 -> 55.738 (diff: 0.000)
+
+Municipality: Lucélia (Code: 3527405)
+  Name Database: Lucélia
+  Population: 15,740 -> 20,061 (diff: 4,320)
+  Area: 314.810 -> 314.810 (diff: 0.000)
+
+Municipality: Lucianópolis (Code: 3527504)
+  Name Database: Lucianópolis
+  Population: 9,477 -> 2,372 (diff: 7,105)
+  Area: 189.536 -> 189.536 (diff: 0.000)
+
+Municipality: Luís Antônio (Code: 3527603)
+  Name Database: Luís Antônio
+  Population: 29,913 -> 12,265 (diff: 17,648)
+  Area: 598.257 -> 598.257 (diff: 0.000)
+
+Municipality: Luiziânia (Code: 3527702)
+  Name Database: Luiziânia
+  Population: 8,329 -> 4,701 (diff: 3,628)
+  Area: 166.576 -> 166.576 (diff: 0.000)
+
+Municipality: Lupércio (Code: 3527801)
+  Name Database: Lupércio
+  Population: 7,759 -> 3,981 (diff: 3,778)
+  Area: 155.171 -> 155.171 (diff: 0.000)
+
+Municipality: Lutécia (Code: 3527900)
+  Name Database: Lutécia
+  Population: 23,761 -> 2,661 (diff: 21,100)
+  Area: 475.226 -> 475.226 (diff: 0.000)
+
+Municipality: Macatuba (Code: 3528007)
+  Name Database: Macatuba
+  Population: 11,226 -> 16,829 (diff: 5,603)
+  Area: 224.514 -> 224.514 (diff: 0.000)
+
+Municipality: Macaubal (Code: 3528106)
+  Name Database: Macaubal
+  Population: 12,404 -> 7,481 (diff: 4,923)
+  Area: 248.087 -> 248.087 (diff: 0.000)
+
+Municipality: Macedônia (Code: 3528205)
+  Name Database: Macedônia
+  Population: 16,378 -> 3,963 (diff: 12,415)
+  Area: 327.567 -> 327.567 (diff: 0.000)
+
+Municipality: Magda (Code: 3528304)
+  Name Database: Magda
+  Population: 15,614 -> 3,165 (diff: 12,449)
+  Area: 312.282 -> 312.282 (diff: 0.000)
+
+Municipality: Mairinque (Code: 3528403)
+  Name Database: Mairinque
+  Population: 10,507 -> 50,027 (diff: 39,520)
+  Area: 210.149 -> 210.149 (diff: 0.000)
+
+Municipality: Mairiporã (Code: 3528502)
+  Name Database: Mairiporã
+  Population: 16,035 -> 93,853 (diff: 77,818)
+  Area: 320.697 -> 320.697 (diff: 0.000)
+
+Municipality: Manduri (Code: 3528601)
+  Name Database: Manduri
+  Population: 11,452 -> 9,871 (diff: 1,581)
+  Area: 229.046 -> 229.046 (diff: 0.000)
+
+Municipality: Marabá Paulista (Code: 3528700)
+  Name Database: Marabá Paulista
+  Population: 45,976 -> 4,573 (diff: 41,403)
+  Area: 919.519 -> 919.519 (diff: 0.000)
+
+Municipality: Maracaí (Code: 3528809)
+  Name Database: Maracaí
+  Population: 26,675 -> 12,673 (diff: 14,002)
+  Area: 533.498 -> 533.498 (diff: 0.000)
+
+Municipality: Marapoama (Code: 3528858)
+  Name Database: Marapoama
+  Population: 5,563 -> 3,292 (diff: 2,271)
+  Area: 111.267 -> 111.267 (diff: 0.000)
+
+Municipality: Mariápolis (Code: 3528908)
+  Name Database: Mariápolis
+  Population: 9,327 -> 3,513 (diff: 5,814)
+  Area: 186.544 -> 186.544 (diff: 0.000)
+
+Municipality: Marília (Code: 3529005)
+  Name Database: Marília
+  Population: 58,526 -> 237,627 (diff: 179,101)
+  Area: 1170.515 -> 1170.515 (diff: 0.000)
+
+Municipality: Marinópolis (Code: 3529104)
+  Name Database: Marinópolis
+  Population: 3,891 -> 1,860 (diff: 2,031)
+  Area: 77.827 -> 77.827 (diff: 0.000)
+
+Municipality: Martinópolis (Code: 3529203)
+  Name Database: Martinópolis
+  Population: 62,702 -> 24,881 (diff: 37,821)
+  Area: 1254.032 -> 1253.564 (diff: 0.468)
+
+Municipality: Matão (Code: 3529302)
+  Name Database: Matão
+  Population: 26,245 -> 79,033 (diff: 52,788)
+  Area: 524.899 -> 524.899 (diff: 0.000)
+
+Municipality: Mauá (Code: 3529401)
+  Name Database: Mauá
+  Population: 3,097 -> 418,261 (diff: 415,164)
+  Area: 61.937 -> 61.937 (diff: 0.000)
+
+Municipality: Mendonça (Code: 3529500)
+  Name Database: Mendonça
+  Population: 9,758 -> 6,159 (diff: 3,599)
+  Area: 195.151 -> 195.151 (diff: 0.000)
+
+Municipality: Meridiano (Code: 3529609)
+  Name Database: Meridiano
+  Population: 11,410 -> 4,572 (diff: 6,838)
+  Area: 228.199 -> 228.199 (diff: 0.000)
+
+Municipality: Mesópolis (Code: 3529658)
+  Name Database: Mesópolis
+  Population: 7,432 -> 1,952 (diff: 5,480)
+  Area: 148.636 -> 148.636 (diff: 0.000)
+
+Municipality: Miguelópolis (Code: 3529708)
+  Name Database: Miguelópolis
+  Population: 41,042 -> 19,441 (diff: 21,601)
+  Area: 820.849 -> 820.849 (diff: 0.000)
+
+Municipality: Mineiros do Tietê (Code: 3529807)
+  Name Database: Mineiros do Tietê
+  Population: 10,662 -> 11,230 (diff: 568)
+  Area: 213.242 -> 213.242 (diff: 0.000)
+
+Municipality: Miracatu (Code: 3529906)
+  Name Database: Miracatu
+  Population: 50,074 -> 18,553 (diff: 31,521)
+  Area: 1001.484 -> 1001.484 (diff: 0.000)
+
+Municipality: Mira Estrela (Code: 3530003)
+  Name Database: Mira Estrela
+  Population: 10,841 -> 3,126 (diff: 7,715)
+  Area: 216.825 -> 216.825 (diff: 0.000)
+
+Municipality: Mirandópolis (Code: 3530102)
+  Name Database: Mirandópolis
+  Population: 45,885 -> 27,983 (diff: 17,902)
+  Area: 917.694 -> 917.694 (diff: 0.000)
+
+Municipality: Mirante do Paranapanema (Code: 3530201)
+  Name Database: Mirante do Paranapanema
+  Population: 61,947 -> 15,917 (diff: 46,030)
+  Area: 1238.931 -> 1238.931 (diff: 0.000)
+
+Municipality: Mirassol (Code: 3530300)
+  Name Database: Mirassol
+  Population: 12,161 -> 63,337 (diff: 51,176)
+  Area: 243.228 -> 243.228 (diff: 0.000)
+
+Municipality: Mirassolândia (Code: 3530409)
+  Name Database: Mirassolândia
+  Population: 8,306 -> 4,669 (diff: 3,637)
+  Area: 166.125 -> 166.125 (diff: 0.000)
+
+Municipality: Mococa (Code: 3530508)
+  Name Database: Mococa
+  Population: 42,758 -> 67,681 (diff: 24,923)
+  Area: 855.156 -> 855.156 (diff: 0.000)
+
+Municipality: Mogi das Cruzes (Code: 3530607)
+  Name Database: Mogi das Cruzes
+  Population: 35,627 -> 451,505 (diff: 415,878)
+  Area: 712.541 -> 712.541 (diff: 0.000)
+
+Municipality: Mogi Guaçu (Code: 3530706)
+  Name Database: Mogi Guaçu
+  Population: 40,638 -> 153,658 (diff: 113,020)
+  Area: 812.753 -> 812.753 (diff: 0.000)
+
+Municipality: Mogi Mirim (Code: 3530805)
+  Name Database: Mogi Mirim
+  Population: 24,885 -> 92,558 (diff: 67,673)
+  Area: 497.708 -> 497.708 (diff: 0.000)
+
+Municipality: Mombuca (Code: 3530904)
+  Name Database: Mombuca
+  Population: 6,685 -> 3,722 (diff: 2,963)
+  Area: 133.698 -> 133.698 (diff: 0.000)
+
+Municipality: Monções (Code: 3531001)
+  Name Database: Monções
+  Population: 5,218 -> 1,937 (diff: 3,281)
+  Area: 104.352 -> 104.352 (diff: 0.000)
+
+Municipality: Mongaguá (Code: 3531100)
+  Name Database: Mongaguá
+  Population: 7,138 -> 61,951 (diff: 54,813)
+  Area: 142.755 -> 142.755 (diff: 0.000)
+
+Municipality: Monte Alegre do Sul (Code: 3531209)
+  Name Database: Monte Alegre do Sul
+  Population: 5,515 -> 8,627 (diff: 3,112)
+  Area: 110.308 -> 110.308 (diff: 0.000)
+
+Municipality: Monte Alto (Code: 3531308)
+  Name Database: Monte Alto
+  Population: 17,348 -> 47,574 (diff: 30,226)
+  Area: 346.950 -> 346.950 (diff: 0.000)
+
+Municipality: Monte Aprazível (Code: 3531407)
+  Name Database: Monte Aprazível
+  Population: 24,778 -> 22,280 (diff: 2,498)
+  Area: 495.559 -> 495.559 (diff: 0.000)
+
+Municipality: Monte Azul Paulista (Code: 3531506)
+  Name Database: Monte Azul Paulista
+  Population: 13,173 -> 18,151 (diff: 4,978)
+  Area: 263.463 -> 263.462 (diff: 0.001)
+
+Municipality: Monte Castelo (Code: 3531605)
+  Name Database: Monte Castelo
+  Population: 11,677 -> 4,222 (diff: 7,455)
+  Area: 233.547 -> 233.547 (diff: 0.000)
+
+Municipality: Monteiro Lobato (Code: 3531704)
+  Name Database: Monteiro Lobato
+  Population: 16,637 -> 4,138 (diff: 12,499)
+  Area: 332.742 -> 332.742 (diff: 0.000)
+
+Municipality: Monte Mor (Code: 3531803)
+  Name Database: Monte Mor
+  Population: 12,028 -> 64,662 (diff: 52,634)
+  Area: 240.566 -> 240.566 (diff: 0.000)
+
+Municipality: Morro Agudo (Code: 3531902)
+  Name Database: Morro Agudo
+  Population: 69,406 -> 27,933 (diff: 41,473)
+  Area: 1388.127 -> 1388.127 (diff: 0.000)
+
+Municipality: Morungaba (Code: 3532009)
+  Name Database: Morungaba
+  Population: 7,338 -> 13,720 (diff: 6,382)
+  Area: 146.752 -> 146.752 (diff: 0.000)
+
+Municipality: Motuca (Code: 3532058)
+  Name Database: Motuca
+  Population: 11,435 -> 4,034 (diff: 7,401)
+  Area: 228.700 -> 228.700 (diff: 0.000)
+
+Municipality: Murutinga do Sul (Code: 3532108)
+  Name Database: Murutinga do Sul
+  Population: 12,544 -> 3,737 (diff: 8,807)
+  Area: 250.873 -> 250.873 (diff: 0.000)
+
+Municipality: Nantes (Code: 3532157)
+  Name Database: Nantes
+  Population: 14,332 -> 2,660 (diff: 11,672)
+  Area: 286.647 -> 286.647 (diff: 0.000)
+
+Municipality: Narandiba (Code: 3532207)
+  Name Database: Narandiba
+  Population: 17,866 -> 5,713 (diff: 12,153)
+  Area: 357.325 -> 357.325 (diff: 0.000)
+
+Municipality: Natividade da Serra (Code: 3532306)
+  Name Database: Natividade da Serra
+  Population: 41,669 -> 6,999 (diff: 34,670)
+  Area: 833.372 -> 833.372 (diff: 0.000)
+
+Municipality: Nazaré Paulista (Code: 3532405)
+  Name Database: Nazaré Paulista
+  Population: 16,313 -> 18,217 (diff: 1,904)
+  Area: 326.254 -> 326.254 (diff: 0.000)
+
+Municipality: Neves Paulista (Code: 3532504)
+  Name Database: Neves Paulista
+  Population: 10,952 -> 9,699 (diff: 1,254)
+  Area: 219.050 -> 219.050 (diff: 0.000)
+
+Municipality: Nhandeara (Code: 3532603)
+  Name Database: Nhandeara
+  Population: 21,808 -> 9,852 (diff: 11,956)
+  Area: 436.159 -> 436.159 (diff: 0.000)
+
+Municipality: Nipoã (Code: 3532702)
+  Name Database: Nipoã
+  Population: 6,880 -> 4,750 (diff: 2,130)
+  Area: 137.609 -> 137.609 (diff: 0.000)
+
+Municipality: Nova Aliança (Code: 3532801)
+  Name Database: Nova Aliança
+  Population: 10,876 -> 6,693 (diff: 4,183)
+  Area: 217.515 -> 217.515 (diff: 0.000)
+
+Municipality: Nova Campina (Code: 3532827)
+  Name Database: Nova Campina
+  Population: 19,269 -> 8,497 (diff: 10,772)
+  Area: 385.375 -> 385.375 (diff: 0.000)
+
+Municipality: Nova Canaã Paulista (Code: 3532843)
+  Name Database: Nova Canaã Paulista
+  Population: 6,224 -> 2,032 (diff: 4,192)
+  Area: 124.473 -> 124.473 (diff: 0.000)
+
+Municipality: Nova Castilho (Code: 3532868)
+  Name Database: Nova Castilho
+  Population: 9,170 -> 1,062 (diff: 8,108)
+  Area: 183.396 -> 183.396 (diff: 0.000)
+
+Municipality: Nova Europa (Code: 3532900)
+  Name Database: Nova Europa
+  Population: 8,012 -> 9,311 (diff: 1,298)
+  Area: 160.250 -> 160.250 (diff: 0.000)
+
+Municipality: Nova Granada (Code: 3533007)
+  Name Database: Nova Granada
+  Population: 26,590 -> 19,419 (diff: 7,171)
+  Area: 531.796 -> 531.796 (diff: 0.000)
+
+Municipality: Nova Guataporanga (Code: 3533106)
+  Name Database: Nova Guataporanga
+  Population: 1,708 -> 2,156 (diff: 448)
+  Area: 34.158 -> 34.158 (diff: 0.000)
+
+Municipality: Nova Independência (Code: 3533205)
+  Name Database: Nova Independência
+  Population: 13,251 -> 4,609 (diff: 8,642)
+  Area: 265.029 -> 265.029 (diff: 0.000)
+
+Municipality: Novais (Code: 3533254)
+  Name Database: Novais
+  Population: 5,889 -> 4,412 (diff: 1,477)
+  Area: 117.772 -> 117.772 (diff: 0.000)
+
+Municipality: Nova Luzitânia (Code: 3533304)
+  Name Database: Nova Luzitânia
+  Population: 3,691 -> 2,837 (diff: 854)
+  Area: 73.816 -> 73.816 (diff: 0.000)
+
+Municipality: Nova Odessa (Code: 3533403)
+  Name Database: Nova Odessa
+  Population: 3,689 -> 62,019 (diff: 58,330)
+  Area: 73.788 -> 73.788 (diff: 0.000)
+
+Municipality: Novo Horizonte (Code: 3533502)
+  Name Database: Novo Horizonte
+  Population: 46,587 -> 38,324 (diff: 8,263)
+  Area: 931.743 -> 931.743 (diff: 0.000)
+
+Municipality: Nuporanga (Code: 3533601)
+  Name Database: Nuporanga
+  Population: 17,413 -> 7,391 (diff: 10,022)
+  Area: 348.265 -> 348.265 (diff: 0.000)
+
+Municipality: Ocauçu (Code: 3533700)
+  Name Database: Ocauçu
+  Population: 15,052 -> 4,331 (diff: 10,721)
+  Area: 301.036 -> 301.036 (diff: 0.000)
+
+Municipality: Óleo (Code: 3533809)
+  Name Database: Óleo
+  Population: 9,947 -> 2,512 (diff: 7,435)
+  Area: 198.938 -> 198.938 (diff: 0.000)
+
+Municipality: Olímpia (Code: 3533908)
+  Name Database: Olímpia
+  Population: 40,128 -> 55,074 (diff: 14,946)
+  Area: 802.555 -> 802.555 (diff: 0.000)
+
+Municipality: Onda Verde (Code: 3534005)
+  Name Database: Onda Verde
+  Population: 12,147 -> 4,771 (diff: 7,376)
+  Area: 242.946 -> 242.946 (diff: 0.000)
+
+Municipality: Oriente (Code: 3534104)
+  Name Database: Oriente
+  Population: 10,933 -> 6,085 (diff: 4,848)
+  Area: 218.668 -> 218.668 (diff: 0.000)
+
+Municipality: Orindiúva (Code: 3534203)
+  Name Database: Orindiúva
+  Population: 12,369 -> 6,024 (diff: 6,345)
+  Area: 247.378 -> 247.378 (diff: 0.000)
+
+Municipality: Orlândia (Code: 3534302)
+  Name Database: Orlândia
+  Population: 14,588 -> 38,319 (diff: 23,731)
+  Area: 291.765 -> 291.765 (diff: 0.000)
+
+Municipality: Osasco (Code: 3534401)
+  Name Database: Osasco
+  Population: 3,248 -> 728,615 (diff: 725,367)
+  Area: 64.954 -> 64.954 (diff: 0.000)
+
+Municipality: Oscar Bressane (Code: 3534500)
+  Name Database: Oscar Bressane
+  Population: 11,106 -> 2,470 (diff: 8,636)
+  Area: 222.130 -> 222.130 (diff: 0.000)
+
+Municipality: Osvaldo Cruz (Code: 3534609)
+  Name Database: Osvaldo Cruz
+  Population: 12,402 -> 31,272 (diff: 18,870)
+  Area: 248.038 -> 248.038 (diff: 0.000)
+
+Municipality: Ourinhos (Code: 3534708)
+  Name Database: Ourinhos
+  Population: 14,791 -> 103,970 (diff: 89,179)
+  Area: 295.818 -> 295.818 (diff: 0.000)
+
+Municipality: Ouroeste (Code: 3534757)
+  Name Database: Ouroeste
+  Population: 14,432 -> 10,294 (diff: 4,138)
+  Area: 288.648 -> 288.648 (diff: 0.000)
+
+Municipality: Ouro Verde (Code: 3534807)
+  Name Database: Ouro Verde
+  Population: 13,339 -> 7,779 (diff: 5,560)
+  Area: 266.778 -> 266.778 (diff: 0.000)
+
+Municipality: Pacaembu (Code: 3534906)
+  Name Database: Pacaembu
+  Population: 16,969 -> 14,877 (diff: 2,092)
+  Area: 339.375 -> 339.375 (diff: 0.000)
+
+Municipality: Palestina (Code: 3535002)
+  Name Database: Palestina
+  Population: 34,885 -> 11,476 (diff: 23,409)
+  Area: 697.701 -> 697.701 (diff: 0.000)
+
+Municipality: Palmares Paulista (Code: 3535101)
+  Name Database: Palmares Paulista
+  Population: 4,106 -> 9,650 (diff: 5,544)
+  Area: 82.125 -> 82.125 (diff: 0.000)
+
+Municipality: Palmeira d'Oeste (Code: 3535200)
+  Name Database: Palmeira d'Oeste
+  Population: 15,937 -> 8,903 (diff: 7,034)
+  Area: 318.740 -> 318.740 (diff: 0.000)
+
+Municipality: Palmital (Code: 3535309)
+  Name Database: Palmital
+  Population: 27,420 -> 19,594 (diff: 7,826)
+  Area: 548.407 -> 548.407 (diff: 0.000)
+
+Municipality: Panorama (Code: 3535408)
+  Name Database: Panorama
+  Population: 17,802 -> 14,964 (diff: 2,838)
+  Area: 356.050 -> 356.050 (diff: 0.000)
+
+Municipality: Paraguaçu Paulista (Code: 3535507)
+  Name Database: Paraguaçu Paulista
+  Population: 50,075 -> 41,120 (diff: 8,955)
+  Area: 1001.492 -> 1001.492 (diff: 0.000)
+
+Municipality: Paraibuna (Code: 3535606)
+  Name Database: Paraibuna
+  Population: 40,479 -> 17,667 (diff: 22,812)
+  Area: 809.576 -> 809.576 (diff: 0.000)
+
+Municipality: Paraíso (Code: 3535705)
+  Name Database: Paraíso
+  Population: 7,759 -> 6,099 (diff: 1,660)
+  Area: 155.186 -> 155.186 (diff: 0.000)
+
+Municipality: Paranapanema (Code: 3535804)
+  Name Database: Paranapanema
+  Population: 50,936 -> 19,395 (diff: 31,541)
+  Area: 1018.724 -> 1018.724 (diff: 0.000)
+
+Municipality: Paranapuã (Code: 3535903)
+  Name Database: Paranapuã
+  Population: 7,018 -> 4,031 (diff: 2,987)
+  Area: 140.354 -> 140.354 (diff: 0.000)
+
+Municipality: Parapuã (Code: 3536000)
+  Name Database: Parapuã
+  Population: 18,333 -> 10,580 (diff: 7,753)
+  Area: 366.664 -> 366.664 (diff: 0.000)
+
+Municipality: Pardinho (Code: 3536109)
+  Name Database: Pardinho
+  Population: 10,495 -> 7,153 (diff: 3,342)
+  Area: 209.894 -> 209.894 (diff: 0.000)
+
+Municipality: Pariquera-Açu (Code: 3536208)
+  Name Database: Pariquera-Açu
+  Population: 17,971 -> 19,233 (diff: 1,262)
+  Area: 359.414 -> 359.414 (diff: 0.000)
+
+Municipality: Parisi (Code: 3536257)
+  Name Database: Parisi
+  Population: 4,237 -> 2,892 (diff: 1,345)
+  Area: 84.737 -> 84.737 (diff: 0.000)
+
+Municipality: Patrocínio Paulista (Code: 3536307)
+  Name Database: Patrocínio Paulista
+  Population: 30,142 -> 14,512 (diff: 15,630)
+  Area: 602.848 -> 602.848 (diff: 0.000)
+
+Municipality: Paulicéia (Code: 3536406)
+  Name Database: Paulicéia
+  Population: 18,705 -> 7,955 (diff: 10,750)
+  Area: 374.091 -> 374.091 (diff: 0.000)
+
+Municipality: Paulínia (Code: 3536505)
+  Name Database: Paulínia
+  Population: 6,939 -> 110,537 (diff: 103,598)
+  Area: 138.777 -> 138.777 (diff: 0.000)
+
+Municipality: Paulistânia (Code: 3536570)
+  Name Database: Paulistânia
+  Population: 12,809 -> 2,090 (diff: 10,719)
+  Area: 256.178 -> 256.178 (diff: 0.000)
+
+Municipality: Paulo de Faria (Code: 3536604)
+  Name Database: Paulo de Faria
+  Population: 36,899 -> 7,400 (diff: 29,499)
+  Area: 737.986 -> 737.986 (diff: 0.000)
+
+Municipality: Pederneiras (Code: 3536703)
+  Name Database: Pederneiras
+  Population: 36,374 -> 44,827 (diff: 8,453)
+  Area: 727.482 -> 727.482 (diff: 0.000)
+
+Municipality: Pedra Bela (Code: 3536802)
+  Name Database: Pedra Bela
+  Population: 7,929 -> 6,557 (diff: 1,372)
+  Area: 158.587 -> 158.587 (diff: 0.000)
+
+Municipality: Pedranópolis (Code: 3536901)
+  Name Database: Pedranópolis
+  Population: 13,005 -> 2,787 (diff: 10,218)
+  Area: 260.101 -> 260.101 (diff: 0.000)
+
+Municipality: Pedregulho (Code: 3537008)
+  Name Database: Pedregulho
+  Population: 35,630 -> 15,525 (diff: 20,105)
+  Area: 712.604 -> 712.604 (diff: 0.000)
+
+Municipality: Pedreira (Code: 3537107)
+  Name Database: Pedreira
+  Population: 5,441 -> 43,112 (diff: 37,671)
+  Area: 108.817 -> 108.817 (diff: 0.000)
+
+Municipality: Pedrinhas Paulista (Code: 3537156)
+  Name Database: Pedrinhas Paulista
+  Population: 7,615 -> 2,804 (diff: 4,811)
+  Area: 152.309 -> 152.309 (diff: 0.000)
+
+Municipality: Pedro de Toledo (Code: 3537206)
+  Name Database: Pedro de Toledo
+  Population: 33,522 -> 11,281 (diff: 22,241)
+  Area: 670.440 -> 670.440 (diff: 0.000)
+
+Municipality: Penápolis (Code: 3537305)
+  Name Database: Penápolis
+  Population: 35,566 -> 61,679 (diff: 26,113)
+  Area: 711.314 -> 711.315 (diff: 0.001)
+
+Municipality: Pereira Barreto (Code: 3537404)
+  Name Database: Pereira Barreto
+  Population: 48,712 -> 24,095 (diff: 24,617)
+  Area: 974.247 -> 974.247 (diff: 0.000)
+
+Municipality: Pereiras (Code: 3537503)
+  Name Database: Pereiras
+  Population: 11,157 -> 8,737 (diff: 2,420)
+  Area: 223.136 -> 223.136 (diff: 0.000)
+
+Municipality: Peruíbe (Code: 3537602)
+  Name Database: Peruíbe
+  Population: 16,311 -> 68,352 (diff: 52,041)
+  Area: 326.216 -> 326.216 (diff: 0.000)
+
+Municipality: Piacatu (Code: 3537701)
+  Name Database: Piacatu
+  Population: 11,624 -> 5,519 (diff: 6,105)
+  Area: 232.488 -> 232.488 (diff: 0.000)
+
+Municipality: Piedade (Code: 3537800)
+  Name Database: Piedade
+  Population: 37,343 -> 52,970 (diff: 15,627)
+  Area: 746.868 -> 746.868 (diff: 0.000)
+
+Municipality: Pilar do Sul (Code: 3537909)
+  Name Database: Pilar do Sul
+  Population: 34,062 -> 27,619 (diff: 6,443)
+  Area: 681.248 -> 681.248 (diff: 0.000)
+
+Municipality: Pindamonhangaba (Code: 3538006)
+  Name Database: Pindamonhangaba
+  Population: 36,568 -> 165,428 (diff: 128,860)
+  Area: 731.355 -> 731.355 (diff: 0.000)
+
+Municipality: Pindorama (Code: 3538105)
+  Name Database: Pindorama
+  Population: 9,241 -> 14,542 (diff: 5,301)
+  Area: 184.825 -> 184.825 (diff: 0.000)
+
+Municipality: Pinhalzinho (Code: 3538204)
+  Name Database: Pinhalzinho
+  Population: 7,726 -> 15,224 (diff: 7,498)
+  Area: 154.529 -> 154.529 (diff: 0.000)
+
+Municipality: Piquerobi (Code: 3538303)
+  Name Database: Piquerobi
+  Population: 24,138 -> 3,264 (diff: 20,874)
+  Area: 482.769 -> 482.769 (diff: 0.000)
+
+Municipality: Piquete (Code: 3538501)
+  Name Database: Piquete
+  Population: 8,800 -> 12,490 (diff: 3,690)
+  Area: 175.996 -> 175.996 (diff: 0.000)
+
+Municipality: Piracaia (Code: 3538600)
+  Name Database: Piracaia
+  Population: 19,278 -> 26,029 (diff: 6,751)
+  Area: 385.568 -> 385.568 (diff: 0.000)
+
+Municipality: Piracicaba (Code: 3538709)
+  Name Database: Piracicaba
+  Population: 68,903 -> 423,323 (diff: 354,420)
+  Area: 1378.069 -> 1378.069 (diff: 0.000)
+
+Municipality: Piraju (Code: 3538808)
+  Name Database: Piraju
+  Population: 25,230 -> 29,436 (diff: 4,206)
+  Area: 504.591 -> 504.591 (diff: 0.000)
+
+Municipality: Pirajuí (Code: 3538907)
+  Name Database: Pirajuí
+  Population: 41,188 -> 22,431 (diff: 18,757)
+  Area: 823.758 -> 823.758 (diff: 0.000)
+
+Municipality: Pirangi (Code: 3539004)
+  Name Database: Pirangi
+  Population: 10,790 -> 10,885 (diff: 95)
+  Area: 215.809 -> 215.809 (diff: 0.000)
+
+Municipality: Pirapora do Bom Jesus (Code: 3539103)
+  Name Database: Pirapora do Bom Jesus
+  Population: 5,424 -> 18,370 (diff: 12,946)
+  Area: 108.489 -> 108.489 (diff: 0.000)
+
+Municipality: Pirapozinho (Code: 3539202)
+  Name Database: Pirapozinho
+  Population: 23,884 -> 25,348 (diff: 1,464)
+  Area: 477.673 -> 477.673 (diff: 0.000)
+
+Municipality: Pirassununga (Code: 3539301)
+  Name Database: Pirassununga
+  Population: 36,356 -> 73,545 (diff: 37,189)
+  Area: 727.118 -> 727.118 (diff: 0.000)
+
+Municipality: Piratininga (Code: 3539400)
+  Name Database: Piratininga
+  Population: 20,120 -> 15,108 (diff: 5,012)
+  Area: 402.409 -> 402.409 (diff: 0.000)
+
+Municipality: Pitangueiras (Code: 3539509)
+  Name Database: Pitangueiras
+  Population: 21,532 -> 33,674 (diff: 12,142)
+  Area: 430.638 -> 430.638 (diff: 0.000)
+
+Municipality: Planalto (Code: 3539608)
+  Name Database: Planalto
+  Population: 14,491 -> 4,389 (diff: 10,102)
+  Area: 289.825 -> 289.825 (diff: 0.000)
+
+Municipality: Platina (Code: 3539707)
+  Name Database: Platina
+  Population: 16,374 -> 3,025 (diff: 13,349)
+  Area: 327.480 -> 327.480 (diff: 0.000)
+
+Municipality: Poá (Code: 3539806)
+  Name Database: Poá
+  Population: 863 -> 103,765 (diff: 102,902)
+  Area: 17.264 -> 17.264 (diff: 0.000)
+
+Municipality: Poloni (Code: 3539905)
+  Name Database: Poloni
+  Population: 6,756 -> 5,592 (diff: 1,164)
+  Area: 135.119 -> 135.120 (diff: 0.001)
+
+Municipality: Pompéia (Code: 3540002)
+  Name Database: Pompéia
+  Population: 39,234 -> 20,196 (diff: 19,038)
+  Area: 784.674 -> 784.674 (diff: 0.000)
+
+Municipality: Pongaí (Code: 3540101)
+  Name Database: Pongaí
+  Population: 9,170 -> 3,395 (diff: 5,775)
+  Area: 183.399 -> 183.399 (diff: 0.000)
+
+Municipality: Pontal (Code: 3540200)
+  Name Database: Pontal
+  Population: 17,819 -> 37,607 (diff: 19,788)
+  Area: 356.371 -> 356.371 (diff: 0.000)
+
+Municipality: Pontalinda (Code: 3540259)
+  Name Database: Pontalinda
+  Population: 10,476 -> 4,127 (diff: 6,349)
+  Area: 209.525 -> 209.525 (diff: 0.000)
+
+Municipality: Pontes Gestal (Code: 3540309)
+  Name Database: Pontes Gestal
+  Population: 10,875 -> 2,387 (diff: 8,488)
+  Area: 217.505 -> 217.505 (diff: 0.000)
+
+Municipality: Populina (Code: 3540408)
+  Name Database: Populina
+  Population: 15,797 -> 4,127 (diff: 11,670)
+  Area: 315.938 -> 315.938 (diff: 0.000)
+
+Municipality: Porangaba (Code: 3540507)
+  Name Database: Porangaba
+  Population: 13,284 -> 10,451 (diff: 2,833)
+  Area: 265.689 -> 265.689 (diff: 0.000)
+
+Municipality: Porto Feliz (Code: 3540606)
+  Name Database: Porto Feliz
+  Population: 27,835 -> 56,497 (diff: 28,662)
+  Area: 556.706 -> 556.706 (diff: 0.000)
+
+Municipality: Porto Ferreira (Code: 3540705)
+  Name Database: Porto Ferreira
+  Population: 12,245 -> 52,649 (diff: 40,404)
+  Area: 244.906 -> 244.906 (diff: 0.000)
+
+Municipality: Potim (Code: 3540754)
+  Name Database: Potim
+  Population: 2,232 -> 20,392 (diff: 18,160)
+  Area: 44.643 -> 44.643 (diff: 0.000)
+
+Municipality: Potirendaba (Code: 3540804)
+  Name Database: Potirendaba
+  Population: 17,125 -> 18,496 (diff: 1,371)
+  Area: 342.492 -> 342.492 (diff: 0.000)
+
+Municipality: Pracinha (Code: 3540853)
+  Name Database: Pracinha
+  Population: 3,153 -> 2,578 (diff: 575)
+  Area: 63.054 -> 63.054 (diff: 0.000)
+
+Municipality: Pradópolis (Code: 3540903)
+  Name Database: Pradópolis
+  Population: 8,369 -> 17,078 (diff: 8,709)
+  Area: 167.378 -> 167.378 (diff: 0.000)
+
+Municipality: Praia Grande (Code: 3541000)
+  Name Database: Praia Grande
+  Population: 7,483 -> 349,935 (diff: 342,452)
+  Area: 149.652 -> 149.652 (diff: 0.000)
+
+Municipality: Pratânia (Code: 3541059)
+  Name Database: Pratânia
+  Population: 8,755 -> 5,126 (diff: 3,629)
+  Area: 175.100 -> 175.100 (diff: 0.000)
+
+Municipality: Presidente Alves (Code: 3541109)
+  Name Database: Presidente Alves
+  Population: 14,332 -> 3,804 (diff: 10,528)
+  Area: 286.642 -> 286.642 (diff: 0.000)
+
+Municipality: Presidente Bernardes (Code: 3541208)
+  Name Database: Presidente Bernardes
+  Population: 37,462 -> 14,490 (diff: 22,972)
+  Area: 749.233 -> 749.233 (diff: 0.000)
+
+Municipality: Presidente Epitácio (Code: 3541307)
+  Name Database: Presidente Epitácio
+  Population: 63,014 -> 39,505 (diff: 23,509)
+  Area: 1260.281 -> 1260.281 (diff: 0.000)
+
+Municipality: Presidente Prudente (Code: 3541406)
+  Name Database: Presidente Prudente
+  Population: 28,032 -> 225,668 (diff: 197,636)
+  Area: 560.637 -> 560.637 (diff: 0.000)
+
+Municipality: Presidente Venceslau (Code: 3541505)
+  Name Database: Presidente Venceslau
+  Population: 37,760 -> 35,201 (diff: 2,559)
+  Area: 755.203 -> 755.203 (diff: 0.000)
+
+Municipality: Promissão (Code: 3541604)
+  Name Database: Promissão
+  Population: 38,960 -> 35,131 (diff: 3,829)
+  Area: 779.200 -> 779.200 (diff: 0.000)
+
+Municipality: Quadra (Code: 3541653)
+  Name Database: Quadra
+  Population: 10,284 -> 3,405 (diff: 6,879)
+  Area: 205.672 -> 205.672 (diff: 0.000)
+
+Municipality: Quatá (Code: 3541703)
+  Name Database: Quatá
+  Population: 32,567 -> 13,163 (diff: 19,404)
+  Area: 651.341 -> 651.341 (diff: 0.000)
+
+Municipality: Queiroz (Code: 3541802)
+  Name Database: Queiroz
+  Population: 11,746 -> 3,265 (diff: 8,481)
+  Area: 234.914 -> 234.914 (diff: 0.000)
+
+Municipality: Queluz (Code: 3541901)
+  Name Database: Queluz
+  Population: 12,470 -> 9,159 (diff: 3,311)
+  Area: 249.399 -> 249.399 (diff: 0.000)
+
+Municipality: Quintana (Code: 3542008)
+  Name Database: Quintana
+  Population: 15,947 -> 7,038 (diff: 8,909)
+  Area: 318.937 -> 318.937 (diff: 0.000)
+
+Municipality: Rafard (Code: 3542107)
+  Name Database: Rafard
+  Population: 6,082 -> 8,965 (diff: 2,883)
+  Area: 121.645 -> 121.645 (diff: 0.000)
+
+Municipality: Rancharia (Code: 3542206)
+  Name Database: Rancharia
+  Population: 79,375 -> 28,588 (diff: 50,787)
+  Area: 1587.498 -> 1587.498 (diff: 0.000)
+
+Municipality: Redenção da Serra (Code: 3542305)
+  Name Database: Redenção da Serra
+  Population: 15,472 -> 4,494 (diff: 10,978)
+  Area: 309.441 -> 309.441 (diff: 0.000)
+
+Municipality: Regente Feijó (Code: 3542404)
+  Name Database: Regente Feijó
+  Population: 13,166 -> 20,145 (diff: 6,979)
+  Area: 263.313 -> 263.280 (diff: 0.033)
+
+Municipality: Reginópolis (Code: 3542503)
+  Name Database: Reginópolis
+  Population: 20,520 -> 7,662 (diff: 12,858)
+  Area: 410.406 -> 410.406 (diff: 0.000)
+
+Municipality: Registro (Code: 3542602)
+  Name Database: Registro
+  Population: 36,110 -> 59,947 (diff: 23,837)
+  Area: 722.201 -> 722.201 (diff: 0.000)
+
+Municipality: Restinga (Code: 3542701)
+  Name Database: Restinga
+  Population: 12,287 -> 6,404 (diff: 5,883)
+  Area: 245.746 -> 245.746 (diff: 0.000)
+
+Municipality: Ribeira (Code: 3542800)
+  Name Database: Ribeira
+  Population: 16,788 -> 3,132 (diff: 13,656)
+  Area: 335.759 -> 335.759 (diff: 0.000)
+
+Municipality: Ribeirão Bonito (Code: 3542909)
+  Name Database: Ribeirão Bonito
+  Population: 23,578 -> 10,989 (diff: 12,589)
+  Area: 471.553 -> 471.553 (diff: 0.000)
+
+Municipality: Ribeirão Branco (Code: 3543006)
+  Name Database: Ribeirão Branco
+  Population: 34,875 -> 18,627 (diff: 16,248)
+  Area: 697.500 -> 697.500 (diff: 0.000)
+
+Municipality: Ribeirão Corrente (Code: 3543105)
+  Name Database: Ribeirão Corrente
+  Population: 7,417 -> 4,608 (diff: 2,809)
+  Area: 148.332 -> 148.332 (diff: 0.000)
+
+Municipality: Ribeirão do Sul (Code: 3543204)
+  Name Database: Ribeirão do Sul
+  Population: 10,160 -> 4,677 (diff: 5,483)
+  Area: 203.208 -> 203.208 (diff: 0.000)
+
+Municipality: Ribeirão dos Índios (Code: 3543238)
+  Name Database: Ribeirão dos Índios
+  Population: 9,822 -> 2,025 (diff: 7,797)
+  Area: 196.446 -> 196.446 (diff: 0.000)
+
+Municipality: Ribeirão Grande (Code: 3543253)
+  Name Database: Ribeirão Grande
+  Population: 16,668 -> 7,450 (diff: 9,218)
+  Area: 333.363 -> 333.363 (diff: 0.000)
+
+Municipality: Ribeirão Pires (Code: 3543303)
+  Name Database: Ribeirão Pires
+  Population: 4,949 -> 115,559 (diff: 110,610)
+  Area: 98.972 -> 98.972 (diff: 0.000)
+
+Municipality: Ribeirão Preto (Code: 3543402)
+  Name Database: Ribeirão Preto
+  Population: 32,546 -> 698,642 (diff: 666,096)
+  Area: 650.916 -> 650.916 (diff: 0.000)
+
+Municipality: Riversul (Code: 3543501)
+  Name Database: Riversul
+  Population: 19,294 -> 5,599 (diff: 13,695)
+  Area: 385.878 -> 385.878 (diff: 0.000)
+
+Municipality: Rifaina (Code: 3543600)
+  Name Database: Rifaina
+  Population: 8,125 -> 4,049 (diff: 4,076)
+  Area: 162.508 -> 162.508 (diff: 0.000)
+
+Municipality: Rincão (Code: 3543709)
+  Name Database: Rincão
+  Population: 15,832 -> 9,098 (diff: 6,734)
+  Area: 316.639 -> 316.639 (diff: 0.000)
+
+Municipality: Rinópolis (Code: 3543808)
+  Name Database: Rinópolis
+  Population: 17,924 -> 9,259 (diff: 8,665)
+  Area: 358.481 -> 358.481 (diff: 0.000)
+
+Municipality: Rio Claro (Code: 3543907)
+  Name Database: Rio Claro
+  Population: 24,921 -> 201,418 (diff: 176,497)
+  Area: 498.422 -> 498.422 (diff: 0.000)
+
+Municipality: Rio das Pedras (Code: 3544004)
+  Name Database: Rio das Pedras
+  Population: 11,333 -> 31,328 (diff: 19,995)
+  Area: 226.657 -> 226.657 (diff: 0.000)
+
+Municipality: Rio Grande da Serra (Code: 3544103)
+  Name Database: Rio Grande da Serra
+  Population: 1,817 -> 44,170 (diff: 42,353)
+  Area: 36.341 -> 36.341 (diff: 0.000)
+
+Municipality: Riolândia (Code: 3544202)
+  Name Database: Riolândia
+  Population: 31,595 -> 10,309 (diff: 21,286)
+  Area: 631.897 -> 631.897 (diff: 0.000)
+
+Municipality: Rosana (Code: 3544251)
+  Name Database: Rosana
+  Population: 37,201 -> 17,440 (diff: 19,761)
+  Area: 744.011 -> 744.011 (diff: 0.000)
+
+Municipality: Roseira (Code: 3544301)
+  Name Database: Roseira
+  Population: 6,492 -> 10,832 (diff: 4,340)
+  Area: 129.847 -> 129.847 (diff: 0.000)
+
+Municipality: Rubiácea (Code: 3544400)
+  Name Database: Rubiácea
+  Population: 11,824 -> 2,700 (diff: 9,124)
+  Area: 236.484 -> 236.484 (diff: 0.000)
+
+Municipality: Rubinéia (Code: 3544509)
+  Name Database: Rubinéia
+  Population: 12,144 -> 3,833 (diff: 8,311)
+  Area: 242.877 -> 242.877 (diff: 0.000)
+
+Municipality: Sabino (Code: 3544608)
+  Name Database: Sabino
+  Population: 15,264 -> 5,112 (diff: 10,152)
+  Area: 305.285 -> 305.285 (diff: 0.000)
+
+Municipality: Sagres (Code: 3544707)
+  Name Database: Sagres
+  Population: 7,397 -> 2,474 (diff: 4,923)
+  Area: 147.935 -> 147.935 (diff: 0.000)
+
+Municipality: Sales (Code: 3544806)
+  Name Database: Sales
+  Population: 15,428 -> 6,437 (diff: 8,991)
+  Area: 308.555 -> 308.555 (diff: 0.000)
+
+Municipality: Sales Oliveira (Code: 3544905)
+  Name Database: Sales Oliveira
+  Population: 15,289 -> 11,411 (diff: 3,878)
+  Area: 305.776 -> 305.776 (diff: 0.000)
+
+Municipality: Salesópolis (Code: 3545001)
+  Name Database: Salesópolis
+  Population: 21,250 -> 15,202 (diff: 6,048)
+  Area: 424.997 -> 424.997 (diff: 0.000)
+
+Municipality: Salmourão (Code: 3545100)
+  Name Database: Salmourão
+  Population: 8,647 -> 4,808 (diff: 3,839)
+  Area: 172.934 -> 172.934 (diff: 0.000)
+
+Municipality: Saltinho (Code: 3545159)
+  Name Database: Saltinho
+  Population: 4,987 -> 8,161 (diff: 3,174)
+  Area: 99.738 -> 99.738 (diff: 0.000)
+
+Municipality: Salto (Code: 3545209)
+  Name Database: Salto
+  Population: 6,653 -> 134,319 (diff: 127,666)
+  Area: 133.057 -> 133.057 (diff: 0.000)
+
+Municipality: Salto de Pirapora (Code: 3545308)
+  Name Database: Salto de Pirapora
+  Population: 14,021 -> 43,748 (diff: 29,727)
+  Area: 280.412 -> 280.412 (diff: 0.000)
+
+Municipality: Salto Grande (Code: 3545407)
+  Name Database: Salto Grande
+  Population: 9,422 -> 9,050 (diff: 372)
+  Area: 188.441 -> 188.441 (diff: 0.000)
+
+Municipality: Sandovalina (Code: 3545506)
+  Name Database: Sandovalina
+  Population: 22,793 -> 3,645 (diff: 19,148)
+  Area: 455.856 -> 455.856 (diff: 0.000)
+
+Municipality: Santa Adélia (Code: 3545605)
+  Name Database: Santa Adélia
+  Population: 16,513 -> 14,018 (diff: 2,495)
+  Area: 330.269 -> 330.269 (diff: 0.000)
+
+Municipality: Santa Albertina (Code: 3545704)
+  Name Database: Santa Albertina
+  Population: 13,635 -> 6,393 (diff: 7,242)
+  Area: 272.692 -> 272.692 (diff: 0.000)
+
+Municipality: Santa Bárbara d'Oeste (Code: 3545803)
+  Name Database: Santa Bárbara d'Oeste
+  Population: 13,551 -> 183,347 (diff: 169,796)
+  Area: 271.030 -> 271.030 (diff: 0.000)
+
+Municipality: Santa Branca (Code: 3546009)
+  Name Database: Santa Branca
+  Population: 13,612 -> 13,975 (diff: 363)
+  Area: 272.238 -> 272.238 (diff: 0.000)
+
+Municipality: Santa Clara d'Oeste (Code: 3546108)
+  Name Database: Santa Clara d'Oeste
+  Population: 9,173 -> 2,598 (diff: 6,575)
+  Area: 183.458 -> 183.458 (diff: 0.000)
+
+Municipality: Santa Cruz da Conceição (Code: 3546207)
+  Name Database: Santa Cruz da Conceição
+  Population: 7,506 -> 4,277 (diff: 3,230)
+  Area: 150.130 -> 150.130 (diff: 0.000)
+
+Municipality: Santa Cruz da Esperança (Code: 3546256)
+  Name Database: Santa Cruz da Esperança
+  Population: 7,403 -> 2,116 (diff: 5,287)
+  Area: 148.062 -> 148.062 (diff: 0.000)
+
+Municipality: Santa Cruz das Palmeiras (Code: 3546306)
+  Name Database: Santa Cruz das Palmeiras
+  Population: 14,767 -> 28,864 (diff: 14,097)
+  Area: 295.337 -> 295.337 (diff: 0.000)
+
+Municipality: Santa Cruz do Rio Pardo (Code: 3546405)
+  Name Database: Santa Cruz do Rio Pardo
+  Population: 55,737 -> 46,442 (diff: 9,295)
+  Area: 1114.747 -> 1114.747 (diff: 0.000)
+
+Municipality: Santa Ernestina (Code: 3546504)
+  Name Database: Santa Ernestina
+  Population: 6,721 -> 6,118 (diff: 603)
+  Area: 134.421 -> 134.421 (diff: 0.000)
+
+Municipality: Santa Fé do Sul (Code: 3546603)
+  Name Database: Santa Fé do Sul
+  Population: 10,327 -> 34,794 (diff: 24,467)
+  Area: 206.537 -> 206.537 (diff: 0.000)
+
+Municipality: Santa Gertrudes (Code: 3546702)
+  Name Database: Santa Gertrudes
+  Population: 4,915 -> 23,611 (diff: 18,696)
+  Area: 98.291 -> 98.291 (diff: 0.000)
+
+Municipality: Santa Isabel (Code: 3546801)
+  Name Database: Santa Isabel
+  Population: 18,167 -> 53,174 (diff: 35,007)
+  Area: 363.332 -> 363.332 (diff: 0.000)
+
+Municipality: Santa Lúcia (Code: 3546900)
+  Name Database: Santa Lúcia
+  Population: 7,693 -> 7,149 (diff: 544)
+  Area: 153.860 -> 153.860 (diff: 0.000)
+
+Municipality: Santa Maria da Serra (Code: 3547007)
+  Name Database: Santa Maria da Serra
+  Population: 12,631 -> 5,243 (diff: 7,388)
+  Area: 252.621 -> 252.621 (diff: 0.000)
+
+Municipality: Santa Mercedes (Code: 3547106)
+  Name Database: Santa Mercedes
+  Population: 8,338 -> 2,956 (diff: 5,382)
+  Area: 166.753 -> 166.753 (diff: 0.000)
+
+Municipality: Santana da Ponte Pensa (Code: 3547205)
+  Name Database: Santana da Ponte Pensa
+  Population: 6,494 -> 1,670 (diff: 4,824)
+  Area: 129.888 -> 129.888 (diff: 0.000)
+
+Municipality: Santana de Parnaíba (Code: 3547304)
+  Name Database: Santana de Parnaíba
+  Population: 8,997 -> 154,105 (diff: 145,108)
+  Area: 179.949 -> 179.949 (diff: 0.000)
+
+Municipality: Santa Rita d'Oeste (Code: 3547403)
+  Name Database: Santa Rita d'Oeste
+  Population: 10,490 -> 2,733 (diff: 7,757)
+  Area: 209.800 -> 209.800 (diff: 0.000)
+
+Municipality: Santa Rita do Passa Quatro (Code: 3547502)
+  Name Database: Santa Rita do Passa Quatro
+  Population: 37,707 -> 24,833 (diff: 12,874)
+  Area: 754.141 -> 754.141 (diff: 0.000)
+
+Municipality: Santa Rosa de Viterbo (Code: 3547601)
+  Name Database: Santa Rosa de Viterbo
+  Population: 14,429 -> 23,411 (diff: 8,982)
+  Area: 288.576 -> 288.576 (diff: 0.000)
+
+Municipality: Santa Salete (Code: 3547650)
+  Name Database: Santa Salete
+  Population: 3,960 -> 1,645 (diff: 2,315)
+  Area: 79.192 -> 79.192 (diff: 0.000)
+
+Municipality: Santo Anastácio (Code: 3547700)
+  Name Database: Santo Anastácio
+  Population: 27,644 -> 17,963 (diff: 9,681)
+  Area: 552.876 -> 552.876 (diff: 0.000)
+
+Municipality: Santo André (Code: 3547809)
+  Name Database: Santo André
+  Population: 8,789 -> 748,919 (diff: 740,130)
+  Area: 175.782 -> 175.782 (diff: 0.000)
+
+Municipality: Santo Antônio da Alegria (Code: 3547908)
+  Name Database: Santo Antônio da Alegria
+  Population: 15,516 -> 6,775 (diff: 8,741)
+  Area: 310.311 -> 310.311 (diff: 0.000)
+
+Municipality: Santo Antônio de Posse (Code: 3548005)
+  Name Database: Santo Antônio de Posse
+  Population: 7,707 -> 23,244 (diff: 15,537)
+  Area: 154.133 -> 154.133 (diff: 0.000)
+
+Municipality: Santo Antônio do Aracanguá (Code: 3548054)
+  Name Database: Santo Antônio do Aracanguá
+  Population: 65,422 -> 8,379 (diff: 57,043)
+  Area: 1308.432 -> 1308.432 (diff: 0.000)
+
+Municipality: Santo Antônio do Jardim (Code: 3548104)
+  Name Database: Santo Antônio do Jardim
+  Population: 5,498 -> 6,126 (diff: 628)
+  Area: 109.956 -> 109.956 (diff: 0.000)
+
+Municipality: Santo Antônio do Pinhal (Code: 3548203)
+  Name Database: Santo Antônio do Pinhal
+  Population: 6,650 -> 7,133 (diff: 483)
+  Area: 133.008 -> 133.008 (diff: 0.000)
+
+Municipality: Santo Expedito (Code: 3548302)
+  Name Database: Santo Expedito
+  Population: 4,723 -> 3,000 (diff: 1,723)
+  Area: 94.465 -> 94.465 (diff: 0.000)
+
+Municipality: Santópolis do Aguapeí (Code: 3548401)
+  Name Database: Santópolis do Aguapeí
+  Population: 6,401 -> 3,899 (diff: 2,502)
+  Area: 128.026 -> 128.026 (diff: 0.000)
+
+Municipality: Santos (Code: 3548500)
+  Name Database: Santos
+  Population: 14,052 -> 418,608 (diff: 404,556)
+  Area: 281.033 -> 281.033 (diff: 0.000)
+
+Municipality: São Bento do Sapucaí (Code: 3548609)
+  Name Database: São Bento do Sapucaí
+  Population: 12,629 -> 11,674 (diff: 955)
+  Area: 252.579 -> 252.579 (diff: 0.000)
+
+Municipality: São Bernardo do Campo (Code: 3548708)
+  Name Database: São Bernardo do Campo
+  Population: 20,477 -> 810,729 (diff: 790,252)
+  Area: 409.532 -> 409.532 (diff: 0.000)
+
+Municipality: São Caetano do Sul (Code: 3548807)
+  Name Database: São Caetano do Sul
+  Population: 767 -> 165,655 (diff: 164,888)
+  Area: 15.331 -> 15.331 (diff: 0.000)
+
+Municipality: São Carlos (Code: 3548906)
+  Name Database: São Carlos
+  Population: 56,845 -> 254,857 (diff: 198,012)
+  Area: 1136.907 -> 1136.907 (diff: 0.000)
+
+Municipality: São Francisco (Code: 3549003)
+  Name Database: São Francisco
+  Population: 3,779 -> 2,602 (diff: 1,177)
+  Area: 75.579 -> 75.579 (diff: 0.000)
+
+Municipality: São João da Boa Vista (Code: 3549102)
+  Name Database: São João da Boa Vista
+  Population: 25,820 -> 92,547 (diff: 66,727)
+  Area: 516.399 -> 516.399 (diff: 0.000)
+
+Municipality: São João das Duas Pontes (Code: 3549201)
+  Name Database: São João das Duas Pontes
+  Population: 6,473 -> 2,580 (diff: 3,893)
+  Area: 129.462 -> 129.462 (diff: 0.000)
+
+Municipality: São João de Iracema (Code: 3549250)
+  Name Database: São João de Iracema
+  Population: 8,920 -> 1,846 (diff: 7,074)
+  Area: 178.396 -> 178.396 (diff: 0.000)
+
+Municipality: São João do Pau d'Alho (Code: 3549300)
+  Name Database: São João do Pau d'Alho
+  Population: 5,883 -> 2,242 (diff: 3,641)
+  Area: 117.665 -> 117.665 (diff: 0.000)
+
+Municipality: São Joaquim da Barra (Code: 3549409)
+  Name Database: São Joaquim da Barra
+  Population: 20,543 -> 48,558 (diff: 28,015)
+  Area: 410.863 -> 410.863 (diff: 0.000)
+
+Municipality: São José da Bela Vista (Code: 3549508)
+  Name Database: São José da Bela Vista
+  Population: 13,848 -> 7,626 (diff: 6,222)
+  Area: 276.952 -> 276.952 (diff: 0.000)
+
+Municipality: São José do Barreiro (Code: 3549607)
+  Name Database: São José do Barreiro
+  Population: 28,534 -> 3,853 (diff: 24,681)
+  Area: 570.685 -> 570.685 (diff: 0.000)
+
+Municipality: São José do Rio Pardo (Code: 3549706)
+  Name Database: São José do Rio Pardo
+  Population: 20,984 -> 52,205 (diff: 31,221)
+  Area: 419.684 -> 419.684 (diff: 0.000)
+
+Municipality: São José do Rio Preto (Code: 3549805)
+  Name Database: São José do Rio Preto
+  Population: 21,597 -> 480,393 (diff: 458,796)
+  Area: 431.944 -> 431.944 (diff: 0.000)
+
+Municipality: São José dos Campos (Code: 3549904)
+  Name Database: São José dos Campos
+  Population: 54,970 -> 697,054 (diff: 642,084)
+  Area: 1099.409 -> 1099.409 (diff: 0.000)
+
+Municipality: São Lourenço da Serra (Code: 3549953)
+  Name Database: São Lourenço da Serra
+  Population: 9,323 -> 16,067 (diff: 6,744)
+  Area: 186.456 -> 186.456 (diff: 0.000)
+
+Municipality: São Luiz do Paraitinga (Code: 3550001)
+  Name Database: São Luiz do Paraitinga
+  Population: 30,866 -> 10,337 (diff: 20,529)
+  Area: 617.315 -> 617.315 (diff: 0.000)
+
+Municipality: São Manuel (Code: 3550100)
+  Name Database: São Manuel
+  Population: 32,537 -> 37,289 (diff: 4,752)
+  Area: 650.734 -> 650.734 (diff: 0.000)
+
+Municipality: São Miguel Arcanjo (Code: 3550209)
+  Name Database: São Miguel Arcanjo
+  Population: 46,517 -> 32,039 (diff: 14,478)
+  Area: 930.339 -> 930.339 (diff: 0.000)
+
+Municipality: São Paulo (Code: 3550308)
+  Name Database: São Paulo
+  Population: 76,060 -> 11,451,999 (diff: 11,375,939)
+  Area: 1521.202 -> 1521.202 (diff: 0.000)
+
+Municipality: São Pedro (Code: 3550407)
+  Name Database: São Pedro
+  Population: 30,564 -> 38,256 (diff: 7,692)
+  Area: 611.278 -> 611.278 (diff: 0.000)
+
+Municipality: São Pedro do Turvo (Code: 3550506)
+  Name Database: São Pedro do Turvo
+  Population: 36,561 -> 7,217 (diff: 29,344)
+  Area: 731.221 -> 731.221 (diff: 0.000)
+
+Municipality: São Roque (Code: 3550605)
+  Name Database: São Roque
+  Population: 15,345 -> 79,484 (diff: 64,139)
+  Area: 306.908 -> 306.908 (diff: 0.000)
+
+Municipality: São Sebastião (Code: 3550704)
+  Name Database: São Sebastião
+  Population: 20,120 -> 81,595 (diff: 61,475)
+  Area: 402.395 -> 402.395 (diff: 0.000)
+
+Municipality: São Sebastião da Grama (Code: 3550803)
+  Name Database: São Sebastião da Grama
+  Population: 12,620 -> 10,441 (diff: 2,180)
+  Area: 252.410 -> 252.410 (diff: 0.000)
+
+Municipality: São Simão (Code: 3550902)
+  Name Database: São Simão
+  Population: 30,863 -> 13,442 (diff: 17,421)
+  Area: 617.252 -> 617.252 (diff: 0.000)
+
+Municipality: São Vicente (Code: 3551009)
+  Name Database: São Vicente
+  Population: 7,408 -> 329,911 (diff: 322,503)
+  Area: 148.151 -> 148.151 (diff: 0.000)
+
+Municipality: Sarapuí (Code: 3551108)
+  Name Database: Sarapuí
+  Population: 17,630 -> 10,369 (diff: 7,261)
+  Area: 352.592 -> 352.592 (diff: 0.000)
+
+Municipality: Sarutaiá (Code: 3551207)
+  Name Database: Sarutaiá
+  Population: 7,080 -> 3,704 (diff: 3,376)
+  Area: 141.608 -> 141.608 (diff: 0.000)
+
+Municipality: Sebastianópolis do Sul (Code: 3551306)
+  Name Database: Sebastianópolis do Sul
+  Population: 8,392 -> 3,130 (diff: 5,262)
+  Area: 167.848 -> 167.848 (diff: 0.000)
+
+Municipality: Serra Azul (Code: 3551405)
+  Name Database: Serra Azul
+  Population: 14,157 -> 12,746 (diff: 1,411)
+  Area: 283.144 -> 283.144 (diff: 0.000)
+
+Municipality: Serrana (Code: 3551504)
+  Name Database: Serrana
+  Population: 6,302 -> 43,909 (diff: 37,607)
+  Area: 126.046 -> 126.046 (diff: 0.000)
+
+Municipality: Serra Negra (Code: 3551603)
+  Name Database: Serra Negra
+  Population: 10,187 -> 29,894 (diff: 19,707)
+  Area: 203.734 -> 203.734 (diff: 0.000)
+
+Municipality: Sertãozinho (Code: 3551702)
+  Name Database: Sertãozinho
+  Population: 20,154 -> 126,887 (diff: 106,733)
+  Area: 403.089 -> 403.089 (diff: 0.000)
+
+Municipality: Sete Barras (Code: 3551801)
+  Name Database: Sete Barras
+  Population: 53,135 -> 12,730 (diff: 40,405)
+  Area: 1062.699 -> 1062.699 (diff: 0.000)
+
+Municipality: Severínia (Code: 3551900)
+  Name Database: Severínia
+  Population: 7,023 -> 14,576 (diff: 7,553)
+  Area: 140.460 -> 140.460 (diff: 0.000)
+
+Municipality: Silveiras (Code: 3552007)
+  Name Database: Silveiras
+  Population: 20,739 -> 6,186 (diff: 14,553)
+  Area: 414.782 -> 414.782 (diff: 0.000)
+
+Municipality: Socorro (Code: 3552106)
+  Name Database: Socorro
+  Population: 22,451 -> 40,122 (diff: 17,671)
+  Area: 449.029 -> 449.029 (diff: 0.000)
+
+Municipality: Sorocaba (Code: 3552205)
+  Name Database: Sorocaba
+  Population: 22,494 -> 723,682 (diff: 701,188)
+  Area: 449.872 -> 449.872 (diff: 0.000)
+
+Municipality: Sud Mennucci (Code: 3552304)
+  Name Database: Sud Mennucci
+  Population: 29,737 -> 7,355 (diff: 22,382)
+  Area: 594.744 -> 594.744 (diff: 0.000)
+
+Municipality: Sumaré (Code: 3552403)
+  Name Database: Sumaré
+  Population: 7,673 -> 279,545 (diff: 271,872)
+  Area: 153.465 -> 153.465 (diff: 0.000)
+
+Municipality: Suzano (Code: 3552502)
+  Name Database: Suzano
+  Population: 10,312 -> 307,429 (diff: 297,117)
+  Area: 206.236 -> 206.236 (diff: 0.000)
+
+Municipality: Suzanápolis (Code: 3552551)
+  Name Database: Suzanápolis
+  Population: 16,529 -> 3,408 (diff: 13,121)
+  Area: 330.587 -> 330.587 (diff: 0.000)
+
+Municipality: Tabapuã (Code: 3552601)
+  Name Database: Tabapuã
+  Population: 17,290 -> 11,323 (diff: 5,967)
+  Area: 345.792 -> 345.792 (diff: 0.000)
+
+Municipality: Tabatinga (Code: 3552700)
+  Name Database: Tabatinga
+  Population: 18,430 -> 14,769 (diff: 3,661)
+  Area: 368.604 -> 368.604 (diff: 0.000)
+
+Municipality: Taboão da Serra (Code: 3552809)
+  Name Database: Taboão da Serra
+  Population: 1,019 -> 273,542 (diff: 272,523)
+  Area: 20.388 -> 20.388 (diff: 0.000)
+
+Municipality: Taciba (Code: 3552908)
+  Name Database: Taciba
+  Population: 30,338 -> 6,260 (diff: 24,078)
+  Area: 606.766 -> 607.267 (diff: 0.501)
+
+Municipality: Taguaí (Code: 3553005)
+  Name Database: Taguaí
+  Population: 7,267 -> 12,669 (diff: 5,402)
+  Area: 145.332 -> 145.332 (diff: 0.000)
+
+Municipality: Taiaçu (Code: 3553104)
+  Name Database: Taiaçu
+  Population: 5,353 -> 5,677 (diff: 324)
+  Area: 107.059 -> 107.059 (diff: 0.000)
+
+Municipality: Taiúva (Code: 3553203)
+  Name Database: Taiúva
+  Population: 6,623 -> 6,548 (diff: 75)
+  Area: 132.459 -> 132.459 (diff: 0.000)
+
+Municipality: Tambaú (Code: 3553302)
+  Name Database: Tambaú
+  Population: 28,089 -> 21,435 (diff: 6,654)
+  Area: 561.788 -> 561.788 (diff: 0.000)
+
+Municipality: Tanabi (Code: 3553401)
+  Name Database: Tanabi
+  Population: 37,361 -> 25,265 (diff: 12,096)
+  Area: 747.218 -> 747.218 (diff: 0.000)
+
+Municipality: Tapiraí (Code: 3553500)
+  Name Database: Tapiraí
+  Population: 37,755 -> 7,996 (diff: 29,759)
+  Area: 755.101 -> 755.100 (diff: 0.001)
+
+Municipality: Tapiratiba (Code: 3553609)
+  Name Database: Tapiratiba
+  Population: 11,095 -> 11,816 (diff: 721)
+  Area: 221.891 -> 221.891 (diff: 0.000)
+
+Municipality: Taquaral (Code: 3553658)
+  Name Database: Taquaral
+  Population: 2,695 -> 2,619 (diff: 76)
+  Area: 53.892 -> 53.892 (diff: 0.000)
+
+Municipality: Taquaritinga (Code: 3553708)
+  Name Database: Taquaritinga
+  Population: 29,717 -> 52,260 (diff: 22,543)
+  Area: 594.335 -> 594.335 (diff: 0.000)
+
+Municipality: Taquarituba (Code: 3553807)
+  Name Database: Taquarituba
+  Population: 22,426 -> 24,350 (diff: 1,924)
+  Area: 448.515 -> 448.515 (diff: 0.000)
+
+Municipality: Taquarivaí (Code: 3553856)
+  Name Database: Taquarivaí
+  Population: 11,590 -> 6,876 (diff: 4,714)
+  Area: 231.792 -> 231.792 (diff: 0.000)
+
+Municipality: Tarabai (Code: 3553906)
+  Name Database: Tarabai
+  Population: 10,069 -> 6,536 (diff: 3,533)
+  Area: 201.385 -> 201.385 (diff: 0.000)
+
+Municipality: Tarumã (Code: 3553955)
+  Name Database: Tarumã
+  Population: 15,146 -> 14,882 (diff: 264)
+  Area: 302.913 -> 302.913 (diff: 0.000)
+
+Municipality: Tatuí (Code: 3554003)
+  Name Database: Tatuí
+  Population: 26,187 -> 123,942 (diff: 97,755)
+  Area: 523.749 -> 523.749 (diff: 0.000)
+
+Municipality: Taubaté (Code: 3554102)
+  Name Database: Taubaté
+  Population: 31,250 -> 310,739 (diff: 279,489)
+  Area: 625.003 -> 625.003 (diff: 0.000)
+
+Municipality: Tejupá (Code: 3554201)
+  Name Database: Tejupá
+  Population: 14,809 -> 4,127 (diff: 10,682)
+  Area: 296.189 -> 296.189 (diff: 0.000)
+
+Municipality: Teodoro Sampaio (Code: 3554300)
+  Name Database: Teodoro Sampaio
+  Population: 77,790 -> 22,173 (diff: 55,617)
+  Area: 1555.803 -> 1555.803 (diff: 0.000)
+
+Municipality: Terra Roxa (Code: 3554409)
+  Name Database: Terra Roxa
+  Population: 11,077 -> 7,904 (diff: 3,173)
+  Area: 221.541 -> 221.541 (diff: 0.000)
+
+Municipality: Tietê (Code: 3554508)
+  Name Database: Tietê
+  Population: 20,220 -> 37,663 (diff: 17,443)
+  Area: 404.396 -> 404.396 (diff: 0.000)
+
+Municipality: Timburi (Code: 3554607)
+  Name Database: Timburi
+  Population: 9,840 -> 2,464 (diff: 7,376)
+  Area: 196.790 -> 196.790 (diff: 0.000)
+
+Municipality: Torre de Pedra (Code: 3554656)
+  Name Database: Torre de Pedra
+  Population: 3,567 -> 2,046 (diff: 1,521)
+  Area: 71.348 -> 71.348 (diff: 0.000)
+
+Municipality: Torrinha (Code: 3554706)
+  Name Database: Torrinha
+  Population: 15,763 -> 9,335 (diff: 6,428)
+  Area: 315.267 -> 315.267 (diff: 0.000)
+
+Municipality: Trabiju (Code: 3554755)
+  Name Database: Trabiju
+  Population: 3,171 -> 1,682 (diff: 1,489)
+  Area: 63.421 -> 63.421 (diff: 0.000)
+
+Municipality: Tremembé (Code: 3554805)
+  Name Database: Tremembé
+  Population: 9,555 -> 51,173 (diff: 41,618)
+  Area: 191.094 -> 191.094 (diff: 0.000)
+
+Municipality: Três Fronteiras (Code: 3554904)
+  Name Database: Três Fronteiras
+  Population: 7,580 -> 6,804 (diff: 776)
+  Area: 151.594 -> 151.594 (diff: 0.000)
+
+Municipality: Tuiuti (Code: 3554953)
+  Name Database: Tuiuti
+  Population: 6,337 -> 6,778 (diff: 441)
+  Area: 126.731 -> 126.731 (diff: 0.000)
+
+Municipality: Tupã (Code: 3555000)
+  Name Database: Tupã
+  Population: 31,399 -> 63,928 (diff: 32,529)
+  Area: 627.986 -> 627.986 (diff: 0.000)
+
+Municipality: Tupi Paulista (Code: 3555109)
+  Name Database: Tupi Paulista
+  Population: 12,238 -> 15,854 (diff: 3,616)
+  Area: 244.770 -> 244.770 (diff: 0.000)
+
+Municipality: Turiúba (Code: 3555208)
+  Name Database: Turiúba
+  Population: 7,662 -> 1,818 (diff: 5,844)
+  Area: 153.235 -> 153.235 (diff: 0.000)
+
+Municipality: Turmalina (Code: 3555307)
+  Name Database: Turmalina
+  Population: 7,390 -> 1,669 (diff: 5,721)
+  Area: 147.797 -> 147.797 (diff: 0.000)
+
+Municipality: Ubarana (Code: 3555356)
+  Name Database: Ubarana
+  Population: 10,493 -> 5,365 (diff: 5,128)
+  Area: 209.861 -> 209.861 (diff: 0.000)
+
+Municipality: Ubatuba (Code: 3555406)
+  Name Database: Ubatuba
+  Population: 35,405 -> 92,981 (diff: 57,576)
+  Area: 708.105 -> 708.105 (diff: 0.000)
+
+Municipality: Ubirajara (Code: 3555505)
+  Name Database: Ubirajara
+  Population: 14,109 -> 5,132 (diff: 8,977)
+  Area: 282.179 -> 282.179 (diff: 0.000)
+
+Municipality: Uchoa (Code: 3555604)
+  Name Database: Uchoa
+  Population: 12,622 -> 10,394 (diff: 2,228)
+  Area: 252.434 -> 252.434 (diff: 0.000)
+
+Municipality: União Paulista (Code: 3555703)
+  Name Database: União Paulista
+  Population: 3,953 -> 1,603 (diff: 2,350)
+  Area: 79.056 -> 79.056 (diff: 0.000)
+
+Municipality: Urânia (Code: 3555802)
+  Name Database: Urânia
+  Population: 10,463 -> 8,833 (diff: 1,630)
+  Area: 209.262 -> 209.262 (diff: 0.000)
+
+Municipality: Uru (Code: 3555901)
+  Name Database: Uru
+  Population: 7,345 -> 1,387 (diff: 5,958)
+  Area: 146.901 -> 146.901 (diff: 0.000)
+
+Municipality: Urupês (Code: 3556008)
+  Name Database: Urupês
+  Population: 16,196 -> 13,744 (diff: 2,452)
+  Area: 323.916 -> 323.916 (diff: 0.000)
+
+Municipality: Valentim Gentil (Code: 3556107)
+  Name Database: Valentim Gentil
+  Population: 7,487 -> 14,098 (diff: 6,611)
+  Area: 149.741 -> 149.741 (diff: 0.000)
+
+Municipality: Valinhos (Code: 3556206)
+  Name Database: Valinhos
+  Population: 7,427 -> 126,373 (diff: 118,946)
+  Area: 148.538 -> 148.538 (diff: 0.000)
+
+Municipality: Valparaíso (Code: 3556305)
+  Name Database: Valparaíso
+  Population: 42,883 -> 24,241 (diff: 18,642)
+  Area: 857.661 -> 857.661 (diff: 0.000)
+
+Municipality: Vargem (Code: 3556354)
+  Name Database: Vargem
+  Population: 7,130 -> 10,512 (diff: 3,382)
+  Area: 142.595 -> 142.595 (diff: 0.000)
+
+Municipality: Vargem Grande do Sul (Code: 3556404)
+  Name Database: Vargem Grande do Sul
+  Population: 13,359 -> 40,133 (diff: 26,774)
+  Area: 267.178 -> 267.178 (diff: 0.000)
+
+Municipality: Vargem Grande Paulista (Code: 3556453)
+  Name Database: Vargem Grande Paulista
+  Population: 2,124 -> 50,415 (diff: 48,291)
+  Area: 42.489 -> 42.489 (diff: 0.000)
+
+Municipality: Várzea Paulista (Code: 3556503)
+  Name Database: Várzea Paulista
+  Population: 1,756 -> 115,771 (diff: 114,015)
+  Area: 35.120 -> 35.120 (diff: 0.000)
+
+Municipality: Vera Cruz (Code: 3556602)
+  Name Database: Vera Cruz
+  Population: 12,386 -> 10,176 (diff: 2,210)
+  Area: 247.716 -> 247.716 (diff: 0.000)
+
+Municipality: Vinhedo (Code: 3556701)
+  Name Database: Vinhedo
+  Population: 4,048 -> 76,540 (diff: 72,492)
+  Area: 80.950 -> 80.950 (diff: 0.000)
+
+Municipality: Viradouro (Code: 3556800)
+  Name Database: Viradouro
+  Population: 10,886 -> 17,414 (diff: 6,528)
+  Area: 217.726 -> 217.726 (diff: 0.000)
+
+Municipality: Vista Alegre do Alto (Code: 3556909)
+  Name Database: Vista Alegre do Alto
+  Population: 4,771 -> 8,109 (diff: 3,338)
+  Area: 95.429 -> 95.429 (diff: 0.000)
+
+Municipality: Vitória Brasil (Code: 3556958)
+  Name Database: Vitória Brasil
+  Population: 2,492 -> 1,794 (diff: 698)
+  Area: 49.832 -> 49.832 (diff: 0.000)
+
+Municipality: Votorantim (Code: 3557006)
+  Name Database: Votorantim
+  Population: 9,209 -> 127,923 (diff: 118,714)
+  Area: 184.186 -> 184.186 (diff: 0.000)
+
+Municipality: Votuporanga (Code: 3557105)
+  Name Database: Votuporanga
+  Population: 21,035 -> 96,634 (diff: 75,599)
+  Area: 420.703 -> 420.703 (diff: 0.000)
+
+Municipality: Zacarias (Code: 3557154)
+  Name Database: Zacarias
+  Population: 15,953 -> 2,692 (diff: 13,261)
+  Area: 319.056 -> 319.056 (diff: 0.000)
+
+Municipality: Chavantes (Code: 3557204)
+  Name Database: Chavantes
+  Population: 9,436 -> 12,211 (diff: 2,775)
+  Area: 188.727 -> 188.727 (diff: 0.000)
+
+Municipality: Estiva Gerbi (Code: 3557303)
+  Name Database: Estiva Gerbi
+  Population: 3,707 -> 11,295 (diff: 7,588)
+  Area: 74.144 -> 74.144 (diff: 0.000)

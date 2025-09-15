@@ -635,24 +635,24 @@ def get_municipality_name_column(df):
 def format_column_name(col_name):
     """Format column names for better display in charts"""
     name_mappings = {
-        'total_final_nm_ano': 'Potencial Total (Nm³/ano)',
-        'total_agricola_nm_ano': 'Potencial Agrícola (Nm³/ano)',
-        'total_pecuaria_nm_ano': 'Potencial Pecuária (Nm³/ano)',
-        'biogas_cana_nm_ano': 'Biogás de Cana-de-açúcar (Nm³/ano)',
-        'biogas_soja_nm_ano': 'Biogás de Soja (Nm³/ano)',
-        'biogas_milho_nm_ano': 'Biogás de Milho (Nm³/ano)',
-        'biogas_cafe_nm_ano': 'Biogás de Café (Nm³/ano)',
-        'biogas_citros_nm_ano': 'Biogás de Citros (Nm³/ano)',
-        'biogas_bovinos_nm_ano': 'Biogás de Bovinos (Nm³/ano)',
-        'biogas_suino_nm_ano': 'Biogás de Suínos (Nm³/ano)',
-        'biogas_aves_nm_ano': 'Biogás de Aves (Nm³/ano)',
-        'biogas_piscicultura_nm_ano': 'Biogás de Piscicultura (Nm³/ano)',
-        'rsu_total_nm_ano': 'Resíduos Urbanos (Nm³/ano)',
-        'rpo_total_nm_ano': 'Resíduos de Poda (Nm³/ano)',
+        'total_final_nm_ano': 'Potencial Total (m³/ano)',
+        'total_agricola_nm_ano': 'Potencial Agrícola (m³/ano)',
+        'total_pecuaria_nm_ano': 'Potencial Pecuária (m³/ano)',
+        'biogas_cana_nm_ano': 'Biogás de Cana-de-açúcar (m³/ano)',
+        'biogas_soja_nm_ano': 'Biogás de Soja (m³/ano)',
+        'biogas_milho_nm_ano': 'Biogás de Milho (m³/ano)',
+        'biogas_cafe_nm_ano': 'Biogás de Café (m³/ano)',
+        'biogas_citros_nm_ano': 'Biogás de Citros (m³/ano)',
+        'biogas_bovinos_nm_ano': 'Biogás de Bovinos (m³/ano)',
+        'biogas_suino_nm_ano': 'Biogás de Suínos (m³/ano)',
+        'biogas_aves_nm_ano': 'Biogás de Aves (m³/ano)',
+        'biogas_piscicultura_nm_ano': 'Biogás de Piscicultura (m³/ano)',
+        'rsu_total_nm_ano': 'Resíduos Urbanos (m³/ano)',
+        'rpo_total_nm_ano': 'Resíduos de Poda (m³/ano)',
         'populacao_2022': 'População (2022)',
         'area_km2': 'Área (km²)',
-        'potencial_biogas': 'Potencial Biogás (Nm³/ano)',
-        'potencial_total': 'Potencial Total (Nm³/ano)',
+        'potencial_biogas': 'Potencial Biogás (m³/ano)',
+        'potencial_total': 'Potencial Total (m³/ano)',
         'faixa_pop': 'Faixa Populacional'
     }
     
@@ -661,7 +661,7 @@ def format_column_name(col_name):
     
     # Format the name nicely
     formatted = col_name.replace('_', ' ').title()
-    formatted = formatted.replace('Nm Ano', '(Nm³/ano)')
+    formatted = formatted.replace('m Ano', '(m³/ano)')
     formatted = formatted.replace('Km2', '(km²)')
     
     return formatted

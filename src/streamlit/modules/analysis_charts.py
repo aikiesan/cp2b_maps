@@ -21,7 +21,7 @@ def create_top_chart(df, display_col, title, limit=15):
         x='nome_municipio',
         y=display_col,
         title=f'Top {limit} Municípios - {title}',
-        labels={display_col: 'Potencial (Nm³/ano)', 'nome_municipio': 'Município'},
+        labels={display_col: 'Potencial (m³/ano)', 'nome_municipio': 'Município'},
         color=display_col,
         color_continuous_scale='Viridis'
     )
@@ -30,7 +30,7 @@ def create_top_chart(df, display_col, title, limit=15):
         height=400,
         showlegend=False,
         xaxis_title="Município",
-        yaxis_title="Potencial (Nm³/ano)"
+        yaxis_title="Potencial (m³/ano)"
     )
     
     return fig
@@ -45,12 +45,12 @@ def create_distribution_chart(df, display_col, title):
         x=display_col,
         title=f'Distribuição - {title}',
         nbins=20,
-        labels={display_col: 'Potencial (Nm³/ano)'},
+        labels={display_col: 'Potencial (m³/ano)'},
         color_discrete_sequence=['#2E8B57']
     )
     fig.update_layout(
         height=400,
-        xaxis_title="Potencial (Nm³/ano)",
+        xaxis_title="Potencial (m³/ano)",
         yaxis_title="Número de Municípios"
     )
     
@@ -69,7 +69,7 @@ def create_correlation_chart(df, display_col, title):
         color=display_col,
         hover_name='nome_municipio',
         title=f'População vs Potencial - {title}',
-        labels={'populacao_2022': 'População (2022)', display_col: 'Potencial (Nm³/ano)'},
+        labels={'populacao_2022': 'População (2022)', display_col: 'Potencial (m³/ano)'},
         color_continuous_scale='Viridis',
         size_max=60
     )
@@ -175,7 +175,7 @@ def create_trend_analysis_chart(df, display_col):
         title='Densidade Populacional vs Potencial Per Capita',
         labels={
             'densidade_pop': 'Densidade Populacional (hab/km²)',
-            'potencial_per_capita': 'Potencial Per Capita (Nm³/hab/ano)'
+            'potencial_per_capita': 'Potencial Per Capita (m³/hab/ano)'
         },
         color_continuous_scale='Viridis'
     )
@@ -286,7 +286,7 @@ def analyze_catchment_area_data(df, catchment_results, display_col):
                     x='nome_municipio',
                     y=display_col,
                     title='Top 10 Municípios na Área de Captação',
-                    labels={display_col: 'Potencial (Nm³/ano)', 'nome_municipio': 'Município'}
+                    labels={display_col: 'Potencial (m³/ano)', 'nome_municipio': 'Município'}
                 )
                 municipality_chart.update_layout(xaxis_tickangle=-45, height=400)
         

@@ -155,7 +155,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
             popup_content = f"""
             <div style="font-family: Arial; font-size: 12px; max-width: 300px;">
                 <h4 style="margin: 0 0 8px 0; color: #2E8B57;">{municipio_nome}</h4>
-                <p style="margin: 4px 0;"><b>🏭 Potencial Total:</b> {value:,.0f} Nm³/ano</p>
+                <p style="margin: 4px 0;"><b>🏭 Potencial Total:</b> {value:,.0f} m³/ano</p>
                 <p style="margin: 4px 0;"><b>👥 População:</b> {row.get('populacao_2022', 'N/A'):,}</p>
                 <p style="margin: 4px 0;"><b>📍 Coordenadas:</b> {lat:.4f}, {lon:.4f}</p>
             </div>
@@ -165,7 +165,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                 location=[lat, lon],
                 radius=radius,
                 popup=folium.Popup(popup_content, max_width=320),
-                tooltip=f"{municipio_nome}: {value:,.0f} Nm³/ano",
+                tooltip=f"{municipio_nome}: {value:,.0f} m³/ano",
                 color='white',
                 weight=2,
                 fillColor=color,

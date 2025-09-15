@@ -103,7 +103,7 @@ class ReferenceDatabase:
                 url="https://iris.unito.it/retrieve/handle/2318/151594/26398/Anaerobic%20digestion%20of%20corn%20stover%20fractions_Menardo.pdf",
                 citation_abnt="MENARDO, S. et al. Anaerobic digestion of corn stover fractions at laboratory scale. Applied Energy, v. 96, p. 206-213, 2012.",
                 category="substrate",
-                description="Fator calibrado: 225 Nm³ biogás/ton milho (palha + sabugo, disponibilidade 25% e 60%)"
+                description="Fator calibrado: 225 m³ biogás/ton milho (palha + sabugo, disponibilidade 25% e 60%)"
             ),
 
             "corn_cob": Reference(
@@ -271,7 +271,7 @@ class ReferenceDatabase:
                 url="https://doi.org/10.1016/j.biombioe.2020.105923",
                 citation_abnt="OLIVEIRA, R.S. et al. Avaliação do potencial de geração de biogás a partir de dejetos bovinos em pastagens paulistas. Revista de Energia Renovável e Sustentabilidade, v. 12, n. 2, p. 78-95, 2021.",
                 category="methodology",
-                description="Fatores calibrados: Bovinos 225 Nm³/cabeça/ano, Suínos 210 Nm³/cabeça/ano, Aves 34 Nm³/ave/ano"
+                description="Fatores calibrados: Bovinos 225 m³/cabeça/ano, Suínos 210 m³/cabeça/ano, Aves 34 m³/ave/ano"
             ),
 
             "realistic_conversion_factors": Reference(
@@ -282,7 +282,7 @@ class ReferenceDatabase:
                 year=2024,
                 citation_abnt="CP2B RESEARCH TEAM. Fatores de conversão realísticos para biogás no Estado de São Paulo. Relatório Técnico CP2B, 2024.",
                 category="methodology",
-                description="Fatores calibrados considerando disponibilidade real: RSU 117 Nm³/hab/ano, RPO 7 Nm³/hab/ano, Piscicultura 62 Nm³/ton peixe/ano"
+                description="Fatores calibrados considerando disponibilidade real: RSU 117 m³/hab/ano, RPO 7 m³/hab/ano, Piscicultura 62 m³/ton peixe/ano"
             ),
 
             "cn_ratio_importance": Reference(

@@ -427,8 +427,8 @@ def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only
                 </div>
                 <div style="margin-bottom: 12px;">
                     <strong>📈 Faixa de Potencial:</strong><br>
-                    Min: {df_merged[display_col].min():,.0f} Nm³/ano<br>
-                    Max: {df_merged[display_col].max():,.0f} Nm³/ano
+                    Min: {df_merged[display_col].min():,.0f} m³/ano<br>
+                    Max: {df_merged[display_col].max():,.0f} m³/ano
                 </div>
                 <div style="margin-bottom: 12px;">
                     <strong>🎨 Escala de Cores:</strong><br>
@@ -632,7 +632,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                     elif hasattr(row, 'nome_municipio'):
                         municipio_nome = str(row.nome_municipio)
                     
-                    popup = f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano"
+                    popup = f"<b>{municipio_nome}</b><br>{value:,.0f} m³/ano"
                     
                     folium.CircleMarker(
                         location=[lat, lon],
@@ -684,7 +684,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                             folium.CircleMarker(
                                 location=[lat, lon],
                                 radius=5,
-                                popup=f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano",
+                                popup=f"<b>{municipio_nome}</b><br>{value:,.0f} m³/ano",
                                 tooltip=municipio_nome,
                                 color='#333333',
                                 fillColor=color,
@@ -710,7 +710,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                         folium.CircleMarker(
                             location=[lat, lon],
                             radius=8,
-                            popup=f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano",
+                            popup=f"<b>{municipio_nome}</b><br>{value:,.0f} m³/ano",
                             tooltip=municipio_nome,
                             color='red',
                             fillColor='orange',
@@ -748,7 +748,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                         marker = folium.CircleMarker(
                             location=[lat, lon],
                             radius=size,
-                            popup=f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano",
+                            popup=f"<b>{municipio_nome}</b><br>{value:,.0f} m³/ano",
                             tooltip=municipio_nome,
                             color='#333333',
                             fillColor=color,
@@ -775,7 +775,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                         folium.CircleMarker(
                             location=[lat, lon],
                             radius=8,
-                            popup=f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano",
+                            popup=f"<b>{municipio_nome}</b><br>{value:,.0f} m³/ano",
                             tooltip=municipio_nome,
                             color='purple',
                             fillColor='violet',
@@ -811,7 +811,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                             folium.CircleMarker(
                                 location=[lat, lon],
                                 radius=12,
-                                popup=f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano",
+                                popup=f"<b>{municipio_nome}</b><br>{value:,.0f} m³/ano",
                                 tooltip=municipio_nome,
                                 color=color,
                                 fillColor=color,
@@ -849,7 +849,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                             folium.CircleMarker(
                                 location=[lat, lon],
                                 radius=12,
-                                popup=f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano",
+                                popup=f"<b>{municipio_nome}</b><br>{value:,.0f} m³/ano",
                                 tooltip=municipio_nome,
                                 color=color,
                                 fillColor=color,
@@ -917,7 +917,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                         folium.CircleMarker(
                             location=[lat, lon],
                             radius=12,
-                            popup=f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano",
+                            popup=f"<b>{municipio_nome}</b><br>{value:,.0f} m³/ano",
                             tooltip=municipio_nome,
                             color=color,
                             fillColor=color,
@@ -948,7 +948,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                     elif hasattr(row, 'nome_municipio'):
                         municipio_nome = str(row.nome_municipio)
                     
-                    popup = f"<b>{municipio_nome}</b><br>{value:,.0f} Nm³/ano"
+                    popup = f"<b>{municipio_nome}</b><br>{value:,.0f} m³/ano"
                     
                     folium.CircleMarker(
                         location=[lat, lon],
@@ -1044,7 +1044,7 @@ def safe_divide(numerator, denominator, default=0):
         return default
 
 @st.cache_data
-def format_number(value, unit="Nm³/ano", scale=1):
+def format_number(value, unit="m³/ano", scale=1):
     """Format numbers with proper scaling"""
     try:
         if pd.isna(value) or value == 0:
@@ -1577,11 +1577,11 @@ def apply_normalization(df, base_col, normalization_type):
     """Apply data normalization based on user selection"""
     df_norm = df.copy()
     
-    if normalization_type == "Potencial Absoluto (Nm³/ano)":
+    if normalization_type == "Potencial Absoluto (m³/ano)":
         # No normalization - use original values
         return df_norm, base_col
         
-    elif normalization_type == "Potencial per Capita (Nm³/hab/ano)":
+    elif normalization_type == "Potencial per Capita (m³/hab/ano)":
         # Normalize by population
         if 'populacao_2022' in df_norm.columns:
             normalized_col = f"{base_col}_per_capita"
@@ -1592,7 +1592,7 @@ def apply_normalization(df, base_col, normalization_type):
             st.warning("⚠️ Dados populacionais não disponíveis para normalização per capita")
             return df_norm, base_col
             
-    elif normalization_type == "Potencial por Área (Nm³/km²/ano)":
+    elif normalization_type == "Potencial por Área (m³/km²/ano)":
         # Normalize by area
         if 'area_km2' in df_norm.columns:
             normalized_col = f"{base_col}_per_area"
@@ -1643,7 +1643,7 @@ def apply_filters(df, filters):
             df_to_display[display_col] = 0
     
     # Apply normalization if specified
-    if 'normalization' in filters and filters['normalization'] != "Potencial Absoluto (Nm³/ano)":
+    if 'normalization' in filters and filters['normalization'] != "Potencial Absoluto (m³/ano)":
         df_to_display, display_col = apply_normalization(df_to_display, display_col, filters['normalization'])
             
     return df_to_display, display_col
@@ -2119,11 +2119,11 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                     popup_text = f"""
                     <!-- id:{row['cd_mun']} -->
                     <b>{row['nome_municipio']}</b><br>
-                    {display_col.replace('_', ' ').title()}: {row[display_col]:,.0f} Nm³/ano
+                    {display_col.replace('_', ' ').title()}: {row[display_col]:,.0f} m³/ano
                     """
                     
                     # The tooltip remains clean
-                    tooltip_text = f"{row['nome_municipio']}: {row[display_col]:,.0f} Nm³/ano"
+                    tooltip_text = f"{row['nome_municipio']}: {row[display_col]:,.0f} m³/ano"
                     
                     # Check if this municipality matches the search term
                     is_searched = (search_term and 
@@ -2274,7 +2274,7 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                     popup_text = f"""
                     <!-- id:{row['cd_mun']} -->
                     <b>{row['nome_municipio']}</b><br>
-                    {display_col.replace('_', ' ').title()}: {row[display_col]:,.0f} Nm³/ano<br>
+                    {display_col.replace('_', ' ').title()}: {row[display_col]:,.0f} m³/ano<br>
                     <small>Posição: {lat:.4f}, {lon:.4f}</small>
                     """
                     
@@ -2318,7 +2318,7 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                                 line_opacity=0.3,
                                 line_color='black',
                                 line_weight=0.5,
-                                legend_name=f'Potencial (Nm³/ano)',
+                                legend_name=f'Potencial (m³/ano)',
                                 highlight=True,
                                 smooth_factor=0.5
                             ).add_to(m)
@@ -2329,7 +2329,7 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                                 popup_text = f"""
                                 <!-- id:{row['cd_mun']} -->
                                 <b>{row.get('nome_municipio', 'Município')}</b><br>
-                                {display_col.replace('_', ' ').title()}: {row[display_col]:,.0f} Nm³/ano<br>
+                                {display_col.replace('_', ' ').title()}: {row[display_col]:,.0f} m³/ano<br>
                                 <small>Código: {row['cd_mun']}</small>
                                 """
                                 
@@ -2398,8 +2398,8 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                 </div>
                 <div style="margin-bottom: 12px;">
                     <strong>📈 Faixa de Potencial:</strong><br>
-                    Min: {df_merged[display_col].min():,.0f} Nm³/ano<br>
-                    Max: {df_merged[display_col].max():,.0f} Nm³/ano
+                    Min: {df_merged[display_col].min():,.0f} m³/ano<br>
+                    Max: {df_merged[display_col].max():,.0f} m³/ano
                 </div>
                 <div style="margin-bottom: 12px;">
                     <strong>🎨 Escala de Cores:</strong><br>
@@ -2709,7 +2709,7 @@ def create_top_chart(df, display_col, title, limit=15):
         x='nome_municipio',
         y=display_col,
         title=f'Top {limit} Municípios - {title}',
-        labels={display_col: 'Potencial (Nm³/ano)', 'nome_municipio': 'Município'}
+        labels={display_col: 'Potencial (m³/ano)', 'nome_municipio': 'Município'}
     )
     fig.update_layout(
         xaxis_tickangle=-45,
@@ -2729,7 +2729,7 @@ def create_distribution_chart(df, display_col, title):
         x=display_col,
         title=f'Distribuição - {title}',
         nbins=20,
-        labels={display_col: 'Potencial (Nm³/ano)'}
+        labels={display_col: 'Potencial (m³/ano)'}
     )
     fig.update_layout(height=400)
     
@@ -2748,7 +2748,7 @@ def create_correlation_chart(df, display_col, title):
         color=display_col,
         hover_name='nome_municipio',
         title=f'População vs Potencial - {title}',
-        labels={'populacao_2022': 'População (2022)', display_col: 'Potencial (Nm³/ano)'},
+        labels={'populacao_2022': 'População (2022)', display_col: 'Potencial (m³/ano)'},
         color_continuous_scale='Viridis',
         size_max=60
     )
@@ -2777,7 +2777,6 @@ def show_municipality_details_horizontal(df, municipality_id, selected_residues)
     <div style='background: linear-gradient(135deg, #2E8B57 0%, #32CD32 100%); 
                 color: white; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem;'>
         <div style='margin: 0; color: white; font-size: 1.1em; font-weight: bold;'>
-            📍 {mun_data.get('regiao_imediata', 'N/A')}
         </div>
         <div style='margin: 2px 0 0 0; opacity: 0.9; font-size: 0.85em;'>
             👥 {mun_data.get('populacao_2022', 0):,.0f} hab | 📐 {mun_data.get('area_km2', 0):.1f} km²
@@ -2794,11 +2793,11 @@ def show_municipality_details_horizontal(df, municipality_id, selected_residues)
     # Compact metrics grid
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("🎯 Total", f"{total_potential/1000000:.1f}M Nm³/ano")
-        st.metric("🌾 Agrícola", f"{agri_potential/1000000:.1f}M Nm³/ano")
+        st.metric("🎯 Total", f"{total_potential/1000000:.1f}M m³/ano")
+        st.metric("🌾 Agrícola", f"{agri_potential/1000000:.1f}M m³/ano")
     with col2:
-        st.metric("🐄 Pecuária", f"{livestock_potential/1000000:.1f}M Nm³/ano")
-        st.metric("🏘️ Urbano", f"{urban_potential/1000000:.1f}M Nm³/ano")
+        st.metric("🐄 Pecuária", f"{livestock_potential/1000000:.1f}M m³/ano")
+        st.metric("🏘️ Urbano", f"{urban_potential/1000000:.1f}M m³/ano")
     
     # Compact visualization
     if total_potential > 0:
@@ -2845,17 +2844,11 @@ def show_municipality_details_horizontal(df, municipality_id, selected_residues)
         residue_sources.sort(key=lambda x: x[1], reverse=True)
         for i, (name, value) in enumerate(residue_sources[:5]):
             percentage = (value / total_potential) * 100
-            st.markdown(f"**{i+1}.** {name}: {value/1000000:.2f}M Nm³ ({percentage:.1f}%)")
+            st.markdown(f"**{i+1}.** {name}: {value/1000000:.2f}M m³ ({percentage:.1f}%)")
         
         # Neighboring municipalities comparison chart
-        if 'regiao_imediata' in mun_data.index and mun_data['regiao_imediata'] != 'N/A':
-            st.markdown("---")
-            st.markdown("**🏘️ Comparação Regional:**")
-            
-            # Get municipalities in the same immediate region
-            same_region = df[df['regiao_imediata'] == mun_data['regiao_imediata']].copy()
-            
-            if len(same_region) > 1:
+        # Regional comparison removed - data not available
+        if False:  # Disabled regional comparison
                 # Sort by total potential and get top 5 + current municipality
                 same_region_sorted = same_region.nlargest(8, 'total_final_nm_ano')
                 
@@ -2886,7 +2879,7 @@ def show_municipality_details_horizontal(df, municipality_id, selected_residues)
                     color='Atual',
                     color_discrete_map={True: '#32CD32', False: '#87CEEB'},
                     height=250,
-                    labels={'Potencial': 'Potencial (M Nm³/ano)'}
+                    labels={'Potencial': 'Potencial (M m³/ano)'}
                 )
                 fig.update_layout(
                     margin=dict(t=20, b=20, l=20, r=20),
@@ -2896,8 +2889,8 @@ def show_municipality_details_horizontal(df, municipality_id, selected_residues)
                 )
                 fig.update_traces(texttemplate='%{x:.1f}M', textposition='outside')
                 st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info("Único município na região")
+            # else:
+            #     st.info("Único município na região")
 
 def show_municipality_details_compact(df, municipality_id, selected_residues):
     """Show compact detailed analysis panel for clicked municipality"""
@@ -2926,7 +2919,6 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
                     color: white; padding: 1rem; border-radius: 10px; margin-bottom: 1rem;'>
             <h2 style='margin: 0; color: white;'>🏙️ {mun_data['nome_municipio']}</h2>
             <p style='margin: 5px 0 0 0; opacity: 0.9;'>
-                📍 <strong>Região:</strong> {mun_data.get('regiao_imediata', 'N/A')} | 
                 👥 <strong>População:</strong> {mun_data.get('populacao_2022', 0):,.0f} hab. | 
                 📐 <strong>Área:</strong> {mun_data.get('area_km2', 0):.1f} km²
             </p>
@@ -2960,28 +2952,28 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
     with metric_cols[0]:
         st.metric(
             "🎯 Potencial Total", 
-            f"{total_potential/1000000:.1f}M Nm³/ano",
+            f"{total_potential/1000000:.1f}M m³/ano",
             delta=f"Top {100-total_percentile:.0f}%" if total_percentile > 50 else f"P{total_percentile:.0f}"
         )
     
     with metric_cols[1]:
         st.metric(
             "🌾 Agrícola", 
-            f"{agri_potential/1000000:.1f}M Nm³/ano",
+            f"{agri_potential/1000000:.1f}M m³/ano",
             delta=f"Top {100-agri_percentile:.0f}%" if agri_percentile > 50 else f"P{agri_percentile:.0f}"
         )
     
     with metric_cols[2]:
         st.metric(
             "🐄 Pecuária", 
-            f"{livestock_potential/1000000:.1f}M Nm³/ano",
+            f"{livestock_potential/1000000:.1f}M m³/ano",
             delta=f"Top {100-livestock_percentile:.0f}%" if livestock_percentile > 50 else f"P{livestock_percentile:.0f}"
         )
     
     with metric_cols[3]:
         st.metric(
             "🏘️ Urbano", 
-            f"{urban_potential/1000000:.1f}M Nm³/ano",
+            f"{urban_potential/1000000:.1f}M m³/ano",
             delta="Estimativa" if urban_potential > 0 else "N/D"
         )
     
@@ -3049,7 +3041,7 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
                 for name, value in top_residues:
                     percentage = (value / total_potential * 100) if total_potential > 0 else 0
                     st.markdown(f"**{name}**")
-                    st.markdown(f"└ {value/1000000:.2f}M Nm³/ano ({percentage:.1f}%)")
+                    st.markdown(f"└ {value/1000000:.2f}M m³/ano ({percentage:.1f}%)")
                     st.progress(percentage/100)
                     st.markdown("")
             else:
@@ -3097,7 +3089,7 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
                                 title='Comparação com Vizinhos (50km)',
                                 color='É_Atual',
                                 color_discrete_map={True: '#ff6b6b', False: '#4ecdc4'},
-                                labels={'Potencial': 'Potencial (Nm³/ano)'})
+                                labels={'Potencial': 'Potencial (m³/ano)'})
                     fig.update_layout(height=300, showlegend=False)
                     st.plotly_chart(fig, use_container_width=True)
                     
@@ -3120,9 +3112,8 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
             # Regional ranking
             regional_rank = None
             regional_total = 0
-            if 'regiao_imediata' in df.columns and mun_data.get('regiao_imediata'):
-                regiao_imediata = mun_data.get('regiao_imediata')
-                regional_df = df[df['regiao_imediata'] == regiao_imediata]
+            # Regional comparison removed - data not available
+            if False:
                 regional_rank = (regional_df['total_final_nm_ano'] >= total_potential).sum()
                 regional_total = len(regional_df)
             
@@ -3210,7 +3201,6 @@ def show_municipality_details(df, municipality_id, selected_residues):
     with col1:
         st.markdown(f"""
         ### 🏙️ **{mun_data['nome_municipio']}**
-        **Região:** {mun_data.get('regiao_imediata', 'N/A')} | 
         **População:** {mun_data.get('populacao_2022', 0):,.0f} hab. |
         **Área:** {mun_data.get('area_km2', 0):.1f} km²
         """)
@@ -3248,7 +3238,7 @@ def show_municipality_details(df, municipality_id, selected_residues):
                     
                     residue_data.append({
                         'Tipo de Resíduo': residue_name,
-                        'Potencial (Nm³/ano)': f"{value:,.0f}",
+                        'Potencial (m³/ano)': f"{value:,.0f}",
                         'Percentil': f"{percentile:.1f}%",
                         'Classificação': get_classification_label(percentile)
                     })
@@ -3319,7 +3309,7 @@ def show_municipality_details(df, municipality_id, selected_residues):
                 avg_neighbors = comp_df[comp_df['Tipo'] == 'Vizinho']['Potencial Total'].mean()
                 st.metric(
                     "Média dos Vizinhos", 
-                    f"{avg_neighbors:,.0f} Nm³/ano"
+                    f"{avg_neighbors:,.0f} m³/ano"
                 )
             
             with col2:
@@ -3393,12 +3383,8 @@ def show_municipality_details(df, municipality_id, selected_residues):
         st.subheader("🗺️ Contexto Regional")
         
         # Regional statistics with real data
-        if 'regiao_imediata' in df.columns and mun_data.get('regiao_imediata'):
-            regiao_imediata = mun_data.get('regiao_imediata', 'N/A')
-            regiao_intermediaria = mun_data.get('regiao_intermediaria', 'N/A')
-            
-            # Filter municipalities in the same immediate region
-            regional_df = df[df['regiao_imediata'] == regiao_imediata]
+        # Regional analysis removed - data not available
+        if False:
             
             col1, col2 = st.columns(2)
             
@@ -3426,12 +3412,12 @@ def show_municipality_details(df, municipality_id, selected_residues):
                 
                 st.metric(
                     "Média Regional",
-                    f"{regional_avg:,.0f} Nm³/ano"
+                    f"{regional_avg:,.0f} m³/ano"
                 )
                 
                 st.metric(
                     "Média Estadual",
-                    f"{state_avg:,.0f} Nm³/ano"
+                    f"{state_avg:,.0f} m³/ano"
                 )
         else:
             st.info("📍 Dados regionais não disponíveis para este município")
@@ -3494,7 +3480,7 @@ def page_main():
         # CP2B Logo no topo da sidebar
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            st.image("logotipo-full-black.png", width=120)
+            st.image("logotipo-full-black.png", width=240)
 
         st.markdown("""
         <div style='background: #2E8B57; color: white; padding: 0.8rem; margin: -1rem -1rem 1rem -1rem;
@@ -3679,7 +3665,7 @@ def page_main():
         # Valores padrão para manter compatibilidade
         classification = "Linear (Intervalo Uniforme)"
         num_classes = 5
-        normalization = "Potencial Absoluto (Nm³/ano)"
+        normalization = "Potencial Absoluto (m³/ano)"
         
         # === SEÇÃO FIXA: MUNICÍPIOS SELECIONADOS ===
         if st.session_state.selected_municipalities:
@@ -3764,7 +3750,7 @@ def page_main():
         active_filters.append(f"Resíduo: **{display_name}**")
     if search_term:
         active_filters.append(f"Busca: **'{search_term}'**")
-    if normalization != "Potencial Absoluto (Nm³/ano)":
+    if normalization != "Potencial Absoluto (m³/ano)":
         metric_short = normalization.split('(')[0].strip()
         active_filters.append(f"Métrica: **{metric_short}**")
     if show_mapbiomas and mapbiomas_classes:
@@ -4008,8 +3994,8 @@ def page_main():
                                 x=potenciais,
                                 y=cultura_names,
                                 orientation='h',
-                                title="Potencial de Biogás por Cultura (Nm³/ano)",
-                                labels={'x': 'Potencial (Nm³/ano)', 'y': 'Cultura'},
+                                title="Potencial de Biogás por Cultura (m³/ano)",
+                                labels={'x': 'Potencial (m³/ano)', 'y': 'Cultura'},
                                 color=potenciais,
                                 color_continuous_scale='Reds'
                             )
@@ -4023,8 +4009,8 @@ def page_main():
                                 'Cultura': cultura,
                                 'Área (km²)': f"{dados['area_km2']:.2f}",
                                 'Percentual (%)': f"{dados['percentual']:.1f}%",
-                                'Potencial Biogás (Nm³/ano)': f"{dados['potencial_biogas']:,.0f}",
-                                'Densidade (Nm³/km²/ano)': f"{dados['densidade']:,.1f}"
+                                'Potencial Biogás (m³/ano)': f"{dados['potencial_biogas']:,.0f}",
+                                'Densidade (m³/km²/ano)': f"{dados['densidade']:,.1f}"
                             }
                             for cultura, dados in culturas_data.items()
                         ])
@@ -4039,7 +4025,7 @@ def page_main():
                         with col1:
                             st.metric("🌾 Área Total Analisada", f"{total_area:.1f} km²")
                         with col2:
-                            st.metric("⚡ Potencial Total", f"{total_potencial:,.0f} Nm³/ano")
+                            st.metric("⚡ Potencial Total", f"{total_potencial:,.0f} m³/ano")
                         with col3:
                             st.metric("📊 Tipos de Cultura", f"{len(culturas_data)}")
                         with col4:
@@ -4158,16 +4144,16 @@ def page_main():
                     st.metric("Total Selecionados", len(selected_df))
                 with col2:
                     total_potential = selected_df['total_final_nm_ano'].sum()
-                    st.metric("Potencial Conjunto", f"{total_potential:,.0f} Nm³/ano")
+                    st.metric("Potencial Conjunto", f"{total_potential:,.0f} m³/ano")
                 with col3:
                     avg_potential = selected_df['total_final_nm_ano'].mean()
-                    st.metric("Média por Município", f"{avg_potential:,.0f} Nm³/ano")
+                    st.metric("Média por Município", f"{avg_potential:,.0f} m³/ano")
                 with col4:
                     if 'populacao_2022' in selected_df.columns:
                         total_population = selected_df['populacao_2022'].sum()
                         if total_population > 0:
                             potential_per_capita = total_potential / total_population
-                            st.metric("Potencial per Capita", f"{potential_per_capita:.1f} Nm³/hab/ano")
+                            st.metric("Potencial per Capita", f"{potential_per_capita:.1f} m³/hab/ano")
                 
                 # Main comparison chart
                 fig_bar = px.bar(
@@ -4508,7 +4494,7 @@ def page_explorer():
         with metric_col1:
             st.metric(
                 "🔥 Potencial Total",
-                f"{total_potential/1_000_000:.1f}M Nm³/ano",
+                f"{total_potential/1_000_000:.1f}M m³/ano",
                 help="Soma de todo o potencial de biogás deste tipo em SP"
             )
         with metric_col2:
@@ -4519,7 +4505,7 @@ def page_explorer():
     with col3:
         st.metric(
             "📊 Potencial Médio", 
-            f"{average_potential/1_000:.0f}K Nm³/ano",
+            f"{average_potential/1_000:.0f}K m³/ano",
             help="Média do potencial por município"
         )
     
@@ -4561,7 +4547,7 @@ def page_explorer():
             ranking_data.append({
                 "🏅 Posição": f"{i}º",
                 "🏘️ Município": row['nome_municipio'],
-                "🔥 Potencial (Nm³/ano)": format_number(row[display_col])
+                "🔥 Potencial (m³/ano)": format_number(row[display_col])
             })
         
         ranking_df = pd.DataFrame(ranking_data)
@@ -4574,7 +4560,7 @@ def page_explorer():
             y='nome_municipio',
             orientation='h',
             title=f"🏆 Top 10 Municípios - {selected_type}",
-            labels={display_col: "Potencial de Biogás (Nm³/ano)", 'nome_municipio': 'Município'},
+            labels={display_col: "Potencial de Biogás (m³/ano)", 'nome_municipio': 'Município'},
             color=display_col,
             color_continuous_scale='Greens'
         )
@@ -4601,7 +4587,7 @@ def page_explorer():
             x=display_col,
             nbins=20,  # Fixed, simpler number
             title=f"Distribuição do Potencial - {selected_type}",
-            labels={display_col: "Potencial de Biogás (Nm³/ano)", 'count': 'Quantidade de Municípios'},
+            labels={display_col: "Potencial de Biogás (m³/ano)", 'count': 'Quantidade de Municípios'},
             color_discrete_sequence=['#2E8B57']
         )
         fig_hist.update_layout(height=400)
@@ -4620,7 +4606,7 @@ def page_explorer():
         
         st.markdown(f"""
         **📖 O que isso significa:**
-        - A mediana é {format_number(median_val)} Nm³/ano
+        - A mediana é {format_number(median_val)} m³/ano
         - {above_median} municípios têm potencial acima deste valor
         - {below_median} municípios têm potencial abaixo deste valor
         """)
@@ -4682,7 +4668,7 @@ def page_explorer():
                     x='Município',
                     y='Potencial',
                     title=f"Comparação - {selected_type}",
-                    labels={'Potencial': 'Potencial (Nm³/ano)'},
+                    labels={'Potencial': 'Potencial (m³/ano)'},
                     color='Potencial',
                     color_continuous_scale='Greens'
                 )
@@ -4773,9 +4759,9 @@ def page_explorer():
     
     with st.expander("🤔 Como interpretar os dados?"):
         st.markdown("""
-        **📊 Potencial de Biogás (Nm³/ano):**
+        **📊 Potencial de Biogás (m³/ano):**
         - Representa quanto biogás pode ser produzido por ano
-        - Nm³ = Metros cúbicos normalizados (unidade padrão para gases)
+        - m³ = Metros cúbicos normalizados (unidade padrão para gases)
         - Valores maiores = maior potencial energético
         
         **🏆 Rankings:**
@@ -4962,7 +4948,7 @@ def page_analysis():
                     total_potential = df_residue[residue_col].sum()
                     col_metric, col_ref = st.columns([3, 1])
                     with col_metric:
-                        st.metric("🔥 Potencial Total", format_number(total_potential) + " Nm³/ano")
+                        st.metric("🔥 Potencial Total", format_number(total_potential) + " m³/ano")
                     with col_ref:
                         # Get appropriate reference based on residue type
                         ref_id = get_substrate_reference_map().get(residue_col, "method_biogas")
@@ -4974,7 +4960,7 @@ def page_analysis():
                     avg_potential = df_residue[residue_col].mean()
                     col_metric, col_ref = st.columns([3, 1])
                     with col_metric:
-                        st.metric("📊 Potencial Médio", format_number(avg_potential) + " Nm³/ano")
+                        st.metric("📊 Potencial Médio", format_number(avg_potential) + " m³/ano")
                     with col_ref:
                         render_reference_button("method_biogas", "Cálculos")
                 with col4:
@@ -5047,7 +5033,7 @@ def page_analysis():
                         y='nome_municipio',
                         orientation='h',
                         title=f"Ranking de Potencial - {selected_residue}",
-                        labels={residue_col: f'Potencial (Nm³/ano)', 'nome_municipio': 'Município'},
+                        labels={residue_col: f'Potencial (m³/ano)', 'nome_municipio': 'Município'},
                         color=residue_col,
                         color_continuous_scale='Greens'
                     )
@@ -5086,7 +5072,7 @@ def page_analysis():
                         x=residue_col,
                         nbins=25,
                         title=f"Distribuição do Potencial - {selected_residue}",
-                        labels={residue_col: f'Potencial (Nm³/ano)', 'count': 'Número de Municípios'},
+                        labels={residue_col: f'Potencial (m³/ano)', 'count': 'Número de Municípios'},
                         color_discrete_sequence=['#2E8B57']
                     )
                     fig_dist.update_layout(height=400)
@@ -5136,7 +5122,7 @@ def page_analysis():
                             y='nome_municipio',
                             orientation='h',
                             title=f"Comparação - {selected_residue}",
-                            labels={residue_col: f'Potencial (Nm³/ano)', 'nome_municipio': 'Município'},
+                            labels={residue_col: f'Potencial (m³/ano)', 'nome_municipio': 'Município'},
                             color=residue_col,
                             color_continuous_scale='Blues'
                         )
@@ -5186,7 +5172,7 @@ def page_analysis():
                     mun_col1, mun_col2, mun_col3, mun_col4 = st.columns(4)
                     
                     with mun_col1:
-                        st.metric(f"🔥 {selected_residue}", format_number(mun_data[residue_col]) + " Nm³/ano")
+                        st.metric(f"🔥 {selected_residue}", format_number(mun_data[residue_col]) + " m³/ano")
                     
                     with mun_col2:
                         if 'populacao_2022' in mun_data:
@@ -5200,7 +5186,7 @@ def page_analysis():
                         # Calculate per capita if possible
                         if 'populacao_2022' in mun_data and mun_data['populacao_2022'] > 0:
                             per_capita = mun_data[residue_col] / mun_data['populacao_2022']
-                            st.metric("👤 Per Capita", f"{per_capita:.2f} Nm³/hab/ano")
+                            st.metric("👤 Per Capita", f"{per_capita:.2f} m³/hab/ano")
                     
                     # Municipality ranking position
                     municipality_rank = df_residue[residue_col].rank(method='dense', ascending=False)
@@ -5236,7 +5222,7 @@ def page_analysis():
                             orientation='h',
                             color='Categoria',
                             title=f"Portfólio Completo de Resíduos - {selected_municipality}",
-                            labels={'Potencial': 'Potencial (Nm³/ano)', 'Tipo': 'Tipo de Resíduo'}
+                            labels={'Potencial': 'Potencial (m³/ano)', 'Tipo': 'Tipo de Resíduo'}
                         )
                         fig_all_residues.update_layout(height=400)
                         st.plotly_chart(fig_all_residues, use_container_width=True)
@@ -5352,7 +5338,7 @@ def page_analysis():
                     with col_metric:
                         st.metric(
                             "🔥 Potencial Total Combinado",
-                            f"{total_state_potential/1_000_000:.1f}M Nm³/ano",
+                            f"{total_state_potential/1_000_000:.1f}M m³/ano",
                             help="Soma de todos os tipos selecionados"
                         )
                     with col_ref:
@@ -5388,7 +5374,7 @@ def page_analysis():
                         x='Tipo de Resíduo',
                         y='Potencial Total',
                         title="Potencial Total por Tipo de Resíduo",
-                        labels={'Potencial Total': 'Potencial (Nm³/ano)'},
+                        labels={'Potencial Total': 'Potencial (m³/ano)'},
                         color='Potencial Total',
                         color_continuous_scale='Oranges'
                     )
@@ -5409,7 +5395,7 @@ def page_analysis():
                         x='Tipo de Resíduo',
                         y='Potencial Médio',
                         title="Potencial Médio por Município por Tipo de Resíduo",
-                        labels={'Potencial Médio': 'Potencial Médio (Nm³/ano)'},
+                        labels={'Potencial Médio': 'Potencial Médio (m³/ano)'},
                         color='Potencial Médio',
                         color_continuous_scale='Blues'
                     )
@@ -5565,7 +5551,7 @@ def page_analysis():
                         x='faixa_pop',
                         y='Potencial Total',
                         title=f"Potencial Total de {selected_residue_regional} por Tamanho de Município",
-                        labels={'Potencial Total': 'Potencial (Nm³/ano)', 'faixa_pop': 'Tamanho do Município'},
+                        labels={'Potencial Total': 'Potencial (m³/ano)', 'faixa_pop': 'Tamanho do Município'},
                         color='Potencial Total',
                         color_continuous_scale='Viridis'
                     )
@@ -5683,7 +5669,7 @@ def page_analysis():
                     x='Grupo',
                     y='Potencial Total',
                     title=f"Concentração do Potencial - {selected_residue_regional}",
-                    labels={'Potencial Total': 'Potencial (Nm³/ano)'},
+                    labels={'Potencial Total': 'Potencial (m³/ano)'},
                     color='Potencial Total',
                     color_continuous_scale='Reds'
                 )
@@ -5693,7 +5679,7 @@ def page_analysis():
                 st.markdown(f"#### 🏆 Lista dos Top {top_n} Municípios")
                 top_display = top_municipalities[['nome_municipio', residue_col]].copy()
                 top_display[residue_col] = top_display[residue_col].apply(format_number)
-                top_display.columns = ['Município', f'{selected_residue_regional} (Nm³/ano)']
+                top_display.columns = ['Município', f'{selected_residue_regional} (m³/ano)']
                 top_display = top_display.reset_index(drop=True)
                 top_display.index += 1
                 st.dataframe(top_display, use_container_width=True)
@@ -5827,8 +5813,8 @@ def page_analysis():
                             hover_name='nome_municipio',
                             title=f"Correlação: {residue_a} vs {residue_b}",
                             labels={
-                                col_a_name: f"{residue_a} (Nm³/ano)",
-                                col_b_name: f"{residue_b} (Nm³/ano)"
+                                col_a_name: f"{residue_a} (m³/ano)",
+                                col_b_name: f"{residue_b} (m³/ano)"
                             },
                             trendline="ols"
                         )
@@ -5842,8 +5828,8 @@ def page_analysis():
                             hover_name='nome_municipio',
                             title=f"Correlação: {residue_a} vs {residue_b}",
                             labels={
-                                col_a_name: f"{residue_a} (Nm³/ano)",
-                                col_b_name: f"{residue_b} (Nm³/ano)"
+                                col_a_name: f"{residue_a} (m³/ano)",
+                                col_b_name: f"{residue_b} (m³/ano)"
                             }
                         )
                     
@@ -5947,7 +5933,7 @@ def page_analysis():
                         st.metric("📍 Municípios", len(df_pop))
                     with col3:
                         avg_per_capita = (df_pop[residue_col_pop] / df_pop['populacao_2022']).mean()
-                        st.metric("👤 Média per Capita", f"{avg_per_capita:.2f} Nm³/hab/ano")
+                        st.metric("👤 Média per Capita", f"{avg_per_capita:.2f} m³/hab/ano")
                     
                     # Interpretation
                     if correlation_pop > 0.5:
@@ -5967,7 +5953,7 @@ def page_analysis():
                             title=f"População vs {selected_residue_pop}",
                             labels={
                                 'populacao_2022': 'População (2022)',
-                                residue_col_pop: f'{selected_residue_pop} (Nm³/ano)'
+                                residue_col_pop: f'{selected_residue_pop} (m³/ano)'
                             },
                             trendline="ols",
                             size=residue_col_pop,
@@ -5984,7 +5970,7 @@ def page_analysis():
                             title=f"População vs {selected_residue_pop}",
                             labels={
                                 'populacao_2022': 'População (2022)',
-                                residue_col_pop: f'{selected_residue_pop} (Nm³/ano)'
+                                residue_col_pop: f'{selected_residue_pop} (m³/ano)'
                             },
                             size=residue_col_pop,
                             color=residue_col_pop,
@@ -6008,7 +5994,7 @@ def page_analysis():
                         per_capita_display['populacao_2022'] = per_capita_display['populacao_2022'].apply(lambda x: f"{x:,.0f}")
                         per_capita_display[residue_col_pop] = per_capita_display[residue_col_pop].apply(format_number)
                         per_capita_display['potencial_per_capita'] = per_capita_display['potencial_per_capita'].apply(lambda x: f"{x:.2f}")
-                        per_capita_display.columns = ['Município', 'População', f'{selected_residue_pop} Total', 'Per Capita (Nm³/hab/ano)']
+                        per_capita_display.columns = ['Município', 'População', f'{selected_residue_pop} Total', 'Per Capita (m³/hab/ano)']
                         st.dataframe(per_capita_display, use_container_width=True, hide_index=True)
                         
                         # Add "VER NO MAPA" button for population correlation analysis
@@ -6237,7 +6223,7 @@ def page_analysis():
                 title="Diversificação vs Potencial Total",
                 labels={
                     'tipos_com_dados': 'Número de Tipos de Resíduos',
-                    'potencial_total_real': 'Potencial Total (Nm³/ano)'
+                    'potencial_total_real': 'Potencial Total (m³/ano)'
                 },
                 size='potencial_total_real',
                 color='diversidade_score',
@@ -6300,7 +6286,7 @@ def page_analysis():
                     st.metric("📊 Média de Tipos", f"{avg_types:.1f}")
                 with col2:
                     total_potential = specialized['potencial_total_real'].sum()
-                    st.metric("🔥 Potencial Total", f"{total_potential/1_000_000:.1f}M Nm³/ano")
+                    st.metric("🔥 Potencial Total", f"{total_potential/1_000_000:.1f}M m³/ano")
                 with col3:
                     st.metric("🎯 Municípios Especializados", len(specialized))
                 
@@ -6399,7 +6385,7 @@ def page_analysis():
                     title="Diversificação vs Potencial Total",
                     labels={
                         'diversidade_score': 'Score de Diversificação',
-                        'potencial_total_real': 'Potencial Total (Nm³/ano)'
+                        'potencial_total_real': 'Potencial Total (m³/ano)'
                     },
                     trendline="ols",
                     color='tipos_com_dados',
@@ -6415,7 +6401,7 @@ def page_analysis():
                     title="Diversificação vs Potencial Total",
                     labels={
                         'diversidade_score': 'Score de Diversificação',
-                        'potencial_total_real': 'Potencial Total (Nm³/ano)'
+                        'potencial_total_real': 'Potencial Total (m³/ano)'
                     },
                     color='tipos_com_dados',
                     color_continuous_scale='Plasma'
@@ -6546,7 +6532,6 @@ def page_analysis():
                     "🚀 Potencial": format_number(row['total_final_nm_ano']),
                     "👥 População": f"{row['populacao_2022']:,.0f}",
                     "⭐ Score": f"{row['opportunity_score']:.3f}",
-                    "🌟 Região": row.get('regiao_imediata', 'N/A')
                 })
             
             st.markdown("#### 🏆 Top 15 Oportunidades de Investimento")
@@ -6589,7 +6574,8 @@ def page_analysis():
         elif opportunity_type == "🎯 Clusters de Sinergia Regional":
             st.markdown("#### 🌍 Análise de Clusters Regionais para Sinergia")
             
-            if 'regiao_imediata' in df.columns:
+            # Regional analysis removed - data not available
+            if False:
                 regional_analysis = df.groupby('regiao_imediata').agg({
                     'total_final_nm_ano': ['sum', 'mean', 'count'],
                     'populacao_2022': 'sum',
@@ -6623,7 +6609,7 @@ def page_analysis():
                     x='regiao_imediata',
                     y='Total_Potencial',
                     title="Potencial Total por Região (Top 10)",
-                    labels={'Total_Potencial': 'Potencial Total (Nm³/ano)', 'regiao_imediata': 'Região'},
+                    labels={'Total_Potencial': 'Potencial Total (m³/ano)', 'regiao_imediata': 'Região'},
                     color='Media_Potencial',
                     color_continuous_scale='Viridis'
                 )
@@ -6662,13 +6648,13 @@ def page_analysis():
             
             region_filter = st.selectbox(
                 "Região de interesse:",
-                ["📍 Todo o Estado"] + (df['regiao_imediata'].dropna().unique().tolist() if 'regiao_imediata' in df.columns else [])
+["📍 Todo o Estado"]
             )
             
             # Filter data based on region
             df_filtered = df.copy()
             if region_filter != "📍 Todo o Estado":
-                df_filtered = df_filtered[df_filtered['regiao_imediata'] == region_filter]
+                pass  # Regional filtering removed - data not available
             
             # Generate personalized recommendations
             if user_profile == "🏛️ Gestor Público Municipal":
@@ -6681,7 +6667,7 @@ def page_analysis():
                 with col1:
                     st.markdown("**🎯 Municípios Prioritários para Políticas Públicas:**")
                     for _, mun in high_potential.head(5).iterrows():
-                        st.markdown(f"• **{mun['nome_municipio']}**: {format_number(mun['total_final_nm_ano'])} Nm³/ano")
+                        st.markdown(f"• **{mun['nome_municipio']}**: {format_number(mun['total_final_nm_ano'])} m³/ano")
                 
                 with col2:
                     st.markdown("**📋 Ações Recomendadas:**")
@@ -6695,8 +6681,8 @@ def page_analysis():
                 
                 # Economic impact calculation
                 total_potential_region = df_filtered['total_final_nm_ano'].sum()
-                estimated_jobs = total_potential_region / 1000000 * 2.5  # Rough estimate: 2.5 jobs per million Nm³/year
-                estimated_revenue = total_potential_region * 0.45  # Rough estimate: R$ 0.45 per Nm³
+                estimated_jobs = total_potential_region / 1000000 * 2.5  # Rough estimate: 2.5 jobs per million m³/year
+                estimated_revenue = total_potential_region * 0.45  # Rough estimate: R$ 0.45 per m³
                 
                 col1, col2, col3 = st.columns(3)
                 with col1:
@@ -6704,7 +6690,7 @@ def page_analysis():
                 with col2:
                     st.metric("💰 Receita Anual Estimada", f"R$ {estimated_revenue/1000000:,.1f}M")
                 with col3:
-                    investment_needed = total_potential_region * 8.5  # Rough estimate: R$ 8.5 per Nm³/year capacity
+                    investment_needed = total_potential_region * 8.5  # Rough estimate: R$ 8.5 per m³/year capacity
                     st.metric("📊 Investimento Estimado", f"R$ {investment_needed/1000000:,.0f}M")
             
             elif user_profile == "💼 Investidor/Empresário":
@@ -6990,7 +6976,7 @@ def display_proximity_results(results, center, radius_km):
         with col_metric:
             if 'municipal' in results:
                 total_pot = results['municipal']['total_potential']
-                st.metric("⚡ Potencial Total", f"{total_pot:,.0f} Nm³/ano")
+                st.metric("⚡ Potencial Total", f"{total_pot:,.0f} m³/ano")
             else:
                 st.metric("⚡ Potencial", "Calculando...")
         with col_ref:
@@ -7011,7 +6997,7 @@ def display_proximity_results(results, center, radius_km):
                 x=mun_names,
                 y=mun_potentials,
                 title="Top 5 Municípios por Potencial",
-                labels={'x': 'Município', 'y': 'Potencial (Nm³/ano)'},
+                labels={'x': 'Município', 'y': 'Potencial (m³/ano)'},
                 color=mun_potentials,
                 color_continuous_scale='Blues'
             )
@@ -7049,7 +7035,7 @@ def display_proximity_results(results, center, radius_km):
                 'Cultura': nome,
                 'Área (km²)': f"{dados['area_km2']:.1f}",
                 'Percentual': f"{dados['percentage']}%",
-                'Potencial Biogás': f"{dados['potential_biogas_nm3']:,.0f} Nm³/ano"
+                'Potencial Biogás': f"{dados['potential_biogas_nm3']:,.0f} m³/ano"
             }
             for nome, dados in crops.items()
         ])
@@ -7573,7 +7559,7 @@ def page_about():
         # Pecuária
         st.markdown("**🐄 Pecuária**")
         substrates_pecuaria = [
-            ("Dejetos Bovinos", "225 Nm³/ano", "cabeça", "biogas_calculation"),
+            ("Dejetos Bovinos", "225 m³/ano", "cabeça", "biogas_calculation"),
             ("Dejetos Suínos", "450-650 m³/ton", "ton MS", "biogas_calculation"),
             ("Cama de Frango", "180-280 m³/ton", "ton MS", "biogas_calculation")
         ]
@@ -7629,7 +7615,7 @@ def page_about():
         3. Conversão para biogás total (55% CH₄):
            49,3 ÷ 0,55 = 89,6 m³ biogás/cabeça/ano
         
-        4. Fator calibrado final: 225 Nm³ biogás/cabeça/ano
+        4. Fator calibrado final: 225 m³ biogás/cabeça/ano
         ```
         """)
 

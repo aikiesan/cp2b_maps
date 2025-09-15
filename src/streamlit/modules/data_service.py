@@ -189,7 +189,7 @@ def safe_divide(numerator, denominator, default=0):
         return default
 
 @st.cache_data
-def format_number(value, unit="Nm³/ano", scale=1):
+def format_number(value, unit="m³/ano", scale=1):
     """Format numbers with proper scaling"""
     try:
         if pd.isna(value) or value == 0:

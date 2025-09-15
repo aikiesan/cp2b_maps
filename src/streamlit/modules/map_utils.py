@@ -62,8 +62,7 @@ def create_enhanced_results_map(municipalities, polygons=None, analysis_data=Non
                 if mun_info:
                     if 'area_km2' in mun_info:
                         popup_content += f"📏 <b>Área:</b> {mun_info['area_km2']:,.1f} km²<br>"
-                    if 'regiao_imediata' in mun_info:
-                        popup_content += f"🗺️ <b>Região:</b> {mun_info['regiao_imediata']}<br>"
+                    # Region information removed
             except:
                 pass
             
@@ -158,13 +157,13 @@ def get_marker_color(index):
 def format_key_name(key):
     """Format key names for better display in popups"""
     name_mappings = {
-        'total_final_nm_ano': 'Potencial Total (Nm³/ano)',
-        'total_agricola_nm_ano': 'Potencial Agrícola (Nm³/ano)',
-        'total_pecuaria_nm_ano': 'Potencial Pecuária (Nm³/ano)',
+        'total_final_nm_ano': 'Potencial Total (m³/ano)',
+        'total_agricola_nm_ano': 'Potencial Agrícola (m³/ano)',
+        'total_pecuaria_nm_ano': 'Potencial Pecuária (m³/ano)',
         'populacao_2022': 'População (2022)',
         'area_km2': 'Área (km²)',
-        'potencial_biogas': 'Potencial Biogás (Nm³/ano)',
-        'potencial_total': 'Potencial Total (Nm³/ano)',
+        'potencial_biogas': 'Potencial Biogás (m³/ano)',
+        'potencial_total': 'Potencial Total (m³/ano)',
         'nome_municipio': 'Município'
     }
     
@@ -174,7 +173,7 @@ def format_key_name(key):
     
     # Otherwise, format the key nicely
     formatted = key.replace('_', ' ').title()
-    formatted = formatted.replace('Nm Ano', '(Nm³/ano)')
+    formatted = formatted.replace('m Ano', '(m³/ano)')
     formatted = formatted.replace('Km2', '(km²)')
     
     return formatted

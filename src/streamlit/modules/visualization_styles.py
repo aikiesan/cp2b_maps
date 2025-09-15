@@ -106,7 +106,7 @@ def render_visualization_styles_page():
 
         with col1:
             min_potential = st.number_input(
-                "Potencial Mínimo (Nm³/ano)",
+                "Potencial Mínimo (m³/ano)",
                 min_value=0,
                 max_value=int(df[display_col].max()),
                 value=0,
@@ -115,7 +115,7 @@ def render_visualization_styles_page():
 
         with col2:
             max_potential = st.number_input(
-                "Potencial Máximo (Nm³/ano)",
+                "Potencial Máximo (m³/ano)",
                 min_value=min_potential,
                 max_value=int(df[display_col].max()),
                 value=int(df[display_col].max()),
@@ -198,7 +198,7 @@ def render_visualization_styles_page():
                             st.metric("Estilo de Visualização", selected_viz)
                         with col3:
                             total_potential = filtered_df[display_col].sum()
-                            st.metric("Potencial Total", f"{total_potential:,.0f} Nm³/ano")
+                            st.metric("Potencial Total", f"{total_potential:,.0f} m³/ano")
 
                         # Display map
                         from streamlit_folium import st_folium
@@ -280,7 +280,7 @@ def show_clicked_municipality_info(clicked_data: Dict[str, Any], df: pd.DataFram
 
         with col2:
             value = municipality[display_col]
-            st.metric("Valor Selecionado", f"{value:,.0f} Nm³/ano")
+            st.metric("Valor Selecionado", f"{value:,.0f} m³/ano")
 
         with col3:
             if 'region' in municipality:

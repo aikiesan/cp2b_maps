@@ -151,7 +151,7 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
                     label = get_residue_label(col)
                     detail_col1, detail_col2 = st.sidebar.columns([4, 1])
                     with detail_col1:
-                        st.sidebar.write(f"• {label}: {mun_data[col]:,.0f} Nm³/ano")
+                        st.sidebar.write(f"• {label}: {mun_data[col]:,.0f} m³/ano")
                     with detail_col2:
                         if col in substrate_refs:
                             render_reference_button(substrate_refs[col], compact=True)
@@ -165,7 +165,7 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
                     label = get_residue_label(col)
                     detail_col1, detail_col2 = st.sidebar.columns([4, 1])
                     with detail_col1:
-                        st.sidebar.write(f"• {label}: {mun_data[col]:,.0f} Nm³/ano")
+                        st.sidebar.write(f"• {label}: {mun_data[col]:,.0f} m³/ano")
                     with detail_col2:
                         if col in substrate_refs:
                             render_reference_button(substrate_refs[col], compact=True)
@@ -195,8 +195,8 @@ def render_municipality_comparison(df, selected_municipalities):
         
         display_df = selected_df[comparison_cols].copy()
         display_df.columns = [
-            'Município', 'População', 'Potencial Total (Nm³/ano)',
-            'Potencial Agrícola (Nm³/ano)', 'Potencial Pecuário (Nm³/ano)'
+            'Município', 'População', 'Potencial Total (m³/ano)',
+            'Potencial Agrícola (m³/ano)', 'Potencial Pecuário (m³/ano)'
         ]
         
         # Format numbers for display
