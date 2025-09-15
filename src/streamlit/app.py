@@ -271,7 +271,7 @@ def add_regioes_layer_fast(m, regioes_gdf):
             popup=False
         ).add_to(m)
 
-def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only=False, search_term="", viz_type="Círculos Proporcionais", show_mapbiomas_layer=False, mapbiomas_classes=None, show_rios=False, show_rodovias=False, show_plantas_biogas=False, show_gasodutos_dist=False, show_gasodutos_transp=False, show_areas_urbanas=False, show_regioes_admin=False, show_municipios_biogas=True, catchment_info=None):
+def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only=False, search_term="", viz_type="Círculos Proporcionais", show_mapbiomas_layer=False, mapbiomas_classes=None, show_rios=False, show_rodovias=False, show_plantas_biogas=False, show_gasodutos_dist=False, show_gasodutos_transp=False, show_areas_urbanas=False, show_regioes_admin=False, show_municipios_biogas=True, show_municipios_polygons=False, catchment_info=None):
     """VERSÃO ULTRA-OTIMIZADA - Cria mapa folium de forma muito mais rápida"""
     
     # Função otimizada para criação de mapas com camadas customizáveis
@@ -386,7 +386,7 @@ def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only
                             df_merged['nome_municipio'] = df_merged['nome_municipio_x']
                         
                         # Converter apenas colunas numéricas específicas (não textuais) para tipos nativos do Python
-                        numeric_cols_to_convert = ['lat', 'lon', 'cd_mun', 'populacao_2022', 'total_final_nm_ano', 'total_agricola_nm_ano', 'total_pecuaria_nm_ano', 'total_urbano_nm_ano']
+                        numeric_cols_to_convert = ['lat', 'lon', 'cd_mun', 'populacao_2022', 'total_final_m_ano', 'total_agricola_m_ano', 'total_pecuaria_m_ano', 'total_urbano_m_ano']
                         for col in df_merged.columns:
                             if col != 'geometry' and col != 'nome_municipio' and col != 'nome_municipio_x' and col != 'nome_municipio_y' and df_merged[col].dtype in ['int32', 'int64', 'float32', 'float64']:
                                 try:
@@ -411,6 +411,33 @@ def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only
                 import traceback
                 st.code(traceback.format_exc())
         
+        # 4.5. ADICIONAR CAMADA DE POLÍGONOS DOS MUNICÍPIOS (OPCIONAL)
+        if show_municipios_polygons:
+            try:
+                # Carregar geometrias dos polígonos
+                gdf_polygons = load_optimized_geometries("medium_detail")
+                
+                if gdf_polygons is not None and 'cd_mun' in gdf_polygons.columns:
+                    # Adicionar polígonos com bordas cinzas e suaves
+                    folium.GeoJson(
+                        gdf_polygons,
+                        style_function=lambda feature: {
+                            'fillColor': 'none',
+                            'color': '#888888',  # Cinza suave
+                            'weight': 1,         # Linha mais fina
+                            'opacity': 0.5,     # Mais transparente
+                            'fillOpacity': 0.0
+                        },
+                        tooltip=folium.features.GeoJsonTooltip(
+                            fields=['NM_MUN'] if 'NM_MUN' in gdf_polygons.columns else ['cd_mun'],
+                            aliases=['Município:'] if 'NM_MUN' in gdf_polygons.columns else ['Código:'],
+                            style="background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;"
+                        )
+                    ).add_to(m)
+                    layers_added.append("Polígonos dos Municípios")
+            except Exception as e:
+                st.error(f"❌ Erro ao carregar polígonos dos municípios: {e}")
+        
         # 5. REMOVER CONTROLES DO FOLIUM - USAMOS SIDEBAR AGORA
         # LayerControl removido para deixar espaço para a legenda bonita
         
@@ -423,7 +450,7 @@ def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only
                     🗺️ Legenda do Mapa
                 </h4>
                 <div style="margin-bottom: 10px;">
-                    <strong>📊 Dados:</strong> {display_col.replace('_', ' ').title()}
+                    <strong>📊 Dados:</strong> {get_friendly_column_label(display_col)}
                 </div>
                 <div style="margin-bottom: 12px;">
                     <strong>📈 Faixa de Potencial:</strong><br>
@@ -476,7 +503,7 @@ def create_centroid_map_optimized(df, display_col, filters=None, get_legend_only
                 🗺️ Legenda
             </h4>
             <div style="margin-bottom: 8px; font-size: 11px;">
-                <strong>📊 Dados:</strong> {display_col.replace('_', ' ').title()}
+                <strong>📊 Dados:</strong> {get_friendly_column_label(display_col)}
             </div>
             <div style="margin-bottom: 8px; font-size: 11px;">
                 <strong>📈 Faixa:</strong><br>
@@ -579,11 +606,9 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
     if df_merged.empty or display_col not in df_merged.columns:
         return
     
-    # Usar apenas uma amostra se houver muitos municípios para melhor performance
-    if len(df_merged) > 500:
-        df_sample = df_merged.nlargest(500, display_col)  # Top 500 maiores valores
-    else:
-        df_sample = df_merged
+    # CORREÇÃO: Usar todos os municípios (645) - problema era limite de 500!
+    # Remover limite que estava ocultando municípios menores
+    df_sample = df_merged  # Sempre usar todos os municípios para garantir visualização completa
     
     # Preparar dados comuns
     values = df_sample[display_col].fillna(0)
@@ -618,6 +643,10 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
         else:
             sizes = pd.Series([5.0] * len(df_sample))
         
+        # Contador para debug/logging
+        circles_added = 0
+        failed_renders = 0
+        
         for idx, row in df_sample.iterrows():
             try:
                 if hasattr(row, 'geometry') and row.geometry:
@@ -644,8 +673,19 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                         fillOpacity=0.8,
                         weight=1
                     ).add_to(m)
-            except Exception:
+                    circles_added += 1
+                else:
+                    failed_renders += 1
+                    municipio_nome = getattr(row, 'nome_municipio', 'unknown')
+                    logger.warning(f"Missing geometry for municipality: {municipio_nome}")
+            except Exception as e:
+                failed_renders += 1
+                municipio_nome = getattr(row, 'nome_municipio', 'unknown')
+                logger.warning(f"Failed to render municipality {municipio_nome}: {str(e)}")
                 continue
+        
+        # Log de debug para acompanhar renderização
+        logger.info(f"Círculos Proporcionais: {circles_added} círculos criados, {failed_renders} falhas de renderização")
                 
     elif viz_type == "Mapa de Calor (Heatmap)":
         logger.debug("VIZ_TYPE: Entering Heat Map block")
@@ -873,7 +913,7 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
                 fill_opacity=0.7,
                 line_opacity=0.2,
                 line_color='black',
-                legend_name=f'Potencial ({display_col.replace("_", " ").title()})',
+                legend_name=f'Potencial de Biogás (m³/ano)',
                 highlight=True
             ).add_to(m)
 
@@ -966,21 +1006,21 @@ def add_municipality_circles_fast(m, df_merged, display_col, viz_type):
 
 # Constants
 RESIDUE_OPTIONS = {
-    'Potencial Total': 'total_final_nm_ano',
-    'Total Agrícola': 'total_agricola_nm_ano',
-    'Total Pecuária': 'total_pecuaria_nm_ano',
-    'Total Urbano': 'total_urbano_nm_ano',
-    'Cana-de-açúcar': 'biogas_cana_nm_ano',
-    'Soja': 'biogas_soja_nm_ano',
-    'Milho': 'biogas_milho_nm_ano',
-    'Café': 'biogas_cafe_nm_ano',
-    'Citros': 'biogas_citros_nm_ano',
-    'Bovinos': 'biogas_bovinos_nm_ano',
-    'Suínos': 'biogas_suino_nm_ano',
-    'Aves': 'biogas_aves_nm_ano',
-    'Piscicultura': 'biogas_piscicultura_nm_ano',
-    'Resíduos Urbanos': 'rsu_total_nm_ano',
-    'Resíduos Poda': 'rpo_total_nm_ano'
+    'Potencial Total': 'total_final_m_ano',
+    'Total Agrícola': 'total_agricola_m_ano',
+    'Total Pecuária': 'total_pecuaria_m_ano',
+    'Total Urbano': 'total_urbano_m_ano',
+    'Cana-de-açúcar': 'biogas_cana_m_ano',
+    'Soja': 'biogas_soja_m_ano',
+    'Milho': 'biogas_milho_m_ano',
+    'Café': 'biogas_cafe_m_ano',
+    'Citros': 'biogas_citros_m_ano',
+    'Bovinos': 'biogas_bovinos_m_ano',
+    'Suínos': 'biogas_suino_m_ano',
+    'Aves': 'biogas_aves_m_ano',
+    'Piscicultura': 'biogas_piscicultura_m_ano',
+    'Resíduos Urbanos': 'rsu_potencial_m_ano',
+    'Resíduos Poda': 'rpo_potencial_m_ano'
 }
 
 @st.cache_data
@@ -989,6 +1029,31 @@ def get_residue_label(column_name):
     # Create reverse mapping
     reverse_options = {v: k for k, v in RESIDUE_OPTIONS.items()}
     return reverse_options.get(column_name, column_name)
+
+def get_friendly_column_label(column_name):
+    """Convert column name to friendly display label with correct units"""
+    
+    # Define mapping for friendly labels with correct units
+    friendly_labels = {
+        'total_final_m_ano': 'Total Final (m³/ano)',
+        'total_agricola_m_ano': 'Total Agrícola (m³/ano)', 
+        'total_pecuaria_m_ano': 'Total Pecuária (m³/ano)',
+        'total_urbano_m_ano': 'Total Urbano (m³/ano)',
+        'biogas_cana_m_ano': 'Cana-de-açúcar (m³/ano)',
+        'biogas_soja_m_ano': 'Soja (m³/ano)',
+        'biogas_milho_m_ano': 'Milho (m³/ano)',
+        'biogas_cafe_m_ano': 'Café (m³/ano)',
+        'biogas_citros_m_ano': 'Citros (m³/ano)',
+        'biogas_bovinos_m_ano': 'Bovinos (m³/ano)',
+        'biogas_suino_m_ano': 'Suínos (m³/ano)',
+        'biogas_aves_m_ano': 'Aves (m³/ano)',
+        'biogas_piscicultura_m_ano': 'Piscicultura (m³/ano)',
+        'rsu_potencial_m_ano': 'Resíduos Urbanos (m³/ano)',
+        'rpo_potencial_m_ano': 'Resíduos de Poda (m³/ano)',
+        'combined_potential': 'Potencial Combinado (m³/ano)'
+    }
+    
+    return friendly_labels.get(column_name, column_name.replace('_', ' ').title())
 
 # --- CONSTANTE PARA A CAMADA RASTER (USANDO A CAMADA MAIS ESTÁVEL DO GEOSERVER) ---
 RASTER_LAYERS = {
@@ -1006,7 +1071,7 @@ def get_database_path():
     """Get database path"""
     return Path(__file__).parent.parent.parent / "data" / "cp2b_maps.db"
 
-@st.cache_data
+@st.cache_data(ttl=300)  # Cache for 5 minutes to allow data updates
 def load_municipalities():
     """Load municipality data from database with error handling"""
     try:
@@ -1017,19 +1082,13 @@ def load_municipalities():
             return pd.DataFrame()
         
         with sqlite3.connect(db_path) as conn:
-            query = "SELECT * FROM municipalities ORDER BY total_final_nm_ano DESC"
+            query = "SELECT * FROM municipalities ORDER BY total_final_m_ano DESC"
             df = pd.read_sql_query(query, conn)
             
-            # Convert per capita values to total values by multiplying by population
-            if 'rsu_potencial_nm_habitante_ano' in df.columns and 'populacao_2022' in df.columns:
-                df['rsu_potencial_nm_ano'] = df['rsu_potencial_nm_habitante_ano'] * df['populacao_2022']
-                df['rsu_potencial_nm_ano'] = df['rsu_potencial_nm_ano'].fillna(0)
+            # RSU and RPO values are now calculated directly in the database
+            # No need for per capita conversion anymore
             
-            if 'rpo_potencial_nm_habitante_ano' in df.columns and 'populacao_2022' in df.columns:
-                df['rpo_potencial_nm_ano'] = df['rpo_potencial_nm_habitante_ano'] * df['populacao_2022']
-                df['rpo_potencial_nm_ano'] = df['rpo_potencial_nm_ano'].fillna(0)
-            
-            logger.info(f"Loaded {len(df)} municipalities")
+            logger.info(f"Loaded {len(df)} municipalities with updated RSU/RPO data")
             return df
             
     except Exception as e:
@@ -1314,7 +1373,7 @@ def prepare_analysis_data_for_results(df, selected_municipalities, analysis_type
             for item in residue_data:
                 if isinstance(item, dict):
                     # Try different potential field names
-                    potential_fields = ['total_final_nm_ano', 'Total (m³)', 'potencial_total', 'Potencial Total']
+                    potential_fields = ['total_final_m_ano', 'Total (m³)', 'potencial_total', 'Potencial Total']
                     potential = 0
                     
                     for field in potential_fields:
@@ -1431,7 +1490,7 @@ def analyze_municipalities_in_radius(df_municipalities, center_lat, center_lon, 
         distance = calculate_distance(center_lat, center_lon, row['lat'], row['lon'])
 
         if distance <= radius_km:
-            potential = row.get('total_final_nm_ano', 0)
+            potential = row.get('total_final_m_ano', 0)
             municipalities_in_radius.append({
                 'nome': row['nome_municipio'],
                 'potencial': potential,
@@ -1622,7 +1681,7 @@ def apply_filters(df, filters):
     Only changes the display column for visualization.
     """
     if df.empty:
-        return df, 'total_final_nm_ano'
+        return df, 'total_final_m_ano'
     
     # Always work with a full copy of the dataframe
     df_to_display = df.copy()
@@ -1630,7 +1689,7 @@ def apply_filters(df, filters):
     # Calculate display column based on residue selection
     if not filters['residues']:
         # Default case if nothing is selected
-        display_col = 'total_final_nm_ano'
+        display_col = 'total_final_m_ano'
         df_to_display['display_col'] = 0
     elif len(filters['residues']) == 1:
         display_col = filters['residues'][0]
@@ -1662,7 +1721,7 @@ def load_optimized_geometries(detail_level="medium_detail"):
             return gpd.read_parquet(parquet_path)
         else:
             # Fallback to original shapefile
-            shapefile_path = Path(__file__).parent.parent.parent / "shapefile" / "Municipios_SP_shapefile.shp"
+            shapefile_path = Path(__file__).parent.parent.parent / "shapefile" / "SP_Municipios_2024.shp"
             if shapefile_path.exists():
                 gdf = gpd.read_file(shapefile_path)
                 if gdf.crs != 'EPSG:4326':
@@ -2394,7 +2453,7 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                     🗺️ Legenda do Mapa
                 </h4>
                 <div style="margin-bottom: 10px;">
-                    <strong>📊 Dados:</strong> {display_col.replace('_', ' ').title()}
+                    <strong>📊 Dados:</strong> {get_friendly_column_label(display_col)}
                 </div>
                 <div style="margin-bottom: 12px;">
                     <strong>📈 Faixa de Potencial:</strong><br>
@@ -2455,7 +2514,7 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
                 🗺️ Legenda
             </h4>
             <div style="margin-bottom: 8px; font-size: 11px;">
-                <strong>📊 Dados:</strong> {display_col.replace('_', ' ').title()}
+                <strong>📊 Dados:</strong> {get_friendly_column_label(display_col)}
             </div>
             <div style="margin-bottom: 8px; font-size: 11px;">
                 <strong>📈 Faixa:</strong><br>
@@ -2785,10 +2844,10 @@ def show_municipality_details_horizontal(df, municipality_id, selected_residues)
     """, unsafe_allow_html=True)
     
     # Key metrics in 2x2 grid
-    total_potential = mun_data.get('total_final_nm_ano', 0)
-    agri_potential = mun_data.get('total_agricola_nm_ano', 0)
-    livestock_potential = mun_data.get('total_pecuaria_nm_ano', 0)
-    urban_potential = mun_data.get('total_urbano_nm_ano', 0) if 'total_urbano_nm_ano' in mun_data else 0
+    total_potential = mun_data.get('total_final_m_ano', 0)
+    agri_potential = mun_data.get('total_agricola_m_ano', 0)
+    livestock_potential = mun_data.get('total_pecuaria_m_ano', 0)
+    urban_potential = mun_data.get('total_urbano_m_ano', 0) if 'total_urbano_m_ano' in mun_data else 0
     
     # Compact metrics grid
     col1, col2 = st.columns(2)
@@ -2834,10 +2893,10 @@ def show_municipality_details_horizontal(df, municipality_id, selected_residues)
         
         residue_sources = []
         for col in df.columns:
-            if col.endswith('_nm_ano') and col not in ['total_final_nm_ano', 'total_agricola_nm_ano', 'total_pecuaria_nm_ano', 'total_urbano_nm_ano']:
+            if col.endswith('_m_ano') and col not in ['total_final_m_ano', 'total_agricola_m_ano', 'total_pecuaria_m_ano', 'total_urbano_m_ano']:
                 value = mun_data.get(col, 0)
                 if value > 0:
-                    clean_name = col.replace('_nm_ano', '').replace('_', ' ').title()
+                    clean_name = col.replace('_m_ano', '').replace('_', ' ').title()
                     residue_sources.append((clean_name, value))
         
         # Sort and show top 5
@@ -2850,7 +2909,7 @@ def show_municipality_details_horizontal(df, municipality_id, selected_residues)
         # Regional comparison removed - data not available
         if False:  # Disabled regional comparison
                 # Sort by total potential and get top 5 + current municipality
-                same_region_sorted = same_region.nlargest(8, 'total_final_nm_ano')
+                same_region_sorted = same_region.nlargest(8, 'total_final_m_ano')
                 
                 # Ensure current municipality is included
                 if municipality_id not in same_region_sorted['cd_mun'].astype(str).values:
@@ -2864,7 +2923,7 @@ def show_municipality_details_horizontal(df, municipality_id, selected_residues)
                     is_current = str(row['cd_mun']) == str(municipality_id)
                     comparison_data.append({
                         'Município': row['nome_municipio'][:15] + ('...' if len(row['nome_municipio']) > 15 else ''),
-                        'Potencial': row['total_final_nm_ano'] / 1000000,
+                        'Potencial': row['total_final_m_ano'] / 1000000,
                         'Atual': is_current
                     })
                 
@@ -2937,15 +2996,15 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
     st.markdown("#### 📊 Indicadores Principais")
     
     # Calculate percentages for better context
-    total_potential = mun_data.get('total_final_nm_ano', 0)
-    agri_potential = mun_data.get('total_agricola_nm_ano', 0)
-    livestock_potential = mun_data.get('total_pecuaria_nm_ano', 0)
-    urban_potential = mun_data.get('total_urbano_nm_ano', 0) if 'total_urbano_nm_ano' in mun_data else 0
+    total_potential = mun_data.get('total_final_m_ano', 0)
+    agri_potential = mun_data.get('total_agricola_m_ano', 0)
+    livestock_potential = mun_data.get('total_pecuaria_m_ano', 0)
+    urban_potential = mun_data.get('total_urbano_m_ano', 0) if 'total_urbano_m_ano' in mun_data else 0
     
     # Calculate percentile rankings
-    total_percentile = (df['total_final_nm_ano'] < total_potential).mean() * 100 if total_potential > 0 else 0
-    agri_percentile = (df['total_agricola_nm_ano'] < agri_potential).mean() * 100 if agri_potential > 0 else 0
-    livestock_percentile = (df['total_pecuaria_nm_ano'] < livestock_potential).mean() * 100 if livestock_potential > 0 else 0
+    total_percentile = (df['total_final_m_ano'] < total_potential).mean() * 100 if total_potential > 0 else 0
+    agri_percentile = (df['total_agricola_m_ano'] < agri_potential).mean() * 100 if agri_potential > 0 else 0
+    livestock_percentile = (df['total_pecuaria_m_ano'] < livestock_potential).mean() * 100 if livestock_potential > 0 else 0
     
     metric_cols = st.columns(4)
     
@@ -3053,13 +3112,13 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
             neighbors = find_neighboring_municipalities(df, mun_data, radius_km=50)
             
             if len(neighbors) > 1:
-                # Show top 5 neighbors - usar total_final_nm_ano como padrão
+                # Show top 5 neighbors - usar total_final_m_ano como padrão
                 neighbor_comparison = []
-                current_total = mun_data.get('total_final_nm_ano', 0)
+                current_total = mun_data.get('total_final_m_ano', 0)
                 
                 for neighbor in neighbors[:6]:  # Top 5 + current
                     if neighbor['cd_mun'] != municipality_id:
-                        neighbor_total = neighbor.get('total_final_nm_ano', 0)
+                        neighbor_total = neighbor.get('total_final_m_ano', 0)
                         neighbor_comparison.append({
                             'Município': neighbor['nome_municipio'],
                             'Potencial': neighbor_total,
@@ -3106,7 +3165,7 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
         
         try:
             # State ranking
-            state_rank = (df['total_final_nm_ano'] >= total_potential).sum()
+            state_rank = (df['total_final_m_ano'] >= total_potential).sum()
             state_percentile = ((len(df) - state_rank + 1) / len(df)) * 100
             
             # Regional ranking
@@ -3114,7 +3173,7 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
             regional_total = 0
             # Regional comparison removed - data not available
             if False:
-                regional_rank = (regional_df['total_final_nm_ano'] >= total_potential).sum()
+                regional_rank = (regional_df['total_final_m_ano'] >= total_potential).sum()
                 regional_total = len(regional_df)
             
             # Create ranking visualization
@@ -3171,7 +3230,7 @@ def show_municipality_details_compact(df, municipality_id, selected_residues):
                 category_df = df[df['populacao_2022'] <= 50000]
             
             if len(category_df) > 0:
-                category_rank = (category_df['total_final_nm_ano'] >= total_potential).sum()
+                category_rank = (category_df['total_final_m_ano'] >= total_potential).sum()
                 st.write(f"👥 **{category}**: {category_rank}º de {len(category_df)} municípios")
 
 
@@ -3480,7 +3539,7 @@ def page_main():
         # CP2B Logo no topo da sidebar
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            st.image("logotipo-full-black.png", width=240)
+            st.image("logotipo-full-black.png", width=480)
 
         st.markdown("""
         <div style='background: #2E8B57; color: white; padding: 0.8rem; margin: -1rem -1rem 1rem -1rem;
@@ -3503,6 +3562,7 @@ def page_main():
             
             st.write("**Dados Principais:**")
             show_municipios_biogas = st.checkbox("📊 Potencial de Biogás", value=True)
+            show_municipios_polygons = st.checkbox("🗺️ Polígonos dos Municípios", value=False)
             
             st.write("**Infraestrutura:**")
             show_plantas_biogas = st.checkbox("🏭 Plantas de Biogás", value=False)
@@ -3639,7 +3699,7 @@ def page_main():
                 st.session_state.active_panel = 'estilos'
             
             st.markdown("**🎯 Escolha o estilo de visualização dos dados no mapa:**")
-            viz_type = st.radio("Tipo de mapa:", options=["Círculos Proporcionais", "Mapa de Calor (Heatmap)", "Agrupamentos (Clusters)", "Mapa de Preenchimento (Coroplético)"], key="viz_type")
+            viz_type = st.radio("Tipo de mapa:", options=["Círculos Proporcionais", "Mapa de Calor (Heatmap)", "Agrupamentos (Clusters)"], key="viz_type", index=0)
             
             # Add descriptions for each visualization type
             if viz_type == "Círculos Proporcionais":
@@ -3648,8 +3708,6 @@ def page_main():
                 st.info("🔥 **Mapa de Calor**: Cores quentes (vermelho) indicam valores altos, cores frias (azul) indicam valores baixos.")
             elif viz_type == "Agrupamentos (Clusters)":
                 st.info("📍 **Agrupamentos**: Municípios próximos são agrupados em clusters. Números indicam quantos pontos estão agrupados.")
-            elif viz_type == "Mapa de Preenchimento (Coroplético)":
-                st.info("🗺️ **Coroplético**: Polígonos dos municípios são coloridos de acordo com o valor dos dados. Cores mais escuras = valores maiores.")
             
             st.markdown("---")
             st.markdown("💡 **Dica**: Experimente diferentes estilos para descobrir qual visualização funciona melhor para seus dados!")
@@ -3790,6 +3848,10 @@ def page_main():
                         st.rerun()
         
         with map_col:
+            # --- DETERMINAÇÃO DO TIPO DE VISUALIZAÇÃO FINAL ---
+            # Usa diretamente a seleção do usuário do seletor de estilos
+            final_viz_type = viz_type
+            
             # --- RENDERIZAÇÃO DO MAPA ---
             # Crie um dicionário com as informações da análise
             catchment_info = None
@@ -3803,7 +3865,7 @@ def page_main():
                 logger.info(f"No catchment_info: enable_proximity={enable_proximity}, catchment_center={st.session_state.get('catchment_center')}")
             
             
-            map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, mapbiomas_classes=mapbiomas_classes, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas, catchment_info=catchment_info)
+            map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=final_viz_type, show_mapbiomas_layer=show_mapbiomas, mapbiomas_classes=mapbiomas_classes, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas, show_municipios_polygons=show_municipios_polygons, catchment_info=catchment_info)
             
             # Exibir legenda na sidebar se existir
             if legend_html and show_municipios_biogas:
@@ -3814,6 +3876,10 @@ def page_main():
             map_data = st_folium(map_object, key="main_map", width=None, height=700)  # Altura maior para compensar layout horizontal
     else:
         # Mapa em largura total quando não há detalhes
+        # --- DETERMINAÇÃO DO TIPO DE VISUALIZAÇÃO FINAL (FULLWIDTH) ---
+        # Usa diretamente a seleção do usuário do seletor de estilos
+        final_viz_type = viz_type
+        
         # Crie um dicionário com as informações da análise
         catchment_info = None
         if enable_proximity and st.session_state.get('catchment_center'):
@@ -3826,7 +3892,7 @@ def page_main():
             logger.info(f"No catchment_info (fullwidth): enable_proximity={enable_proximity}, catchment_center={st.session_state.get('catchment_center')}")
         
         
-        map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=viz_type, show_mapbiomas_layer=show_mapbiomas, mapbiomas_classes=mapbiomas_classes, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas, catchment_info=catchment_info)
+        map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=final_viz_type, show_mapbiomas_layer=show_mapbiomas, mapbiomas_classes=mapbiomas_classes, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas, show_municipios_polygons=show_municipios_polygons, catchment_info=catchment_info)
         
         # Exibir legenda na sidebar se existir
         if legend_html and show_municipios_biogas:
@@ -4117,11 +4183,11 @@ def page_main():
                 with col1:
                     st.metric("População", f"{mun.get('populacao_2022', 'N/A'):,}" if pd.notna(mun.get('populacao_2022')) else "N/A")
                 with col2:
-                    st.metric("Potencial Total", f"{mun['total_final_nm_ano']:,.0f}")
+                    st.metric("Potencial Total", f"{mun['total_final_m_ano']:,.0f}")
                 with col3:
-                    st.metric("Agrícola", f"{mun['total_agricola_nm_ano']:,.0f}")
+                    st.metric("Agrícola", f"{mun['total_agricola_m_ano']:,.0f}")
                 with col4:
-                    st.metric("Pecuária", f"{mun['total_pecuaria_nm_ano']:,.0f}")
+                    st.metric("Pecuária", f"{mun['total_pecuaria_m_ano']:,.0f}")
                 
                 # Donut chart for composition
                 residue_cols = {v: k for k, v in RESIDUE_OPTIONS.items() if 'Total' not in k}
@@ -4143,10 +4209,10 @@ def page_main():
                 with col1:
                     st.metric("Total Selecionados", len(selected_df))
                 with col2:
-                    total_potential = selected_df['total_final_nm_ano'].sum()
+                    total_potential = selected_df['total_final_m_ano'].sum()
                     st.metric("Potencial Conjunto", f"{total_potential:,.0f} m³/ano")
                 with col3:
-                    avg_potential = selected_df['total_final_nm_ano'].mean()
+                    avg_potential = selected_df['total_final_m_ano'].mean()
                     st.metric("Média por Município", f"{avg_potential:,.0f} m³/ano")
                 with col4:
                     if 'populacao_2022' in selected_df.columns:
@@ -4159,9 +4225,9 @@ def page_main():
                 fig_bar = px.bar(
                     selected_df, 
                     x='nome_municipio', 
-                    y='total_final_nm_ano',
+                    y='total_final_m_ano',
                     title='Potencial Total por Município',
-                    color='total_final_nm_ano',
+                    color='total_final_m_ano',
                     color_continuous_scale='Viridis'
                 )
                 fig_bar.update_layout(height=400, xaxis_tickangle=45)
@@ -4177,13 +4243,13 @@ def page_main():
                         
                         # Prepare data for results page
                         municipal_data = selected_df.to_dict('records')
-                        total_selected_potential = selected_df['total_final_nm_ano'].sum()
+                        total_selected_potential = selected_df['total_final_m_ano'].sum()
                         
                         data, summary, polygons = prepare_analysis_data_for_results(
                             df, selected_mun_names, 'municipal_comparison', 
                             residue_data=municipal_data, 
                             metrics={'total_selected_potential': total_selected_potential, 'selected_count': len(selected_df)},
-                            analysis_context={'relevant_fields': ['nome_municipio', 'total_final_nm_ano', 'area_km2', 'populacao_2022']}
+                            analysis_context={'relevant_fields': ['nome_municipio', 'total_final_m_ano', 'area_km2', 'populacao_2022']}
                         )
                         
                         # Create button
@@ -4308,7 +4374,7 @@ def page_main():
             comparison_df = df[df['nome_municipio'].isin(selected_for_comparison)]
             
             # Summary table
-            summary_cols = ['nome_municipio', 'total_final_nm_ano', 'total_agricola_nm_ano', 'total_pecuaria_nm_ano']
+            summary_cols = ['nome_municipio', 'total_final_m_ano', 'total_agricola_m_ano', 'total_pecuaria_m_ano']
             available_summary_cols = [col for col in summary_cols if col in comparison_df.columns]
             summary_df = comparison_df[available_summary_cols].round(0)
             st.dataframe(summary_df, use_container_width=True)
@@ -4329,14 +4395,14 @@ def page_main():
         
         with preset_col2:
             if st.button("🌾 Foco Agrícola", key="agri_focus"):
-                agri_municipalities = df[df['total_agricola_nm_ano'] > df['total_agricola_nm_ano'].quantile(0.75)]['cd_mun'].tolist()
+                agri_municipalities = df[df['total_agricola_m_ano'] > df['total_agricola_m_ano'].quantile(0.75)]['cd_mun'].tolist()
                 st.session_state.selected_municipalities = agri_municipalities
                 st.toast(f"{len(agri_municipalities)} municípios agrícolas selecionados!", icon="🌾")
                 st.rerun()
         
         with preset_col3:
             if st.button("🐄 Foco Pecuário", key="livestock_focus"):
-                livestock_municipalities = df[df['total_pecuaria_nm_ano'] > df['total_pecuaria_nm_ano'].quantile(0.75)]['cd_mun'].tolist()
+                livestock_municipalities = df[df['total_pecuaria_m_ano'] > df['total_pecuaria_m_ano'].quantile(0.75)]['cd_mun'].tolist()
                 st.session_state.selected_municipalities = livestock_municipalities
                 st.toast(f"{len(livestock_municipalities)} municípios pecuários selecionados!", icon="🐄")
                 st.rerun()
@@ -4394,7 +4460,7 @@ def page_main():
         selected_cols = st.multiselect(
             "Selecionar colunas para exibir:",
             ['nome_municipio'] + all_numeric_cols,
-            default=['nome_municipio', 'total_final_nm_ano', 'total_agricola_nm_ano', 'total_pecuaria_nm_ano'],
+            default=['nome_municipio', 'total_final_m_ano', 'total_agricola_m_ano', 'total_pecuaria_m_ano'],
             key="column_selector"
         )
         
@@ -4811,7 +4877,7 @@ def page_explorer():
                     df, top_municipalities, 'municipal_profile', 
                     residue_data=explorer_data, 
                     metrics={'selected_type': selected_type, 'total_potential': total_potential},
-                    analysis_context={'relevant_fields': ['nome_municipio'] + [selected_type.lower() if selected_type != 'Total Geral' else 'total_final_nm_ano', 'area_km2', 'populacao_2022']}
+                    analysis_context={'relevant_fields': ['nome_municipio'] + [selected_type.lower() if selected_type != 'Total Geral' else 'total_final_m_ano', 'area_km2', 'populacao_2022']}
                 )
                 
                 # Create button
@@ -4887,21 +4953,21 @@ def page_analysis():
         # Organize residues by category for better UX
         residue_categories = {
             "🌾 Resíduos Agrícolas": {
-                "Cana-de-açúcar": "biogas_cana_nm_ano",
-                "Soja": "biogas_soja_nm_ano", 
-                "Milho": "biogas_milho_nm_ano",
-                "Café": "biogas_cafe_nm_ano",
-                "Citros": "biogas_citros_nm_ano"
+                "Cana-de-açúcar": "biogas_cana_m_ano",
+                "Soja": "biogas_soja_m_ano", 
+                "Milho": "biogas_milho_m_ano",
+                "Café": "biogas_cafe_m_ano",
+                "Citros": "biogas_citros_m_ano"
             },
             "🐄 Resíduos Pecuários": {
-                "Bovinos": "biogas_bovinos_nm_ano",
-                "Suínos": "biogas_suino_nm_ano",
-                "Aves": "biogas_aves_nm_ano",
-                "Piscicultura": "biogas_piscicultura_nm_ano"
+                "Bovinos": "biogas_bovinos_m_ano",
+                "Suínos": "biogas_suino_m_ano",
+                "Aves": "biogas_aves_m_ano",
+                "Piscicultura": "biogas_piscicultura_m_ano"
             },
             "🏙️ Resíduos Urbanos": {
-                "Resíduos Urbanos": "rsu_total_nm_ano",
-                "Resíduos de Poda": "rpo_total_nm_ano"
+                "Resíduos Urbanos": "rsu_potencial_m_ano",
+                "Resíduos de Poda": "rpo_potencial_m_ano"
             }
         }
         
@@ -6064,7 +6130,7 @@ def page_analysis():
                     'nome_municipio': row['nome_municipio'],
                     'score_especializacao': score,
                     'tipos_destacados': ', '.join(types_with_potential) if types_with_potential else 'Nenhum',
-                    'total_potencial': row.get('total_final_nm_ano', 0)
+                    'total_potencial': row.get('total_final_m_ano', 0)
                 })
             
             specialization_df = pd.DataFrame(specialization_scores)
@@ -6500,10 +6566,10 @@ def page_analysis():
             
             # Calculate development index (population + economic indicators proxy)
             df_opp = df.copy()
-            df_opp = df_opp[df_opp['total_final_nm_ano'] > 0].copy()
+            df_opp = df_opp[df_opp['total_final_m_ano'] > 0].copy()
             
             # Normalize metrics for comparison
-            df_opp['potencial_normalizado'] = (df_opp['total_final_nm_ano'] - df_opp['total_final_nm_ano'].min()) / (df_opp['total_final_nm_ano'].max() - df_opp['total_final_nm_ano'].min())
+            df_opp['potencial_normalizado'] = (df_opp['total_final_m_ano'] - df_opp['total_final_m_ano'].min()) / (df_opp['total_final_m_ano'].max() - df_opp['total_final_m_ano'].min())
             df_opp['desenvolvimento_normalizado'] = (df_opp['populacao_2022'] - df_opp['populacao_2022'].min()) / (df_opp['populacao_2022'].max() - df_opp['populacao_2022'].min())
             
             # Calculate opportunity score (high potential, low development)
@@ -6514,10 +6580,10 @@ def page_analysis():
             
             col1, col2, col3 = st.columns(3)
             with col1:
-                avg_potential = top_opportunities['total_final_nm_ano'].mean()
+                avg_potential = top_opportunities['total_final_m_ano'].mean()
                 st.metric("💎 Potencial Médio (Oportunidades)", format_number(avg_potential))
             with col2:
-                total_unexplored = top_opportunities['total_final_nm_ano'].sum()
+                total_unexplored = top_opportunities['total_final_m_ano'].sum()
                 st.metric("🚀 Potencial Total Subutilizado", format_number(total_unexplored))
             with col3:
                 best_score = top_opportunities['opportunity_score'].max()
@@ -6529,7 +6595,7 @@ def page_analysis():
                 opportunities_ranking.append({
                     "🏅 Rank": f"{i}º",
                     "💎 Município": row['nome_municipio'],
-                    "🚀 Potencial": format_number(row['total_final_nm_ano']),
+                    "🚀 Potencial": format_number(row['total_final_m_ano']),
                     "👥 População": f"{row['populacao_2022']:,.0f}",
                     "⭐ Score": f"{row['opportunity_score']:.3f}",
                 })
@@ -6551,7 +6617,7 @@ def page_analysis():
                 },
                 color='opportunity_score',
                 color_continuous_scale='RdYlGn',
-                size='total_final_nm_ano'
+                size='total_final_m_ano'
             )
             
             # Add quadrant lines
@@ -6577,10 +6643,10 @@ def page_analysis():
             # Regional analysis removed - data not available
             if False:
                 regional_analysis = df.groupby('regiao_imediata').agg({
-                    'total_final_nm_ano': ['sum', 'mean', 'count'],
+                    'total_final_m_ano': ['sum', 'mean', 'count'],
                     'populacao_2022': 'sum',
-                    'total_agricola_nm_ano': 'sum',
-                    'total_pecuaria_nm_ano': 'sum'
+                    'total_agricola_m_ano': 'sum',
+                    'total_pecuaria_m_ano': 'sum'
                 }).round(0)
                 
                 regional_analysis.columns = ['Total_Potencial', 'Media_Potencial', 'Num_Municipios', 'Pop_Total', 'Potencial_Agri', 'Potencial_Pec']
@@ -6661,13 +6727,13 @@ def page_analysis():
                 st.markdown("#### 🏛️ Recomendações para Gestores Públicos")
                 
                 # Priority municipalities for public policy
-                high_potential = df_filtered[df_filtered['total_final_nm_ano'] > df_filtered['total_final_nm_ano'].quantile(0.8)]
+                high_potential = df_filtered[df_filtered['total_final_m_ano'] > df_filtered['total_final_m_ano'].quantile(0.8)]
                 
                 col1, col2 = st.columns(2)
                 with col1:
                     st.markdown("**🎯 Municípios Prioritários para Políticas Públicas:**")
                     for _, mun in high_potential.head(5).iterrows():
-                        st.markdown(f"• **{mun['nome_municipio']}**: {format_number(mun['total_final_nm_ano'])} m³/ano")
+                        st.markdown(f"• **{mun['nome_municipio']}**: {format_number(mun['total_final_m_ano'])} m³/ano")
                 
                 with col2:
                     st.markdown("**📋 Ações Recomendadas:**")
@@ -6680,7 +6746,7 @@ def page_analysis():
                     """)
                 
                 # Economic impact calculation
-                total_potential_region = df_filtered['total_final_nm_ano'].sum()
+                total_potential_region = df_filtered['total_final_m_ano'].sum()
                 estimated_jobs = total_potential_region / 1000000 * 2.5  # Rough estimate: 2.5 jobs per million m³/year
                 estimated_revenue = total_potential_region * 0.45  # Rough estimate: R$ 0.45 per m³
                 
@@ -6697,8 +6763,8 @@ def page_analysis():
                 st.markdown("#### 💼 Análise de Oportunidades de Investimento")
                 
                 # ROI analysis
-                df_investment = df_filtered[df_filtered['total_final_nm_ano'] > 100000].copy()  # Minimum viable scale
-                df_investment['roi_score'] = df_investment['total_final_nm_ano'] / df_investment['populacao_2022']  # Potential per capita
+                df_investment = df_filtered[df_filtered['total_final_m_ano'] > 100000].copy()  # Minimum viable scale
+                df_investment['roi_score'] = df_investment['total_final_m_ano'] / df_investment['populacao_2022']  # Potential per capita
                 
                 top_investments = df_investment.nlargest(8, 'roi_score')
                 
@@ -6707,9 +6773,9 @@ def page_analysis():
                 for _, inv in top_investments.iterrows():
                     investment_table.append({
                         "🏘️ Município": inv['nome_municipio'],
-                        "🚀 Potencial": format_number(inv['total_final_nm_ano']),
+                        "🚀 Potencial": format_number(inv['total_final_m_ano']),
                         "📊 ROI Score": f"{inv['roi_score']:.1f}",
-                        "🎯 Tipo Principal": "Agrícola" if inv['total_agricola_nm_ano'] > inv['total_pecuaria_nm_ano'] else "Pecuário"
+                        "🎯 Tipo Principal": "Agrícola" if inv['total_agricola_m_ano'] > inv['total_pecuaria_m_ano'] else "Pecuário"
                     })
                 
                 st.dataframe(pd.DataFrame(investment_table), use_container_width=True, hide_index=True)
@@ -6890,7 +6956,7 @@ def analyze_municipalities_in_radius(df, center_lat, center_lon, radius_km):
             distance_km = haversine(center_lat, center_lon, municipio['lat'], municipio['lon'])
             
             if distance_km <= radius_km:
-                potential = municipio.get('total_final_nm_ano', 0)
+                potential = municipio.get('total_final_m_ano', 0)
                 if pd.notna(potential) and potential > 0:
                     municipalities_in_radius.append({
                         'nome': municipio.get('nome_municipio', 'N/A'),
@@ -6911,40 +6977,219 @@ def analyze_municipalities_in_radius(df, center_lat, center_lon, radius_km):
     }
 
 def analyze_mapbiomas_in_radius(center_lat, center_lon, radius_km):
-    """Analyze MapBiomas raster data within radius - SIMPLIFIED VERSION"""
-    # For now, return simulated data based on regional characteristics
-    # This can be replaced with actual raster analysis when available
+    """Analyze MapBiomas raster data within radius - REAL GEOSPATIAL ANALYSIS"""
+    import rasterio
+    import numpy as np
+    from rasterio.mask import mask
+    from shapely.geometry import Point, mapping
+    import geopandas as gpd
+    from pathlib import Path
+    import logging
     
-    # Determine region characteristics
+    # MapBiomas class mapping - COMPLETE mapping based on actual raster data
+    mapbiomas_classes = {
+        9: {
+            'name': 'Silvicultura',
+            'icon': '🌲',
+            'biogas_m3_per_km2': 15000  # Lower biogas potential per km²
+        },
+        15: {
+            'name': 'Pastagem', 
+            'icon': '🌾',
+            'biogas_m3_per_km2': 25000  # Medium biogas potential per km²
+        },
+        20: {
+            'name': 'Cana-de-açúcar',
+            'icon': '🎋',
+            'biogas_m3_per_km2': 45000  # Very high biogas potential per km²
+        },
+        39: {
+            'name': 'Soja',
+            'icon': '🫘',
+            'biogas_m3_per_km2': 35000  # High biogas potential per km²
+        },
+        40: {
+            'name': 'Arroz',
+            'icon': '🌾',
+            'biogas_m3_per_km2': 30000  # Medium-high biogas potential per km²
+        },
+        41: {
+            'name': 'Outras Culturas Temporárias',
+            'icon': '🌱', 
+            'biogas_m3_per_km2': 35000  # High biogas potential per km²
+        },
+        46: {
+            'name': 'Café',
+            'icon': '☕',
+            'biogas_m3_per_km2': 20000  # Medium biogas potential per km²
+        },
+        47: {
+            'name': 'Citros',
+            'icon': '🍊',
+            'biogas_m3_per_km2': 25000  # Medium biogas potential per km²
+        },
+        48: {
+            'name': 'Outras Culturas Perenes',
+            'icon': '🌳',
+            'biogas_m3_per_km2': 22000  # Medium biogas potential per km²
+        }
+    }
+    
+    try:
+        # Path to the raster file
+        raster_path = Path(__file__).parent.parent.parent / 'rasters' / 'MapBiomas_SP_2024_APENAS_AGROPECUARIA_COG_90m_SELECIONADAS.tif'
+        
+        if not raster_path.exists():
+            logging.warning(f"Raster file not found: {raster_path}")
+            return _fallback_simulation_analysis(center_lat, center_lon, radius_km)
+        
+        # Create circular geometry around the center point
+        center_point = Point(center_lon, center_lat)
+        # Convert radius from km to degrees (rough approximation: 1 degree ≈ 111 km)
+        radius_degrees = radius_km / 111.0
+        circle = center_point.buffer(radius_degrees)
+        
+        # Create GeoDataFrame with the circle
+        circle_gdf = gpd.GeoDataFrame([1], geometry=[circle], crs='EPSG:4326')
+        
+        logging.info(f"Analyzing area: center=({center_lat:.4f}, {center_lon:.4f}), radius={radius_km}km")
+        
+        # Open raster and mask to circle
+        with rasterio.open(str(raster_path)) as src:
+            # Ensure the geometry is in the same CRS as raster
+            if circle_gdf.crs != src.crs:
+                circle_gdf = circle_gdf.to_crs(src.crs)
+            
+            # Mask raster data within the circle
+            masked_data, masked_transform = mask(src, circle_gdf.geometry, crop=True, filled=False)
+            
+            if masked_data.size == 0:
+                logging.warning("No raster data found in the specified area")
+                return _fallback_simulation_analysis(center_lat, center_lon, radius_km)
+            
+            # Get pixel resolution in degrees
+            pixel_size_x, pixel_size_y = src.res
+            # Convert to area per pixel in km² (rough approximation)
+            pixel_area_km2 = abs(pixel_size_x * pixel_size_y) * (111.32 ** 2)
+            
+            # Flatten the masked data (remove extra dimensions)
+            flat_data = masked_data[0].flatten()
+            
+            # Remove nodata values (typically 0 or masked values)
+            valid_data = flat_data[~flat_data.mask] if hasattr(flat_data, 'mask') else flat_data
+            valid_data = valid_data[valid_data > 0]  # Remove zeros
+            
+            if len(valid_data) == 0:
+                logging.warning("No valid data found after masking")
+                return _fallback_simulation_analysis(center_lat, center_lon, radius_km)
+            
+            # Count pixels for each class
+            unique_values, counts = np.unique(valid_data, return_counts=True)
+            
+            total_valid_pixels = counts.sum()
+            total_analyzed_area_km2 = total_valid_pixels * pixel_area_km2
+            
+            logging.info(f"Found {len(unique_values)} unique classes: {unique_values}")
+            logging.info(f"Total valid pixels: {total_valid_pixels}, area: {total_analyzed_area_km2:.2f} km²")
+            
+            # Calculate areas and percentages for each class
+            crops_analysis = {}
+            
+            for value, count in zip(unique_values, counts):
+                if value in mapbiomas_classes:
+                    class_info = mapbiomas_classes[value]
+                    area_km2 = count * pixel_area_km2
+                    percentage = (count / total_valid_pixels) * 100
+                    
+                    crops_analysis[class_info['name']] = {
+                        'area_km2': round(area_km2, 1),
+                        'percentage': round(percentage, 1), 
+                        'potential_biogas_nm3': round(area_km2 * class_info['biogas_m3_per_km2'], 0),
+                        'class_code': int(value),
+                        'pixel_count': int(count)
+                    }
+                    
+                    logging.info(f"Class {value} ({class_info['name']}): {count} pixels, {area_km2:.1f} km², {percentage:.1f}%")
+            
+            # Calculate theoretical circle area for comparison
+            theoretical_area_km2 = 3.14159 * radius_km ** 2
+            coverage_percentage = (total_analyzed_area_km2 / theoretical_area_km2) * 100
+            
+            # Determine region based on coordinates
+            if center_lat > -21:
+                region = "Norte do Estado"
+            elif center_lat < -23.5:
+                region = "Sul do Estado"  
+            else:
+                region = "Centro do Estado"
+            
+            return {
+                'region': region,
+                'total_area_km2': round(theoretical_area_km2, 1),
+                'analyzed_area_km2': round(total_analyzed_area_km2, 1),
+                'coverage_percentage': round(coverage_percentage, 1),
+                'crops': crops_analysis,
+                'analysis_method': 'Real MapBiomas Raster Analysis',
+                'pixel_size_km2': round(pixel_area_km2, 6),
+                'total_pixels_analyzed': int(total_valid_pixels),
+                'raster_classes_found': list(unique_values.astype(int)),
+                'validation': {
+                    'raster_bounds': src.bounds,
+                    'raster_crs': str(src.crs),
+                    'analysis_successful': True
+                }
+            }
+            
+    except Exception as e:
+        logging.error(f"Error in MapBiomas analysis: {str(e)}")
+        # Fallback to simulation if real analysis fails
+        return _fallback_simulation_analysis(center_lat, center_lon, radius_km, error=str(e))
+
+def _fallback_simulation_analysis(center_lat, center_lon, radius_km, error=None):
+    """Fallback simulation when real analysis fails"""
+    logging.warning(f"Using fallback simulation for analysis. Error: {error}")
+    
+    # Determine region characteristics (keeping original logic as fallback)
     if center_lat > -21:
-        region = "Norte"
-        main_crops = ["Cana-de-açúcar", "Soja", "Pastagem", "Vegetação Natural"]
-        crop_percentages = [35, 25, 30, 10]
+        region = "Norte (simulado)"
+        main_crops = ["Silvicultura", "Pastagem", "Outras Culturas", "Área não classificada"]
+        crop_percentages = [15, 45, 25, 15]
     elif center_lat < -23.5:
-        region = "Sul"  
-        main_crops = ["Pastagem", "Soja", "Milho", "Silvicultura"]
-        crop_percentages = [40, 25, 20, 15]
+        region = "Sul (simulado)"  
+        main_crops = ["Pastagem", "Silvicultura", "Outras Culturas", "Área não classificada"]
+        crop_percentages = [50, 25, 15, 10]
     else:
-        region = "Centro"
-        main_crops = ["Cana-de-açúcar", "Pastagem", "Citros", "Vegetação Natural"]
-        crop_percentages = [30, 35, 15, 20]
+        region = "Centro (simulado)"
+        main_crops = ["Pastagem", "Outras Culturas", "Silvicultura", "Área não classificada"]
+        crop_percentages = [40, 30, 20, 10]
     
     total_area_km2 = 3.14159 * radius_km ** 2
     
     crops_analysis = {}
+    biogas_potentials = [25000, 35000, 15000, 0]  # m³/km²/ano for each crop type
+    
     for i, (crop, percentage) in enumerate(zip(main_crops, crop_percentages)):
         area_km2 = total_area_km2 * (percentage / 100)
         crops_analysis[crop] = {
-            'area_km2': round(area_km2, 2),
-            'percentage': percentage,
-            'potential_biogas_nm3': round(area_km2 * (500 - i * 100), 0)  # Decreasing potential by crop
+            'area_km2': round(area_km2, 1),
+            'percentage': round(percentage, 1),
+            'potential_biogas_nm3': round(area_km2 * biogas_potentials[i], 0),
+            'class_code': 'simulated',
+            'pixel_count': 'simulated'
         }
     
     return {
         'region': region,
         'total_area_km2': round(total_area_km2, 1),
+        'analyzed_area_km2': round(total_area_km2, 1),
+        'coverage_percentage': 100.0,
         'crops': crops_analysis,
-        'analysis_method': 'Regional Simulation'
+        'analysis_method': 'Fallback Simulation',
+        'error_message': error,
+        'validation': {
+            'analysis_successful': False,
+            'fallback_used': True
+        }
     }
 
 def display_proximity_results(results, center, radius_km):
@@ -7029,17 +7274,81 @@ def display_proximity_results(results, center, radius_km):
         fig_crops.update_layout(height=400)
         st.plotly_chart(fig_crops, use_container_width=True)
         
-        # Detailed crops table
-        crops_df = pd.DataFrame([
-            {
+        # Detailed crops table with additional validation info
+        enhanced_crops_data = []
+        for nome, dados in crops.items():
+            row = {
                 'Cultura': nome,
                 'Área (km²)': f"{dados['area_km2']:.1f}",
                 'Percentual': f"{dados['percentage']}%",
                 'Potencial Biogás': f"{dados['potential_biogas_nm3']:,.0f} m³/ano"
             }
-            for nome, dados in crops.items()
-        ])
+            
+            # Add validation info if available
+            if isinstance(dados.get('class_code'), int):
+                row['Classe MapBiomas'] = dados['class_code']
+            if isinstance(dados.get('pixel_count'), int):
+                row['Pixels Analisados'] = f"{dados['pixel_count']:,}"
+            
+            enhanced_crops_data.append(row)
+        
+        crops_df = pd.DataFrame(enhanced_crops_data)
         st.dataframe(crops_df, use_container_width=True, hide_index=True)
+        
+        # Display validation and analysis method information
+        if 'analysis_method' in raster_data:
+            analysis_method = raster_data['analysis_method']
+            
+            if analysis_method == 'Real MapBiomas Raster Analysis':
+                # Show detailed validation info
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    analyzed_area = raster_data.get('analyzed_area_km2', 0)
+                    theoretical_area = raster_data.get('total_area_km2', 0)
+                    st.metric(
+                        "🔍 Área Analisada", 
+                        f"{analyzed_area:.1f} km²",
+                        help="Área efetivamente coberta pelo raster MapBiomas"
+                    )
+                
+                with col2:
+                    coverage = raster_data.get('coverage_percentage', 0)
+                    st.metric(
+                        "📊 Cobertura", 
+                        f"{coverage:.1f}%",
+                        help="Percentual da área do círculo coberta pelos dados"
+                    )
+                
+                with col3:
+                    pixels = raster_data.get('total_pixels_analyzed', 0)
+                    st.metric(
+                        "🎯 Pixels", 
+                        f"{pixels:,}",
+                        help="Total de pixels analisados do raster"
+                    )
+                
+                # Technical details
+                with st.expander("🔬 Detalhes Técnicos da Análise"):
+                    st.write(f"**Método:** {analysis_method}")
+                    st.write(f"**Resolução do pixel:** {raster_data.get('pixel_size_km2', 'N/A'):.6f} km²")
+                    st.write(f"**Classes encontradas:** {raster_data.get('raster_classes_found', 'N/A')}")
+                    
+                    if 'validation' in raster_data:
+                        validation = raster_data['validation']
+                        st.write(f"**CRS do raster:** {validation.get('raster_crs', 'N/A')}")
+                        st.write(f"**Análise bem-sucedida:** {'✅ Sim' if validation.get('analysis_successful') else '❌ Não'}")
+                
+                st.success("✅ Análise baseada em dados reais do MapBiomas 2024")
+                
+            elif analysis_method == 'Fallback Simulation':
+                st.warning("⚠️ Dados simulados - Erro na análise de raster real")
+                if 'error_message' in raster_data:
+                    with st.expander("🔧 Detalhes do Erro"):
+                        st.code(raster_data['error_message'])
+            
+            else:
+                st.info(f"📊 Método: {analysis_method}")
         
     # Analysis summary
     st.markdown("#### 📈 Conclusões")
@@ -7050,7 +7359,11 @@ def display_proximity_results(results, center, radius_km):
     elif 'municipal' in results:
         st.info("🏘️ Análise baseada em dados municipais disponível.")
     elif 'raster' in results:
-        st.info("🌾 Análise de uso do solo disponível.")
+        raster_data = results['raster']
+        if raster_data.get('analysis_method') == 'Real MapBiomas Raster Analysis':
+            st.info("🌾 Análise de uso do solo baseada em dados reais do MapBiomas.")
+        else:
+            st.info("🌾 Análise de uso do solo (dados simulados).")
 
 def page_proximity_analysis():
     """Dedicated page for proximity analysis with specialized map and raster integration"""
