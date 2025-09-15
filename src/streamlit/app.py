@@ -4396,12 +4396,20 @@ def page_explorer():
         display_col = RESIDUE_OPTIONS[selected_type]
     
     with col2:
+        from modules.reference_system import render_reference_button, get_substrate_reference_map
+
         st.info("""
         💡 **Dica:**
-        
+
         Comece com "Potencial Total" para ter uma visão geral, depois explore tipos específicos!
         """)
-    
+
+        # Add reference for selected substrate
+        substrate_refs = get_substrate_reference_map()
+        if display_col in substrate_refs:
+            st.markdown("**📚 Base Científica:**")
+            render_reference_button(substrate_refs[display_col], compact=True)
+
     # Filter data
     df_filtered = df[df[display_col] > 0].copy()  # Only show municipalities with data
     
@@ -4429,11 +4437,17 @@ def page_explorer():
         )
     
     with col2:
-        st.metric(
-            "🔥 Potencial Total", 
-            f"{total_potential/1_000_000:.1f}M Nm³/ano",
-            help="Soma de todo o potencial de biogás deste tipo em SP"
-        )
+        metric_col1, metric_col2 = st.columns([3, 1])
+        with metric_col1:
+            st.metric(
+                "🔥 Potencial Total",
+                f"{total_potential/1_000_000:.1f}M Nm³/ano",
+                help="Soma de todo o potencial de biogás deste tipo em SP"
+            )
+        with metric_col2:
+            substrate_refs = get_substrate_reference_map()
+            if display_col in substrate_refs:
+                render_reference_button(substrate_refs[display_col], compact=True)
     
     with col3:
         st.metric(
@@ -4879,13 +4893,23 @@ def page_analysis():
                 col1, col2, col3, col4 = st.columns(4)
                 with col1:
                     total_potential = df_residue[residue_col].sum()
-                    st.metric("🔥 Potencial Total", format_number(total_potential) + " Nm³/ano")
+                    col_metric, col_ref = st.columns([3, 1])
+                    with col_metric:
+                        st.metric("🔥 Potencial Total", format_number(total_potential) + " Nm³/ano")
+                    with col_ref:
+                        # Get appropriate reference based on residue type
+                        ref_id = get_substrate_reference_map().get(residue_col, "method_biogas")
+                        render_reference_button(ref_id, "Metodologia")
                 with col2:
                     municipalities_with_data = len(df_residue)
                     st.metric("🏘️ Municípios com Dados", f"{municipalities_with_data:,}")
                 with col3:
                     avg_potential = df_residue[residue_col].mean()
-                    st.metric("📊 Potencial Médio", format_number(avg_potential) + " Nm³/ano")
+                    col_metric, col_ref = st.columns([3, 1])
+                    with col_metric:
+                        st.metric("📊 Potencial Médio", format_number(avg_potential) + " Nm³/ano")
+                    with col_ref:
+                        render_reference_button("method_biogas", "Cálculos")
                 with col4:
                     percentage_state = (municipalities_with_data / len(df)) * 100
                     st.metric("📍 Cobertura Estadual", f"{percentage_state:.1f}%")
@@ -5257,11 +5281,15 @@ def page_analysis():
                 
                 col1, col2, col3 = st.columns(3)
                 with col1:
-                    st.metric(
-                        "🔥 Potencial Total Combinado",
-                        f"{total_state_potential/1_000_000:.1f}M Nm³/ano",
-                        help="Soma de todos os tipos selecionados"
-                    )
+                    col_metric, col_ref = st.columns([4, 1])
+                    with col_metric:
+                        st.metric(
+                            "🔥 Potencial Total Combinado",
+                            f"{total_state_potential/1_000_000:.1f}M Nm³/ano",
+                            help="Soma de todos os tipos selecionados"
+                        )
+                    with col_ref:
+                        render_reference_button("method_biogas", "Metodologia")
                 with col2:
                     best_type = comp_df.loc[comp_df['Potencial Total'].idxmax(), 'Tipo de Resíduo']
                     st.metric(
@@ -5270,12 +5298,16 @@ def page_analysis():
                         help="Tipo com maior potencial total"
                     )
                 with col3:
-                    avg_municipalities = comp_df['Municípios com Dados'].mean()
-                    st.metric(
-                        "📍 Média de Municípios",
-                        f"{avg_municipalities:.0f}",
-                        help="Média de municípios com dados por tipo"
-                    )
+                    col_metric, col_ref = st.columns([4, 1])
+                    with col_metric:
+                        avg_municipalities = comp_df['Municípios com Dados'].mean()
+                        st.metric(
+                            "📍 Média de Municípios",
+                            f"{avg_municipalities:.0f}",
+                            help="Média de municípios com dados por tipo"
+                        )
+                    with col_ref:
+                        render_reference_button("data_ibge", "Dados")
                 
                 # Visual comparisons
                 st.markdown("#### 📊 Comparação Visual")
@@ -6874,20 +6906,28 @@ def display_proximity_results(results, center, radius_km):
     with col1:
         area_total = 3.14159 * radius_km ** 2
         st.metric("📐 Área Total", f"{area_total:.1f} km²")
-    
+
     with col2:
-        if 'municipal' in results:
-            mun_count = results['municipal']['total_municipalities']
-            st.metric("🏘️ Municípios", f"{mun_count}")
-        else:
-            st.metric("🏘️ Municípios", "N/A")
-    
+        col_metric, col_ref = st.columns([3, 1])
+        with col_metric:
+            if 'municipal' in results:
+                mun_count = results['municipal']['total_municipalities']
+                st.metric("🏘️ Municípios", f"{mun_count}")
+            else:
+                st.metric("🏘️ Municípios", "N/A")
+        with col_ref:
+            render_reference_button("data_ibge", "Dados")
+
     with col3:
-        if 'municipal' in results:
-            total_pot = results['municipal']['total_potential']
-            st.metric("⚡ Potencial Total", f"{total_pot:,.0f} Nm³/ano")
-        else:
-            st.metric("⚡ Potencial", "Calculando...")
+        col_metric, col_ref = st.columns([3, 1])
+        with col_metric:
+            if 'municipal' in results:
+                total_pot = results['municipal']['total_potential']
+                st.metric("⚡ Potencial Total", f"{total_pot:,.0f} Nm³/ano")
+            else:
+                st.metric("⚡ Potencial", "Calculando...")
+        with col_ref:
+            render_reference_button("method_biogas", "Cálculos")
     
     # Municipal Analysis Results
     if 'municipal' in results and results['municipal']['municipalities']:
@@ -6911,9 +6951,13 @@ def display_proximity_results(results, center, radius_km):
             fig_mun.update_layout(height=300, showlegend=False)
             st.plotly_chart(fig_mun, use_container_width=True)
     
-    # Raster Analysis Results  
+    # Raster Analysis Results
     if 'raster' in results and results['raster']['crops']:
-        st.markdown("#### 🌾 Análise de Uso do Solo")
+        col_title, col_ref = st.columns([4, 1])
+        with col_title:
+            st.markdown("#### 🌾 Análise de Uso do Solo")
+        with col_ref:
+            render_reference_button("data_mapbiomas", "MapBiomas")
         raster_data = results['raster']
         
         # Crops pie chart
@@ -7377,7 +7421,10 @@ def page_references():
 
                 with col2:
                     if ref.url:
-                        st.link_button("🔗 Acessar", ref.url, key=f"link_{ref.id}")
+                        # Use unique key with timestamp to avoid conflicts
+                        import time
+                        link_key = f"link_{ref.id}_{int(time.time() * 1000) % 10000}"
+                        st.link_button("🔗 Acessar", ref.url, key=link_key)
 
                 if ref.citation_abnt:
                     st.markdown("**Citação ABNT:**")
@@ -7396,10 +7443,12 @@ def page_references():
         results = db.search_references(search_query)
         if results:
             st.markdown(f"**{len(results)} referência(s) encontrada(s):**")
-            for ref in results:
+            for i, ref in enumerate(results):
                 st.markdown(f"- **{ref.title}** ({ref.authors}, {ref.year})")
                 if ref.url:
-                    st.link_button("🔗 Acessar", ref.url, key=f"search_{ref.id}")
+                    import time
+                    search_key = f"search_{ref.id}_{i}_{int(time.time() * 1000) % 10000}"
+                    st.link_button("🔗 Acessar", ref.url, key=search_key)
         else:
             st.warning("Nenhuma referência encontrada para os termos pesquisados.")
 

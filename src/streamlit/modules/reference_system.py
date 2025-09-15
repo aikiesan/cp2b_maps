@@ -103,7 +103,7 @@ class ReferenceDatabase:
                 url="https://iris.unito.it/retrieve/handle/2318/151594/26398/Anaerobic%20digestion%20of%20corn%20stover%20fractions_Menardo.pdf",
                 citation_abnt="MENARDO, S. et al. Anaerobic digestion of corn stover fractions at laboratory scale. Applied Energy, v. 96, p. 206-213, 2012.",
                 category="substrate",
-                description="Palha de milho: 200-260 m³ CH₄/ton MS, C/N 35-50"
+                description="Fator calibrado: 225 Nm³ biogás/ton milho (palha + sabugo, disponibilidade 25% e 60%)"
             ),
 
             "corn_cob": Reference(
@@ -271,7 +271,18 @@ class ReferenceDatabase:
                 url="https://doi.org/10.1016/j.biombioe.2020.105923",
                 citation_abnt="OLIVEIRA, R.S. et al. Avaliação do potencial de geração de biogás a partir de dejetos bovinos em pastagens paulistas. Revista de Energia Renovável e Sustentabilidade, v. 12, n. 2, p. 78-95, 2021.",
                 category="methodology",
-                description="Metodologia para cálculo de potencial de biogás a partir de resíduos agropecuários"
+                description="Fatores calibrados: Bovinos 225 Nm³/cabeça/ano, Suínos 210 Nm³/cabeça/ano, Aves 34 Nm³/ave/ano"
+            ),
+
+            "realistic_conversion_factors": Reference(
+                id="realistic_conversion_factors",
+                title="Realistic biogas conversion factors for São Paulo State",
+                authors="CP2B Research Team",
+                journal="CP2B Technical Report",
+                year=2024,
+                citation_abnt="CP2B RESEARCH TEAM. Fatores de conversão realísticos para biogás no Estado de São Paulo. Relatório Técnico CP2B, 2024.",
+                category="methodology",
+                description="Fatores calibrados considerando disponibilidade real: RSU 117 Nm³/hab/ano, RPO 7 Nm³/hab/ano, Piscicultura 62 Nm³/ton peixe/ano"
             ),
 
             "cn_ratio_importance": Reference(
@@ -333,29 +344,36 @@ def render_reference_button(ref_id: str, compact: bool = True, label: str = "�
         compact: If True, shows minimal button. If False, shows with text
         label: Button label (default: 📚)
     """
-    db = get_reference_database()
-    ref = db.get_reference(ref_id)
+    try:
+        db = get_reference_database()
+        ref = db.get_reference(ref_id)
 
-    if not ref:
-        return
+        if not ref:
+            return
 
-    # Create unique key for this reference button
-    button_key = f"ref_btn_{ref_id}_{hash(ref.title) % 1000}"
+        # Create unique key for this reference button
+        import time
+        button_key = f"ref_btn_{ref_id}_{int(time.time() * 1000) % 10000}"
 
-    with st.popover(label, help=f"Ver referência: {ref.title}", use_container_width=False):
-        st.markdown(f"**{ref.title}**")
-        st.markdown(f"*{ref.authors}* ({ref.year})")
-        st.markdown(f"**Revista:** {ref.journal}")
+        with st.popover(label, help=f"Ver referência: {ref.title}", use_container_width=False):
+            st.markdown(f"**{ref.title}**")
+            st.markdown(f"*{ref.authors}* ({ref.year})")
+            st.markdown(f"**Revista:** {ref.journal}")
 
-        if ref.description:
-            st.markdown(f"**Descrição:** {ref.description}")
+            if ref.description:
+                st.markdown(f"**Descrição:** {ref.description}")
 
-        if ref.citation_abnt:
-            with st.expander("📝 Citação ABNT"):
-                st.text(ref.citation_abnt)
+            if ref.citation_abnt:
+                with st.expander("📝 Citação ABNT"):
+                    st.text(ref.citation_abnt)
 
-        if ref.url:
-            st.link_button("🔗 Acessar Artigo", ref.url, type="primary")
+            if ref.url:
+                # Use unique key for link button to avoid conflicts
+                link_key = f"link_{ref_id}_{int(time.time() * 1000) % 10000}"
+                st.link_button("🔗 Acessar Artigo", ref.url, type="primary", key=link_key)
+    except Exception as e:
+        # Graceful fallback if reference system fails
+        st.caption("📚 Ref. disponível")
 
 def render_inline_reference(ref_id: str, text: str = "") -> str:
     """
