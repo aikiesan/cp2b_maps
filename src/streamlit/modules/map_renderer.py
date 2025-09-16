@@ -29,33 +29,94 @@ except ImportError:
     logger.warning("Raster system not available")
 
 def add_plantas_layer_fast(m, plantas_gdf):
-    """Adiciona camada de plantas de forma otimizada"""
+    """Adiciona camada de plantas de bioenergia sem clustering"""
     if plantas_gdf is None or len(plantas_gdf) == 0:
         return
-    
-    # Usar MarkerCluster para performance com muitos pontos
-    marker_cluster = MarkerCluster(name="🏭 Plantas de Biogás").add_to(m)
-    
+
+    # Criar grupo de features para plantas de bioenergia (sem clustering)
+    plantas_group = folium.FeatureGroup(name="🏭 Plantas de Bioenergia").add_to(m)
+
+    # Mapeamento de cores baseado no tipo de bioenergia
     color_map = {
-        'Biogás': '#32CD32',
-        'Aterro': '#8B4513', 
-        'Tratamento': '#4169E1',
-        'Outros': '#9370DB'
+        'BIOGAS': '#2E7D32',     # Verde escuro para biogas
+        'ETANOL': '#1976D2',     # Azul para bioetanol
+        'BIOMASSA': '#F57C00',   # Laranja para biomassa UTE
+        'default': '#9E9E9E'     # Cinza para indefinido
     }
-    
+
+    # Mapeamento de ícones e emojis
+    icon_map = {
+        'BIOGAS': '🌱',      # Biogas
+        'ETANOL': '🌾',      # Bioetanol
+        'BIOMASSA': '🔥',    # Biomassa UTE
+        'default': '🏭'      # Genérico
+    }
+
+    # Tamanho padrão para todos os tipos
+    standard_size = 8
+
     for _, row in plantas_gdf.iterrows():
-        tipo = row.get('TIPO_PLANT', 'Outros')
-        color = color_map.get(tipo, '#666666')
-        
+        # Usar o tipo de bioenergia para classificação
+        tipo_bioen = row.get('TIPO_BIOEN', 'default')
+        color = color_map.get(tipo_bioen, color_map['default'])
+        icon_emoji = icon_map.get(tipo_bioen, icon_map['default'])
+
+        # Preparar informações para popup
+        municipio = row.get('Municipio', 'N/A')
+        categoria = row.get('Categoria', 'N/A')
+        situacao = row.get('Situacao', 'N/A')
+        energia_el = row.get('Energia_el', 'N/A')
+        energia_te = row.get('Energia_te', 'N/A')
+        bio_total = row.get('Bio_Total', 0)
+        principal = row.get('Principal_', 'N/A')
+
+        # Formatar potencial total
+        if bio_total and bio_total > 0:
+            if bio_total >= 1_000_000:
+                bio_total_str = f"{bio_total/1_000_000:.1f}M m³/ano"
+            elif bio_total >= 1_000:
+                bio_total_str = f"{bio_total/1_000:.0f}K m³/ano"
+            else:
+                bio_total_str = f"{bio_total:,.0f} m³/ano"
+        else:
+            bio_total_str = "Não disponível"
+
+        # Nome da planta baseado no tipo
+        tipo_nome_map = {
+            'BIOGAS': 'Planta de Biogás',
+            'ETANOL': 'Planta de Bioetanol',
+            'BIOMASSA': 'Usina de Biomassa',
+            'default': 'Planta de Bioenergia'
+        }
+        tipo_nome = tipo_nome_map.get(tipo_bioen, tipo_nome_map['default'])
+
+        popup_html = f"""
+        <div style="width: 280px;">
+            <h4>{icon_emoji} {tipo_nome}</h4>
+            <hr>
+            <b>📍 Município:</b> {municipio}<br>
+            <b>⚡ Tipo de Bioenergia:</b> <span style="color: {color}; font-weight: bold;">{tipo_bioen}</span><br>
+            <b>🏷️ Categoria:</b> {categoria}<br>
+            <b>📊 Status:</b> {situacao}<br>
+            <b>🔌 Energia Elétrica:</b> {energia_el}<br>
+            <b>🌡️ Energia Térmica:</b> {energia_te}<br>
+            <b>⚡ Principal Produto:</b> {principal}<br>
+            <b>💡 Potencial Total:</b> {bio_total_str}
+        </div>
+        """
+
+        tooltip_text = f"{icon_emoji} {municipio} | {tipo_bioen} | {situacao}"
+
         folium.CircleMarker(
             location=[row['geometry'].y, row['geometry'].x],
-            radius=8,
-            color=color,
+            radius=standard_size,
+            color='white',
             fillColor=color,
-            fillOpacity=0.7,
-            popup=f"<b>Planta:</b> {row.get('NOME', 'N/A')}<br><b>Tipo:</b> {tipo}",
-            tooltip=f"{row.get('NOME', 'Planta de Biogás')} ({tipo})"
-        ).add_to(marker_cluster)
+            fillOpacity=0.9,
+            weight=2,
+            popup=folium.Popup(popup_html, max_width=320),
+            tooltip=tooltip_text
+        ).add_to(plantas_group)
 
 def add_lines_layer_fast(m, gdf, name, color, weight=2):
     """Adiciona camada de linhas de forma otimizada"""

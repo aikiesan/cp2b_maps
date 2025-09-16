@@ -133,7 +133,7 @@ def prepare_layer_data():
     layers = {}
     
     # Plantas de Biogás (pontos - sem simplificação)
-    plantas_path = base_path / "Plantas_Biogas_SP.shp" 
+    plantas_path = base_path / "Shapefile_425_Biogas_Mapbiomas_SP.shp" 
     layers['plantas'] = load_shapefile_cached(str(plantas_path), simplify_tolerance=0)
     
     # Gasodutos (linhas - simplificação leve)
@@ -1899,7 +1899,7 @@ def create_centroid_map(df, display_col, filters=None, get_legend_only=False, se
             try:
                 st.write("🔍 **PROCESSANDO:** Plantas de Biogás...")
                 plantas_group = folium.FeatureGroup(name="🏭 Plantas de Biogás", show=True)
-                plantas_path = Path(__file__).parent.parent.parent / "shapefile" / "Plantas_Biogas_SP.shp"
+                plantas_path = Path(__file__).parent.parent.parent / "shapefile" / "Shapefile_425_Biogas_Mapbiomas_SP.shp"
                 st.write(f"📁 Caminho: {plantas_path}")
                 st.write(f"✅ Arquivo existe: {plantas_path.exists()}")
                 if plantas_path.exists():
@@ -3588,76 +3588,100 @@ def page_main():
                 with st.container(border=True):  # Borda para destacar
                     st.markdown("**Selecione as culturas a visualizar:**")
                     
-                    # Organizar culturas por categoria com prioridade de cores
-                    pastagem_crops = {
-                        15: ('Pastagem', '#FFD966')
-                    }
-                    
-                    temp_crops = {
-                        39: ('Soja', '#E1BEE7'),
-                        20: ('Cana-de-açúcar', '#C5E1A5'),
-                        40: ('Arroz', '#FFCDD2'),
-                        62: ('Algodão', '#F8BBD9'),
-                        41: ('Outras Temporárias', '#DCEDC8')
-                    }
-                    
-                    perennial_crops = {
-                        46: ('Café', '#8D6E63'),
-                        47: ('Citrus', '#FFA726'),
-                        48: ('Outras Perenes', '#A1887F')
-                    }
-                    
-                    silviculture_crops = {
-                        9: ('Silvicultura', '#6D4C41')
-                    }
-                    
-                    # Interface organizada em colunas melhorada
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.markdown("**🌱 Pastagem e Silvicultura**")
+                    # Organizar todas as culturas em uma estrutura unificada
+                    mapbiomas_options = {
                         # Pastagem
-                        for code, (name, color) in pastagem_crops.items():
-                            if st.checkbox(f"{name}", key=f"mapbiomas_{code}"):
-                                mapbiomas_classes.append(code)
+                        15: ('🌱 Pastagem', '#FFD966', 'pastagem'),
+
                         # Silvicultura
-                        for code, (name, color) in silviculture_crops.items():
-                            if st.checkbox(f"{name}", key=f"mapbiomas_{code}"):
-                                mapbiomas_classes.append(code)
-                    
-                    with col2:
-                        st.markdown("**🌾 Culturas Agrícolas**")
-                        # Temporárias
-                        st.markdown("*Temporárias:*")
-                        for code, (name, color) in temp_crops.items():
-                            if st.checkbox(f"{name}", key=f"mapbiomas_{code}"):
-                                mapbiomas_classes.append(code)
-                        
-                        # Perenes  
-                        st.markdown("*Perenes:*")
-                        for code, (name, color) in perennial_crops.items():
-                            if st.checkbox(f"{name}", key=f"mapbiomas_{code}"):
-                                mapbiomas_classes.append(code)
-                    
-                    # Controles rápidos melhorados
-                    st.markdown("<hr style='margin: 0.3rem 0;'>", unsafe_allow_html=True)
-                    col_a, col_b = st.columns(2)
-                    with col_a:
+                        9: ('🌲 Silvicultura', '#6D4C41', 'silvicultura'),
+
+                        # Culturas Temporárias
+                        39: ('🫘 Soja', '#E1BEE7', 'temporaria'),
+                        20: ('🎍 Cana-de-açúcar', '#C5E1A5', 'temporaria'),
+                        40: ('🌾 Arroz', '#FFCDD2', 'temporaria'),
+                        62: ('🤍 Algodão', '#F8BBD9', 'temporaria'),
+                        41: ('🌱 Outras Temporárias', '#DCEDC8', 'temporaria'),
+
+                        # Culturas Perenes
+                        46: ('☕ Café', '#8D6E63', 'perene'),
+                        47: ('🍊 Citrus', '#FFA726', 'perene'),
+                        48: ('🌳 Outras Perenes', '#A1887F', 'perene')
+                    }
+
+                    # Inicializar flags de controle se não existirem
+                    if 'mapbiomas_select_all_flag' not in st.session_state:
+                        st.session_state.mapbiomas_select_all_flag = False
+                    if 'mapbiomas_select_none_flag' not in st.session_state:
+                        st.session_state.mapbiomas_select_none_flag = False
+
+                    # Controles de Seleção no topo
+                    col_ctrl1, col_ctrl2 = st.columns(2)
+                    with col_ctrl1:
                         if st.button("✅ Selecionar Todas", key="select_all_mapbiomas", use_container_width=True):
-                            # Força atualização dos checkboxes usando método mais direto
-                            all_codes = list(pastagem_crops.keys()) + list(temp_crops.keys()) + list(perennial_crops.keys()) + list(silviculture_crops.keys())
-                            for code in all_codes:
-                                st.session_state[f"mapbiomas_{code}"] = True
-                            st.toast("Todas as culturas selecionadas!", icon="✅")
+                            st.session_state.mapbiomas_select_all_flag = True
+                            st.session_state.mapbiomas_select_none_flag = False
                             st.rerun()
-                    with col_b:
+                    with col_ctrl2:
                         if st.button("❌ Desmarcar Todas", key="select_none_mapbiomas", use_container_width=True):
-                            # Força atualização dos checkboxes usando método mais direto
-                            all_codes = list(pastagem_crops.keys()) + list(temp_crops.keys()) + list(perennial_crops.keys()) + list(silviculture_crops.keys())
-                            for code in all_codes:
-                                st.session_state[f"mapbiomas_{code}"] = False
-                            st.toast("Culturas desmarcadas!", icon="❌")
+                            st.session_state.mapbiomas_select_all_flag = False
+                            st.session_state.mapbiomas_select_none_flag = True
                             st.rerun()
+
+                    st.markdown("<hr style='margin: 0.5rem 0;'>", unsafe_allow_html=True)
+
+                    # Interface em coluna única com melhor design
+                    categories = {
+                        'pastagem': '🌱 Pastagem',
+                        'silvicultura': '🌲 Silvicultura',
+                        'temporaria': '🌾 Culturas Temporárias',
+                        'perene': '🌳 Culturas Perenes'
+                    }
+
+                    for category_key, category_title in categories.items():
+                        category_items = [(code, name, color) for code, (name, color, cat) in mapbiomas_options.items() if cat == category_key]
+
+                        if category_items:
+                            st.markdown(f"**{category_title}**")
+
+                            for code, name, color in category_items:
+                                # Determinar valor inicial do checkbox baseado nas flags
+                                initial_value = False
+                                if st.session_state.mapbiomas_select_all_flag:
+                                    initial_value = True
+                                elif st.session_state.mapbiomas_select_none_flag:
+                                    initial_value = False
+                                else:
+                                    initial_value = st.session_state.get(f"mapbiomas_{code}", False)
+
+                                # Criar checkbox com indicador de cor
+                                col_check, col_color = st.columns([0.85, 0.15])
+                                with col_check:
+                                    selected = st.checkbox(
+                                        name,
+                                        value=initial_value,
+                                        key=f"mapbiomas_{code}"
+                                    )
+                                    if selected:
+                                        mapbiomas_classes.append(code)
+
+                                with col_color:
+                                    # Mostrar amostra da cor
+                                    st.markdown(
+                                        f'<div style="width: 30px; height: 20px; background-color: {color}; '
+                                        f'border: 1px solid #ddd; border-radius: 4px; margin-top: 8px;"></div>',
+                                        unsafe_allow_html=True
+                                    )
+
+                            st.markdown("<br>", unsafe_allow_html=True)  # Espaçamento entre categorias
+
+                    # Reset das flags após processamento
+                    if st.session_state.mapbiomas_select_all_flag:
+                        st.session_state.mapbiomas_select_all_flag = False
+                        st.toast("✅ Todas as culturas selecionadas!", icon="✅")
+                    if st.session_state.mapbiomas_select_none_flag:
+                        st.session_state.mapbiomas_select_none_flag = False
+                        st.toast("❌ Todas as culturas desmarcadas!", icon="❌")
         
         # === 2. EXPANDER PARA FILTROS DE DADOS (Só ativo se Potencial de Biogás estiver ativo) ===
         if show_municipios_biogas:

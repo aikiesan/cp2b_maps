@@ -64,7 +64,7 @@ class DataService:
             return self._cache[layer_name]
 
         layer_config = {
-            'plantas': {'file': 'Plantas_Biogas_SP.shp', 'simplify': 0},
+            'plantas': {'file': 'Shapefile_425_Biogas_Mapbiomas_SP.shp', 'simplify': 0},
             'gasodutos_dist': {'file': 'Gasodutos_Distribuicao_SP.shp', 'simplify': 0.0001},
             'gasodutos_transp': {'file': 'Gasodutos_Transporte_SP.shp', 'simplify': 0.0001},
             'rodovias': {'file': 'Rodovias_Estaduais_SP.shp', 'simplify': 0.0001},
