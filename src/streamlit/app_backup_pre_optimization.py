@@ -1444,7 +1444,7 @@ def render_compact_filters(page_key="default"):
         
         with col4:
             show_zeros = st.checkbox("Valores zero", key=f"{page_key}_zeros")
-            max_count = st.slider("Max:", 10, 645, 50, key=f"{page_key}_max", help="Número máximo de municípios para visualizar")
+            max_count = st.slider("Max:", 10, 645, 100, key=f"{page_key}_max")
     
     return {
         'residues': residues,
@@ -3562,8 +3562,7 @@ def page_main():
             
             st.write("**Dados Principais:**")
             show_municipios_biogas = st.checkbox("📊 Potencial de Biogás", value=True)
-            show_municipios_polygons = st.checkbox("🗺️ Polígonos dos Municípios", value=False, disabled=True, help="Funcionalidade desabilitada na versão demo")
-            show_municipios_polygons = False  # Forçar desabilitação
+            show_municipios_polygons = st.checkbox("🗺️ Polígonos dos Municípios", value=False)
             
             st.write("**Infraestrutura:**")
             show_plantas_biogas = st.checkbox("🏭 Plantas de Biogás", value=False)
@@ -3741,7 +3740,7 @@ def page_main():
         # Moved to dedicated tab - no longer shown in map sidebar
         
         # Set default values to avoid errors in the rest of the code
-        enable_proximity = False  # Desabilitado na versão demo
+        enable_proximity = False
         st.session_state.catchment_center = None
         
         # === PAINEL REMOVIDO: OUTRAS ANÁLISES (confuso para usuários) ===
