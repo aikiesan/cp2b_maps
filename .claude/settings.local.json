@@ -20,7 +20,9 @@
       "Bash(timeout 10 streamlit run:*)",
       "Bash(timeout 5 streamlit run:*)",
       "Bash(git reset:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(grep:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []
