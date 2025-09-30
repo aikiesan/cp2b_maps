@@ -24,6 +24,9 @@ except ImportError:
 # Import HTML escape for safe rendering
 import html
 
+# Import RAG module
+from .bagacinho_rag import BagacinhoRAG
+
 
 # ============================================================================
 # DATABASE CONTEXT PREPARATION
@@ -32,6 +35,25 @@ import html
 def get_database_path():
     """Get the database path"""
     return Path(__file__).parent.parent.parent.parent / "data" / "cp2b_maps.db"
+
+
+def get_rag_instance() -> Optional[BagacinhoRAG]:
+    """
+    Get or create BagacinhoRAG instance with caching
+
+    Returns:
+        BagacinhoRAG instance or None if initialization fails
+    """
+    if 'bagacinho_rag' not in st.session_state:
+        try:
+            db_path = get_database_path()
+            st.session_state.bagacinho_rag = BagacinhoRAG(db_path=db_path)
+            logger.info("BagacinhoRAG initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize BagacinhoRAG: {e}")
+            st.session_state.bagacinho_rag = None
+
+    return st.session_state.bagacinho_rag
 
 
 def prepare_database_context() -> str:
@@ -269,30 +291,47 @@ def query_ollama(
     model: str = "llama3.1",
     context: str = "",
     conversation_history: Optional[List[Dict]] = None,
-    host: str = "http://localhost:11434"
+    host: str = "http://localhost:11434",
+    use_rag: bool = True
 ) -> Tuple[str, bool]:
     """
     Query Ollama with a question and context.
-    
+
     Args:
         question: User's question
         model: Ollama model to use (supports "bagacinho", "llama3.1", etc.)
-        context: Database context to provide
+        context: Database context to provide (used as fallback if RAG fails)
         conversation_history: Previous messages for context
         host: Ollama host URL
-        
+        use_rag: Whether to use RAG for dynamic context retrieval (default: True)
+
     Returns:
         Tuple of (answer, success)
     """
     if not HAS_OLLAMA:
         return "Erro: Biblioteca Ollama não instalada.", False
-    
+
     try:
         client = ollama.Client(host=host)
-        
+
+        # ========== RAG INTEGRATION ==========
+        # Try to get dynamic context from RAG
+        rag_context = None
+        if use_rag:
+            try:
+                rag = get_rag_instance()
+                if rag:
+                    rag_context = rag.construir_contexto(question)
+                    logger.info(f"RAG context generated for question: {question[:50]}...")
+            except Exception as e:
+                logger.warning(f"RAG failed, using static context: {e}")
+
+        # Use RAG context if available, otherwise fallback to static context
+        final_context = rag_context if rag_context else context
+
         # Build message history
         messages = []
-        
+
         # Customized system prompt based on model
         if model.lower() == "bagacinho":
             # Special prompt for the fine-tuned Bagacinho model
@@ -305,12 +344,18 @@ Você foi treinado especificamente com conhecimento sobre:
 - 🏙️ Análise dos 645 municípios de São Paulo
 
 CONTEXTO ATUALIZADO DO BANCO DE DADOS:
-{context}
+{final_context}
+
+IMPORTANTE:
+- Use PRIORITARIAMENTE os dados reais fornecidos acima
+- Cite números exatos quando disponíveis
+- Se os dados acima não tiverem a informação, use seu conhecimento geral mas deixe claro
+- Seja técnico mas acessível
 
 Use seu conhecimento especializado combinado com os dados acima para responder de forma precisa e técnica, mas acessível."""
         else:
             # Default prompt for general models
-            system_prompt = f"""Você é o Bagacinho, um assistente especializado e amigável do sistema CP2B Maps, 
+            system_prompt = f"""Você é o Bagacinho, um assistente especializado e amigável do sistema CP2B Maps,
 uma plataforma de análise de potencial de biogás desenvolvida pela UNICAMP.
 
 Sua função é ajudar os usuários a entender os dados do sistema, responder perguntas
@@ -329,7 +374,7 @@ IMPORTANTE:
 - Quando falar sobre grandes números, use formatação clara (ex: "1,2 milhão de m³/ano")
 
 CONTEXTO DO BANCO DE DADOS CP2B:
-{context}
+{final_context}
 
 Responda de forma clara, útil e profissional, mas com um toque amigável."""
 

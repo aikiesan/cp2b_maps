@@ -9,6 +9,9 @@ __pycache__/
 *.sqlite
 *.sqlite3
 
+# Exception: Include main CP2B database (needed for RAG)
+!data/cp2b_maps.db
+
 # Virtual environments
 venv/
 env/
