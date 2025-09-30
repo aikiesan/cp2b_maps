@@ -26,3 +26,7 @@ pillow>=10.0.0,<11.0.0
 
 # Memory monitoring
 psutil>=5.9.0,<6.0.0
+
+# AI/LLM Integration
+ollama>=0.1.6,<1.0.0
+requests>=2.31.0,<3.0.0  # For REST API communication with Ollama

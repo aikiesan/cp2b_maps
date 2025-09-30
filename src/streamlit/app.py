@@ -50,6 +50,7 @@ from modules.ui_components import (render_header, render_navigation, render_side
                                   render_academic_footer, render_substrate_info_panel,
                                   render_value_with_reference)
 from modules.reference_system import render_reference_button, get_substrate_reference_map
+from modules.chatbot_assistant import render_chatbot_sidebar, render_chatbot_fullpage
 
 # Configure logging with environment-based level
 LOG_LEVEL = os.getenv('CP2B_LOG_LEVEL', 'INFO').upper()
@@ -1150,6 +1151,7 @@ def render_navigation():
         "🔍 Explorar Dados",
         "📊 Análises Avançadas",
         "🎯 Análise de Proximidade",
+        "🍊 Bagacinho",
         "📚 Referências Científicas",
         "ℹ️ Sobre o CP2B Maps"
     ])
@@ -3764,60 +3766,10 @@ def page_main():
                 st.toast(f"{len(selected_names)} municípios removidos da seleção!", icon="🗑️")
                 st.rerun()
         
-        # === INSTRUÇÃO MELHORADA PARA ESCONDER SIDEBAR ===
-        st.markdown("---")
         
-        # Create a more visible instruction box
-        st.markdown("""
-        <div style='
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); 
-            color: white; 
-            padding: 1rem; 
-            border-radius: 10px; 
-            text-align: center; 
-            margin: 1rem 0;
-            border: 2px solid #388E3C;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        '>
-            <div style='font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem;'>
-                🖥️ MAXIMIZAR VISUALIZAÇÃO DO MAPA
-            </div>
-            <div style='font-size: 0.9rem; opacity: 0.95;'>
-                👆 Procure pelo botão <strong>[×]</strong> ou <strong>[>]</strong> no CANTO SUPERIOR ESQUERDO desta barra lateral
-            </div>
-            <div style='font-size: 0.85rem; opacity: 0.9; margin-top: 0.3rem;'>
-                Isso ocultará este painel e dará mais espaço para o mapa!
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Add CSS to make the sidebar collapse button more visible
-        st.markdown("""
-        <style>
-        /* Highlight the sidebar collapse button */
-        .css-1d391kg, .css-1v0mbdj, button[title="Close sidebar"] {
-            background-color: #FF6B6B !important;
-            color: white !important;
-            border: 2px solid #FF4444 !important;
-            border-radius: 8px !important;
-            font-weight: bold !important;
-            font-size: 16px !important;
-            padding: 8px !important;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(255, 107, 107, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
-        }
-        
-        /* Highlight sidebar header area */
-        .css-1544g2n {
-            border-top: 3px solid #FF6B6B !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
+        # === AI CHATBOT ASSISTANT - ALWAYS VISIBLE ===
+        # Render the chatbot assistant in the sidebar (replaces legend)
+        render_chatbot_sidebar()
 
     # --- 4. APLICAÇÃO DOS FILTROS ---
     # Processa os dados ANTES de qualquer renderização de layout
@@ -3892,11 +3844,7 @@ def page_main():
             
             map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=final_viz_type, show_mapbiomas_layer=show_mapbiomas, mapbiomas_classes=mapbiomas_classes, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas, show_municipios_polygons=show_municipios_polygons, catchment_info=catchment_info)
             
-            # Exibir legenda na sidebar se existir
-            if legend_html and show_municipios_biogas:
-                with st.sidebar:
-                    st.markdown("---")
-                    st.markdown(legend_html, unsafe_allow_html=True)
+            # Legend is now replaced by AI Chatbot Assistant in sidebar
             
             map_data = st_folium(map_object, key="main_map", width=None, height=700)  # Altura maior para compensar layout horizontal
     else:
@@ -3919,11 +3867,7 @@ def page_main():
         
         map_object, legend_html = create_centroid_map_optimized(df_to_display, display_col, search_term=search_term, viz_type=final_viz_type, show_mapbiomas_layer=show_mapbiomas, mapbiomas_classes=mapbiomas_classes, show_rios=show_rios, show_rodovias=show_rodovias, show_plantas_biogas=show_plantas_biogas, show_gasodutos_dist=show_gasodutos_dist, show_gasodutos_transp=show_gasodutos_transp, show_areas_urbanas=show_areas_urbanas, show_regioes_admin=show_regioes_admin, show_municipios_biogas=show_municipios_biogas, show_municipios_polygons=show_municipios_polygons, catchment_info=catchment_info)
         
-        # Exibir legenda na sidebar se existir
-        if legend_html and show_municipios_biogas:
-            with st.sidebar:
-                st.markdown("---")
-                st.markdown(legend_html, unsafe_allow_html=True)
+        # Legend is now replaced by AI Chatbot Assistant in sidebar
         
         map_data = st_folium(map_object, key="main_map", width=None, height=600)
     
@@ -7837,6 +7781,11 @@ def page_references():
         else:
             st.warning("Nenhuma referência encontrada para os termos pesquisados.")
 
+def page_chatbot():
+    """AI Chatbot Assistant page - Full interface"""
+    render_chatbot_fullpage()
+
+
 def page_about():
     """About page with institutional context and technical details"""
     st.title("ℹ️ Sobre o CP2B Maps")
@@ -8099,9 +8048,12 @@ def main():
         page_proximity_analysis()
 
     with tabs[4]:
-        page_references()
+        page_chatbot()
 
     with tabs[5]:
+        page_references()
+
+    with tabs[6]:
         page_about()
     
     # Academic references footer
