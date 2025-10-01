@@ -228,20 +228,39 @@ Agora responda às perguntas do usuário com precisão, conhecimento técnico e 
         Returns:
             Tuple of (is_available, message)
         """
-        if not HAS_GEMINI:
-            return False, "❌ Biblioteca google-generativeai não instalada. Execute: pip install google-generativeai"
-
-        # Try Streamlit secrets first, then environment variable
         try:
-            import streamlit as st
-            if "GEMINI_API_KEY" in st.secrets:
-                api_key = st.secrets["GEMINI_API_KEY"]
-            else:
+            logger.info("Checking Gemini availability...")
+
+            if not HAS_GEMINI:
+                logger.warning("google-generativeai library not installed")
+                return False, "❌ Biblioteca google-generativeai não instalada. Execute: pip install google-generativeai"
+
+            # Try Streamlit secrets first, then environment variable
+            api_key = None
+            key_source = None
+
+            try:
+                import streamlit as st
+                logger.info("Checking Streamlit secrets for GEMINI_API_KEY...")
+
+                if "GEMINI_API_KEY" in st.secrets:
+                    api_key = st.secrets["GEMINI_API_KEY"]
+                    key_source = "Streamlit Secrets"
+                    logger.info("✓ API key found in Streamlit secrets")
+                else:
+                    logger.info("GEMINI_API_KEY not found in Streamlit secrets, checking environment...")
+                    api_key = os.getenv("GEMINI_API_KEY")
+                    key_source = "Environment Variable" if api_key else None
+
+            except Exception as e:
+                logger.warning(f"Failed to access Streamlit secrets: {type(e).__name__}: {e}")
+                logger.info("Falling back to environment variable...")
                 api_key = os.getenv("GEMINI_API_KEY")
-        except (KeyError, FileNotFoundError, AttributeError):
-            api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            return False, """❌ Chave API do Gemini não configurada.
+                key_source = "Environment Variable" if api_key else None
+
+            if not api_key:
+                logger.error("No API key found in secrets or environment")
+                return False, """❌ Chave API do Gemini não configurada.
 
 **Como configurar:**
 1. Obtenha sua chave gratuita em: https://makersuite.google.com/app/apikey
@@ -252,7 +271,24 @@ Agora responda às perguntas do usuário com precisão, conhecimento técnico e 
    ```
 """
 
-        return True, f"✅ Gemini configurado! Usando modelo gratuito Gemini Flash"
+            logger.info(f"✓ API key found via {key_source}")
+            logger.info(f"API key length: {len(api_key)} characters")
+            logger.info(f"API key starts with: {api_key[:10]}...")
+
+            # Try to actually initialize Gemini to verify it works
+            try:
+                logger.info("Testing Gemini API initialization...")
+                genai.configure(api_key=api_key)
+                logger.info("✓ Gemini API configured successfully")
+            except Exception as e:
+                logger.error(f"Failed to configure Gemini API: {type(e).__name__}: {e}")
+                return False, f"❌ Erro ao configurar Gemini API: {str(e)}"
+
+            return True, f"✅ Gemini configurado! Usando modelo gratuito Gemini Flash (fonte: {key_source})"
+
+        except Exception as e:
+            logger.error(f"Unexpected error in check_availability: {type(e).__name__}: {e}", exc_info=True)
+            return False, f"❌ Erro inesperado ao verificar Gemini: {str(e)}"
 
 
 # ============================================================================
