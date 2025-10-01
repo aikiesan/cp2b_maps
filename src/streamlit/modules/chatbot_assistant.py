@@ -550,39 +550,43 @@ def render_chatbot_sidebar():
     </style>
     """, unsafe_allow_html=True)
     
-    # Chat messages with container that grows
-    chat_container = st.container()
-    with chat_container:
-        # Display chat history with bubbles
-        for msg in st.session_state.chat_history:
-            if msg["role"] == "user":
-                # User message bubble (right-aligned, green)
-                # Escape HTML to prevent rendering issues
-                safe_content = html.escape(msg['content']).replace('\n', '<br>')
-                st.markdown(f"""
-                <div style='margin-bottom: 0.8rem; display: flex; justify-content: flex-end;'>
-                    <div style='background: #DCF8C6; color: #000; padding: 0.6rem 0.8rem; 
-                                border-radius: 12px 12px 0 12px; max-width: 85%; 
-                                box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-size: 0.85rem;
-                                word-wrap: break-word;'>
-                        {safe_content}
-                    </div>
+    # Fixed-height scrollable container for chat messages
+    st.markdown("""
+    <div style='max-height: 400px; overflow-y: auto; padding-right: 0.5rem; margin-bottom: 1rem;' id='chat-container'>
+    """, unsafe_allow_html=True)
+    
+    for msg in st.session_state.chat_history:
+        if msg["role"] == "user":
+            # User message bubble (right-aligned, green)
+            # Escape HTML to prevent rendering issues
+            safe_content = html.escape(msg['content']).replace('\n', '<br>')
+            st.markdown(f"""
+            <div style='margin-bottom: 0.8rem; display: flex; justify-content: flex-end;'>
+                <div style='background: #DCF8C6; color: #000; padding: 0.6rem 0.8rem; 
+                            border-radius: 12px 12px 0 12px; max-width: 85%; 
+                            box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-size: 0.85rem;
+                            word-wrap: break-word;'>
+                    {safe_content}
                 </div>
-                """, unsafe_allow_html=True)
-            else:
-                # Bagacinho message bubble (left-aligned, white)
-                # Escape HTML to prevent rendering issues
-                safe_content = html.escape(msg['content']).replace('\n', '<br>')
-                st.markdown(f"""
-                <div style='margin-bottom: 0.8rem; display: flex; justify-content: flex-start;'>
-                    <div style='background: #FFFFFF; color: #000; padding: 0.6rem 0.8rem; 
-                                border-radius: 12px 12px 12px 0; max-width: 85%; 
-                                box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-size: 0.85rem;
-                                border: 1px solid #E5E5EA; word-wrap: break-word;'>
-                        <strong style='color: #FF8C00;'>🍊</strong> {safe_content}
-                    </div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            # Bagacinho message bubble (left-aligned, white)
+            # Escape HTML to prevent rendering issues
+            safe_content = html.escape(msg['content']).replace('\n', '<br>')
+            st.markdown(f"""
+            <div style='margin-bottom: 0.8rem; display: flex; justify-content: flex-start;'>
+                <div style='background: #FFFFFF; color: #000; padding: 0.6rem 0.8rem; 
+                            border-radius: 12px 12px 12px 0; max-width: 85%; 
+                            box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-size: 0.85rem;
+                            border: 1px solid #E5E5EA; word-wrap: break-word;'>
+                    <strong style='color: #FF8C00;'>🍊</strong> {safe_content}
                 </div>
-                """, unsafe_allow_html=True)
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # Close scrollable container
+    st.markdown("</div>", unsafe_allow_html=True)
     
     st.markdown("---")
     
