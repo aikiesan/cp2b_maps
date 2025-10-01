@@ -38,7 +38,7 @@ class GeminiAssistant:
         # Try Streamlit secrets first, then environment variable
         try:
             import streamlit as st
-            self.api_key = api_key or st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
+            self.api_key = api_key or st.secrets["GEMINI_API_KEY"] or os.getenv("GEMINI_API_KEY")
         except:
             self.api_key = api_key or os.getenv("GEMINI_API_KEY")
         if not self.api_key:
@@ -267,7 +267,7 @@ Agora responda às perguntas do usuário com precisão, conhecimento técnico e 
         # Try Streamlit secrets first, then environment variable
         try:
             import streamlit as st
-            api_key = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
+            api_key = st.secrets["GEMINI_API_KEY"] or os.getenv("GEMINI_API_KEY")
         except:
             api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
