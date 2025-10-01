@@ -68,7 +68,8 @@ class GeminiAssistant:
         Returns:
             List of training examples
         """
-        training_file = Path("C:/Users/Lucas/Documents/CP2B/CP2B_IA_BAGACINHO/cp2b_biogas_dataset.jsonl")
+        # Use relative path from this file's location (works on both Windows and Linux)
+        training_file = Path(__file__).parent / "data" / "cp2b_biogas_dataset.jsonl"
 
         if not training_file.exists():
             logger.warning(f"Training data not found at {training_file}")
