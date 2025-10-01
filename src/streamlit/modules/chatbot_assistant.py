@@ -485,12 +485,12 @@ def render_chatbot_sidebar():
     """
     st.markdown("---")
     st.markdown("""
-    <div style='background: linear-gradient(135deg, #2E8B57 0%, #32CD32 100%); 
-                color: white; padding: 0.6rem; border-radius: 8px; text-align: center;
-                margin-bottom: 0.8rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
-        <h4 style='margin: 0; font-size: 0.95rem;'>🍊 Bagacinho</h4>
-        <p style='margin: 0.2rem 0 0 0; font-size: 0.7rem; opacity: 0.95;'>
-            Seu assistente de biogás CP2B
+    <div style='background: linear-gradient(135deg, #2E8B57 0%, #32CD32 100%);
+                color: white; padding: 0.5rem; border-radius: 8px; text-align: center;
+                margin-bottom: 0.3rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
+        <h4 style='margin: 0; font-size: 0.9rem;'>🍊 Bagacinho</h4>
+        <p style='margin: 0.1rem 0 0 0; font-size: 0.65rem; opacity: 0.95;'>
+            Assistente de biogás CP2B
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -550,13 +550,13 @@ def render_chatbot_sidebar():
 
     /* Fixed-size chat container */
     #chat-container {
-        height: 400px !important;
-        max-height: 400px !important;
-        min-height: 400px !important;
+        height: 250px !important;
+        max-height: 250px !important;
+        min-height: 250px !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
         padding-right: 0.5rem;
-        margin-bottom: 1rem;
+        margin-bottom: 0.5rem;
         display: flex;
         flex-direction: column;
     }
@@ -598,11 +598,11 @@ def render_chatbot_sidebar():
             # Escape HTML to prevent rendering issues
             safe_content = html.escape(msg['content']).replace('\n', '<br>')
             st.markdown(f"""
-            <div style='margin-bottom: 0.8rem; display: flex; justify-content: flex-end;'>
-                <div style='background: #DCF8C6; color: #000; padding: 0.6rem 0.8rem; 
-                            border-radius: 12px 12px 0 12px; max-width: 85%; 
-                            box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-size: 0.85rem;
-                            word-wrap: break-word;'>
+            <div style='margin-bottom: 0.5rem; display: flex; justify-content: flex-end;'>
+                <div style='background: #DCF8C6; color: #000; padding: 0.5rem 0.7rem;
+                            border-radius: 12px 12px 0 12px; max-width: 85%;
+                            box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-size: 0.8rem;
+                            word-wrap: break-word; line-height: 1.3;'>
                     {safe_content}
                 </div>
             </div>
@@ -612,11 +612,11 @@ def render_chatbot_sidebar():
             # Escape HTML to prevent rendering issues
             safe_content = html.escape(msg['content']).replace('\n', '<br>')
             st.markdown(f"""
-            <div style='margin-bottom: 0.8rem; display: flex; justify-content: flex-start;'>
-                <div style='background: #FFFFFF; color: #000; padding: 0.6rem 0.8rem; 
-                            border-radius: 12px 12px 12px 0; max-width: 85%; 
-                            box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-size: 0.85rem;
-                            border: 1px solid #E5E5EA; word-wrap: break-word;'>
+            <div style='margin-bottom: 0.5rem; display: flex; justify-content: flex-start;'>
+                <div style='background: #FFFFFF; color: #000; padding: 0.5rem 0.7rem;
+                            border-radius: 12px 12px 12px 0; max-width: 85%;
+                            box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-size: 0.8rem;
+                            border: 1px solid #E5E5EA; word-wrap: break-word; line-height: 1.3;'>
                     <strong style='color: #FF8C00;'>🍊</strong> {safe_content}
                 </div>
             </div>
