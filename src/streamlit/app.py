@@ -3557,7 +3557,7 @@ def page_main():
             st.session_state.active_panel = 'camadas'
         
         # === 1. EXPANDER PARA CAMADAS (Ação mais comum) ===
-        with st.expander("🗺️ Camadas Visíveis", expanded=(st.session_state.active_panel == 'camadas')):  # Controle dinâmico
+        with st.expander("🗺️ Camadas Visíveis", expanded=False):  # Controle dinâmico
             # Auto-set as active panel when interacted with
             if st.session_state.active_panel != 'camadas':
                 st.session_state.active_panel = 'camadas'

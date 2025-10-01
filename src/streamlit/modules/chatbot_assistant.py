@@ -21,6 +21,16 @@ except ImportError:
     HAS_OLLAMA = False
     logger.warning("Ollama library not available. Install with: pip install ollama")
 
+
+# Try importing Gemini integration
+try:
+    from .gemini_integration import query_gemini, check_gemini_connection
+    HAS_GEMINI = True
+    logger.info("Gemini integration loaded successfully")
+except ImportError as e:
+    HAS_GEMINI = False
+    logger.warning(f"Gemini integration not available: {e}")
+
 # Import HTML escape for safe rendering
 import html
 
@@ -257,6 +267,34 @@ def check_ollama_connection(host: str = "http://localhost:11434") -> Tuple[bool,
         return False, f"❌ Não foi possível conectar ao Ollama: {str(e)}\n\nVerifique se o Ollama está rodando em {host}"
 
 
+def check_ai_connection(provider: str = "auto") -> Tuple[bool, str, str]:
+    """
+    Check if AI provider is available
+    
+    Args:
+        provider: "ollama", "gemini", or "auto" (auto-detect)
+    
+    Returns:
+        Tuple of (is_connected, message, selected_provider)
+    """
+    if provider == "gemini" or (provider == "auto" and HAS_GEMINI):
+        is_connected, msg = check_gemini_connection()
+        if is_connected:
+            return True, msg, "gemini"
+    
+    if provider == "ollama" or provider == "auto":
+        is_connected, msg = check_ollama_connection()
+        if is_connected:
+            return True, msg, "ollama"
+    
+    # Fallback
+    if HAS_GEMINI:
+        is_connected, msg = check_gemini_connection()
+        return is_connected, msg, "gemini"
+    
+    return False, "❌ Nenhum provedor de IA disponível (Ollama ou Gemini)", "none"
+
+
 def get_available_models(host: str = "http://localhost:11434") -> List[str]:
     """Get list of available Ollama models"""
     if not HAS_OLLAMA:
@@ -292,22 +330,50 @@ def query_ollama(
     context: str = "",
     conversation_history: Optional[List[Dict]] = None,
     host: str = "http://localhost:11434",
-    use_rag: bool = True
+    use_rag: bool = True,
+    provider: str = "ollama"
 ) -> Tuple[str, bool]:
     """
-    Query Ollama with a question and context.
+    Query AI provider (Ollama or Gemini) with a question and context.
 
     Args:
         question: User's question
-        model: Ollama model to use (supports "bagacinho", "llama3.1", etc.)
+        model: Model to use (e.g., "bagacinho", "llama3.1" for Ollama; ignored for Gemini)
         context: Database context to provide (used as fallback if RAG fails)
         conversation_history: Previous messages for context
-        host: Ollama host URL
+        host: Ollama host URL (only for Ollama)
         use_rag: Whether to use RAG for dynamic context retrieval (default: True)
+        provider: AI provider to use - "ollama" or "gemini" (default: "ollama")
 
     Returns:
         Tuple of (answer, success)
     """
+    # Route to Gemini if requested
+    if provider == "gemini":
+        if not HAS_GEMINI:
+            return "Erro: Integração Gemini não disponível.", False
+        
+        # Get RAG context if enabled
+        final_context = context
+        if use_rag:
+            try:
+                rag = get_rag_instance()
+                if rag:
+                    rag_context = rag.construir_contexto(question)
+                    if rag_context:
+                        final_context = rag_context
+                    logger.info(f"RAG context generated for Gemini query")
+            except Exception as e:
+                logger.warning(f"RAG failed for Gemini, using static context: {e}")
+        
+        # Query Gemini
+        return query_gemini(
+            question=question,
+            db_context=final_context,
+            conversation_history=conversation_history
+        )
+    
+    # Otherwise use Ollama (original code)
     if not HAS_OLLAMA:
         return "Erro: Biblioteca Ollama não instalada.", False
 
@@ -419,7 +485,7 @@ def render_chatbot_sidebar():
     """
     st.markdown("---")
     st.markdown("""
-    <div style='background: linear-gradient(135deg, #FF8C00 0%, #FF6347 100%); 
+    <div style='background: linear-gradient(135deg, #2E8B57 0%, #32CD32 100%); 
                 color: white; padding: 0.6rem; border-radius: 8px; text-align: center;
                 margin-bottom: 0.8rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
         <h4 style='margin: 0; font-size: 0.95rem;'>🍊 Bagacinho</h4>
@@ -429,43 +495,38 @@ def render_chatbot_sidebar():
     </div>
     """, unsafe_allow_html=True)
     
-    # Check connection
-    is_connected, status_msg = check_ollama_connection()
+    # AI Provider - Auto-detect silently (no UI clutter)
+    if 'ai_provider_sidebar' not in st.session_state:
+        st.session_state.ai_provider_sidebar = "auto"
+    
+    # Check connection silently
+    is_connected, status_msg, active_provider = check_ai_connection(st.session_state.ai_provider_sidebar)
     
     if not is_connected:
-        st.error(status_msg)
-        st.info("""
-        **Para usar o assistente:**
-        1. Certifique-se que o Docker Ollama está rodando
-        2. Recarregue a página
-        """)
+        st.error("❌ Assistente indisponível. Configure Gemini API ou inicie Ollama.")
         return
     
-    # Model selection
-    available_models = get_available_models()
-    
-    # Prioritize bagacinho if available
-    default_model = "bagacinho" if "bagacinho" in available_models else (available_models[0] if available_models else "llama3.1")
-    
-    if 'selected_model_sidebar' not in st.session_state:
-        st.session_state.selected_model_sidebar = default_model
-    
-    selected_model = st.selectbox(
-        "🤖 Modelo",
-        options=available_models if available_models else ["llama3.1"],
-        index=available_models.index(st.session_state.selected_model_sidebar) if st.session_state.selected_model_sidebar in available_models else 0,
-        key="model_selector_sidebar",
-        help="Escolha o modelo LLM (recomendado: bagacinho se disponível)"
-    )
-    
-    st.session_state.selected_model_sidebar = selected_model
-    
-    # Show model indicator
-    if selected_model == "bagacinho":
-        st.success("🍊 Usando modelo **Bagacinho** treinado!")
-    else:
-        st.info(f"🤖 Usando modelo: {selected_model}")
-    
+    # Model selection (only for Ollama)
+    selected_model = "llama3.1"  # Default
+    if active_provider == "ollama":
+        available_models = get_available_models()
+        
+        # Prioritize bagacinho if available
+        default_model = "bagacinho" if "bagacinho" in available_models else (available_models[0] if available_models else "llama3.1")
+        
+        if 'selected_model_sidebar' not in st.session_state:
+            st.session_state.selected_model_sidebar = default_model
+        
+        selected_model = st.selectbox(
+            "🤖 Modelo Ollama",
+            options=available_models if available_models else ["llama3.1"],
+            index=available_models.index(st.session_state.selected_model_sidebar) if st.session_state.selected_model_sidebar in available_models else 0,
+            key="model_selector_sidebar",
+            help="Escolha o modelo LLM (recomendado: bagacinho se disponível)"
+        )
+        
+        st.session_state.selected_model_sidebar = selected_model
+        
     # Initialize chat history with greeting message
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
@@ -541,9 +602,10 @@ def render_chatbot_sidebar():
         with st.spinner("🍊 Bagacinho está pensando..."):
             answer, success = query_ollama(
                 question=user_input,
-                model=st.session_state.selected_model_sidebar,
+                model=selected_model,
                 context=st.session_state.db_context,
-                conversation_history=st.session_state.chat_history
+                conversation_history=st.session_state.chat_history,
+                provider=active_provider
             )
             
             if success:
@@ -563,7 +625,7 @@ def render_chatbot_fullpage():
     Render full-page chatbot interface with beautiful bubble design.
     """
     st.markdown("""
-    <div style='background: linear-gradient(135deg, #FF8C00 0%, #FF6347 100%); 
+    <div style='background: linear-gradient(135deg, #2E8B57 0%, #32CD32 100%); 
                 color: white; padding: 2rem; border-radius: 15px; text-align: center;
                 margin-bottom: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.15);'>
         <h1 style='margin: 0; font-size: 2.5rem;'>🍊 Bagacinho</h1>
@@ -576,55 +638,34 @@ def render_chatbot_fullpage():
     </div>
     """, unsafe_allow_html=True)
     
-    # Check connection
-    is_connected, status_msg = check_ollama_connection()
+    # AI Provider - Auto-detect silently
+    if 'ai_provider_fullpage' not in st.session_state:
+        st.session_state.ai_provider_fullpage = "auto"
+    
+    # Check connection silently
+    is_connected, status_msg, active_provider = check_ai_connection(st.session_state.ai_provider_fullpage)
     
     if not is_connected:
-        st.error(status_msg)
-        st.info("""
-        **Para usar o assistente:**
-        1. Certifique-se que o Docker Ollama está rodando
-        2. Recarregue a página
-        """)
+        st.error("❌ Assistente indisponível. Configure Gemini API ou inicie Ollama.")
         return
     
-    # Model selection at top
-    col1, col2, col3 = st.columns([2, 2, 1])
-    
-    with col1:
-        st.success(f"✅ {status_msg}")
-    
-    with col2:
+    # Set model based on provider
+    if active_provider == "ollama":
         available_models = get_available_models()
-        
-        # Prioritize bagacinho if available
-        default_model = "bagacinho" if "bagacinho" in available_models else (available_models[0] if available_models else "llama3.1")
-        
+        selected_model = "bagacinho" if "bagacinho" in available_models else (available_models[0] if available_models else "llama3.1")
         if 'selected_model_fullpage' not in st.session_state:
-            st.session_state.selected_model_fullpage = default_model
-        
-        selected_model = st.selectbox(
-            "🤖 Modelo LLM",
-            options=available_models if available_models else ["llama3.1"],
-            index=available_models.index(st.session_state.selected_model_fullpage) if st.session_state.selected_model_fullpage in available_models else 0,
-            key="model_selector_fullpage",
-            help="Escolha o modelo (recomendado: bagacinho se disponível)"
-        )
-        
-        st.session_state.selected_model_fullpage = selected_model
-    
-    with col3:
-        if selected_model == "bagacinho":
-            st.markdown("### 🍊")
-            st.caption("Modelo treinado")
+            st.session_state.selected_model_fullpage = selected_model
+        selected_model = st.session_state.selected_model_fullpage
+    else:
+        selected_model = "gemini-flash-latest"
     
     st.divider()
-    
     # Initialize session state with greeting
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
         st.session_state.chat_history.append({
             "role": "assistant",
+    
             "content": "Olá! Vamos falar sobre a Cana? 🍊"
         })
     
@@ -726,9 +767,10 @@ def render_chatbot_fullpage():
         with st.spinner("🍊 Bagacinho está pensando..."):
             answer, success = query_ollama(
                 question=user_input,
-                model=st.session_state.selected_model_fullpage,
+                model=selected_model,
                 context=st.session_state.db_context,
-                conversation_history=st.session_state.chat_history
+                conversation_history=st.session_state.chat_history,
+                provider=active_provider
             )
             
             if success:
