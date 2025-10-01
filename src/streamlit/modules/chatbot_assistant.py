@@ -540,19 +540,56 @@ def render_chatbot_sidebar():
         with st.spinner("Preparando contexto..."):
             st.session_state.db_context = prepare_database_context()
     
-    # Chat messages container with scroll and auto-grow
+    # Chat messages container with scroll and fixed height
     st.markdown("""
     <style>
     /* Hide form buttons completely */
     div[data-testid="stForm"] button[kind="formSubmit"] {
         display: none !important;
     }
+
+    /* Fixed-size chat container */
+    #chat-container {
+        height: 400px !important;
+        max-height: 400px !important;
+        min-height: 400px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        padding-right: 0.5rem;
+        margin-bottom: 1rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Smooth scrolling */
+    #chat-container {
+        scroll-behavior: smooth;
+    }
+
+    /* Custom scrollbar for better UX */
+    #chat-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #chat-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    #chat-container::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+
+    #chat-container::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
     </style>
     """, unsafe_allow_html=True)
-    
+
     # Fixed-height scrollable container for chat messages
     st.markdown("""
-    <div style='max-height: 400px; overflow-y: auto; padding-right: 0.5rem; margin-bottom: 1rem;' id='chat-container'>
+    <div id='chat-container'>
     """, unsafe_allow_html=True)
     
     for msg in st.session_state.chat_history:
@@ -585,8 +622,17 @@ def render_chatbot_sidebar():
             </div>
             """, unsafe_allow_html=True)
     
-    # Close scrollable container
-    st.markdown("</div>", unsafe_allow_html=True)
+    # Close scrollable container and auto-scroll to bottom
+    st.markdown("""
+    </div>
+    <script>
+        // Auto-scroll to bottom of chat on load
+        const chatContainer = document.getElementById('chat-container');
+        if (chatContainer) {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
+    """, unsafe_allow_html=True)
     
     st.markdown("---")
     

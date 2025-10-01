@@ -1,0 +1,240 @@
+/* ============================================================================
+   CP2B Maps - WCAG Level A Accessibility Styles
+   Minimum accessibility requirements for keyboard navigation and focus
+   ============================================================================ */
+
+/* Skip Navigation Link - WCAG 2.4.1 Bypass Blocks (Level A) */
+.skip-to-content {
+    position: fixed;
+    left: -9999px;
+    z-index: 9999;
+    padding: 1em;
+    background-color: #000;
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+    border: 2px solid #fff;
+}
+
+.skip-to-content:focus {
+    left: 50%;
+    transform: translateX(-50%);
+    top: 10px;
+}
+
+/* Focus Indicators - WCAG 2.4.7 Focus Visible (Level AA, but essential) */
+/* Applied to Level A for better accessibility */
+*:focus {
+    outline: 3px solid #0066cc !important;
+    outline-offset: 2px !important;
+}
+
+button:focus,
+a:focus,
+input:focus,
+select:focus,
+textarea:focus,
+[role="button"]:focus,
+[role="link"]:focus,
+[tabindex]:focus {
+    outline: 3px solid #0066cc !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.3) !important;
+}
+
+/* Streamlit-specific focus improvements */
+.stButton button:focus,
+.stDownloadButton button:focus,
+.stRadio [role="radiogroup"] > label:focus-within,
+.stCheckbox [role="checkbox"]:focus-within,
+.stSelectbox select:focus,
+.stMultiSelect [role="combobox"]:focus,
+.stTextInput input:focus,
+.stNumberInput input:focus,
+.stTextArea textarea:focus {
+    outline: 3px solid #0066cc !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.3) !important;
+}
+
+/* Tab Navigation Visibility */
+[role="tab"]:focus {
+    background-color: #e6f2ff;
+    border: 2px solid #0066cc;
+}
+
+/* Links - WCAG 1.4.1 Use of Color (Level A) */
+/* Ensure links are identifiable without color alone */
+a {
+    text-decoration: underline;
+}
+
+a:hover {
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* ARIA Live Regions - For dynamic content announcements */
+[aria-live="polite"],
+[aria-live="assertive"] {
+    position: relative;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Ensure proper heading hierarchy visibility */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: bold;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+h1 { font-size: 2rem; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.25rem; }
+h4 { font-size: 1.1rem; }
+h5 { font-size: 1rem; }
+h6 { font-size: 0.9rem; }
+
+/* Landmark regions for screen readers */
+[role="navigation"],
+[role="main"],
+[role="complementary"],
+[role="contentinfo"] {
+    position: relative;
+}
+
+/* Error messages - WCAG 3.3.1 Error Identification (Level A) */
+/* Only apply to explicit error-message class to avoid conflicts with Streamlit's st.info/st.warning */
+.error-message {
+    color: #d32f2f;
+    background-color: #ffebee;
+    border: 2px solid #d32f2f;
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.error-message::before {
+    content: "⚠ Erro: ";
+    font-weight: bold;
+}
+
+/* Success messages */
+.success-message {
+    color: #2e7d32;
+    background-color: #e8f5e9;
+    border: 2px solid #2e7d32;
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+    border-radius: 4px;
+}
+
+.success-message::before {
+    content: "✓ ";
+    font-weight: bold;
+}
+
+/* Form labels - WCAG 3.3.2 Labels or Instructions (Level A) */
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+/* Required field indicator */
+.required::after {
+    content: " *";
+    color: #d32f2f;
+    font-weight: bold;
+}
+
+/* Keyboard navigation for Streamlit sidebar */
+.css-1d391kg, /* Streamlit sidebar class (may vary) */
+[data-testid="stSidebar"] {
+    position: relative;
+}
+
+/* Ensure interactive elements are keyboard accessible */
+[onclick]:not(button):not(a) {
+    cursor: pointer;
+    outline: 2px solid transparent;
+    transition: outline 0.2s;
+}
+
+[onclick]:not(button):not(a):focus {
+    outline: 3px solid #0066cc !important;
+}
+
+/* Map controls accessibility */
+.leaflet-control-zoom a,
+.leaflet-control-layers-toggle,
+.folium-map button {
+    outline: 2px solid transparent !important;
+}
+
+.leaflet-control-zoom a:focus,
+.leaflet-control-layers-toggle:focus,
+.folium-map button:focus {
+    outline: 3px solid #0066cc !important;
+    outline-offset: 2px !important;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    *:focus {
+        outline-width: 4px !important;
+    }
+}
+
+/* Reduced motion support - WCAG 2.3.3 Animation from Interactions (Level AAA) */
+/* But good practice for Level A */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Loading indicators with ARIA labels */
+.stSpinner [role="status"] {
+    position: relative;
+}
+
+/* Ensure data tables are accessible */
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+table th {
+    text-align: left;
+    font-weight: bold;
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+/* Caption for tables - WCAG 1.3.1 Info and Relationships (Level A) */
+table caption {
+    font-weight: bold;
+    padding: 8px;
+    text-align: left;
+}

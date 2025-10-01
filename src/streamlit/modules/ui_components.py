@@ -10,16 +10,16 @@ from .data_loader import get_residue_label, format_number
 from .reference_system import render_reference_button, get_substrate_reference_map
 
 def render_header():
-    """Render application header"""
+    """Render application header with WCAG Level A compliance"""
     st.markdown("""
-    <div style='background: linear-gradient(135deg, #2E8B57 0%, #228B22 50%, #32CD32 100%); 
+    <header role="banner" style='background: linear-gradient(135deg, #2E8B57 0%, #228B22 50%, #32CD32 100%);
                 color: white; padding: 1.5rem; margin: -1rem -1rem 1rem -1rem;
                 text-align: center; border-radius: 0 0 15px 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);'>
         <h1 style='margin: 0; font-size: 2.2rem; font-weight: 700;'>🗺️ Análise de Potencial de Biogás</h1>
         <p style='margin: 5px 0 0 0; font-size: 1rem; opacity: 0.9;'>
             645 municípios de São Paulo
         </p>
-    </div>
+    </header>
     """, unsafe_allow_html=True)
 
 def render_navigation():

@@ -26,7 +26,7 @@ from streamlit_folium import st_folium
 
 # Configure page layout for wide mode
 st.set_page_config(
-    page_title="CP2B Maps",
+    page_title="CP2B Maps - Análise de Potencial de Biogás",
     page_icon="🗺️",
     layout="wide",
     initial_sidebar_state="expanded"  # This ensures the sidebar is visible and open on load
@@ -51,6 +51,7 @@ from modules.ui_components import (render_header, render_navigation, render_side
                                   render_value_with_reference)
 from modules.reference_system import render_reference_button, get_substrate_reference_map
 from modules.chatbot_assistant import render_chatbot_sidebar, render_chatbot_fullpage
+from modules.accessibility import initialize_accessibility
 
 # Configure logging with environment-based level
 LOG_LEVEL = os.getenv('CP2B_LOG_LEVEL', 'INFO').upper()
@@ -1145,7 +1146,10 @@ def render_header():
     """, unsafe_allow_html=True)
 
 def render_navigation():
-    """Simple tab-based navigation"""
+    """Simple tab-based navigation with WCAG Level A compliance"""
+    # Add navigation landmark
+    st.markdown('<nav role="navigation" aria-label="Navegação principal"></nav>', unsafe_allow_html=True)
+
     tabs = st.tabs([
         "🏠 Mapa Principal",
         "🔍 Explorar Dados",
@@ -3847,6 +3851,28 @@ def page_main():
             # Legend is now replaced by AI Chatbot Assistant in sidebar
             
             map_data = st_folium(map_object, key="main_map", width=None, height=700)  # Altura maior para compensar layout horizontal
+
+            # WCAG Level A: Text alternative for map
+            with st.expander("♿ Descrição do Mapa (Alternativa de Texto)", expanded=False):
+                st.markdown(f"""
+                **Mapa interativo de potencial de biogás em São Paulo**
+
+                Este mapa mostra {len(df_to_display)} municípios do estado de São Paulo com dados de potencial de biogás.
+                Os municípios são representados visualmente no mapa com cores ou símbolos proporcionais ao seu potencial energético.
+
+                **Para navegar:** Use a tecla Tab para acessar os controles do mapa, Enter ou Espaço para interagir com botões.
+                """)
+
+                # Show top 5 municipalities
+                if not df_to_display.empty and len(df_to_display) > 0:
+                    try:
+                        top_5 = df_to_display.nlargest(5, display_col)
+                        st.markdown("**Top 5 municípios com maior potencial:**")
+                        for idx, row in top_5.iterrows():
+                            st.markdown(f"- {row['nome_municipio']}: {format_number(row[display_col])}")
+                    except Exception:
+                        st.markdown("*Dados de classificação não disponíveis*")
+
     else:
         # Mapa em largura total quando não há detalhes
         # --- DETERMINAÇÃO DO TIPO DE VISUALIZAÇÃO FINAL (FULLWIDTH) ---
@@ -3870,7 +3896,28 @@ def page_main():
         # Legend is now replaced by AI Chatbot Assistant in sidebar
         
         map_data = st_folium(map_object, key="main_map", width=None, height=600)
-    
+
+        # WCAG Level A: Text alternative for map
+        with st.expander("♿ Descrição do Mapa (Alternativa de Texto)", expanded=False):
+            st.markdown(f"""
+            **Mapa interativo de potencial de biogás em São Paulo**
+
+            Este mapa mostra {len(df_to_display)} municípios do estado de São Paulo com dados de potencial de biogás.
+            Os municípios são representados visualmente no mapa com cores ou símbolos proporcionais ao seu potencial energético.
+
+            **Para navegar:** Use a tecla Tab para acessar os controles do mapa, Enter ou Espaço para interagir com botões.
+            """)
+
+            # Show top 5 municipalities
+            if not df_to_display.empty and len(df_to_display) > 0:
+                try:
+                    top_5 = df_to_display.nlargest(5, display_col)
+                    st.markdown("**Top 5 municípios com maior potencial:**")
+                    for idx, row in top_5.iterrows():
+                        st.markdown(f"- {row['nome_municipio']}: {format_number(row[display_col])}")
+                except Exception:
+                    st.markdown("*Dados de classificação não disponíveis*")
+
     # === CONTAINER PARA RESULTADOS DA ANÁLISE DE PROXIMIDADE ===
     if enable_proximity and st.session_state.get('catchment_center'):
         
@@ -8017,7 +8064,10 @@ def page_about():
 
 def main():
     """Main application"""
-    
+
+    # Initialize WCAG Level A accessibility features
+    initialize_accessibility()
+
     # Check if we should show results page
     if st.session_state.get('show_results_page', False):
         try:
