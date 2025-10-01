@@ -488,35 +488,35 @@ def render_chatbot_sidebar():
     <div style='background: linear-gradient(135deg, #2E8B57 0%, #32CD32 100%);
                 color: white; padding: 0.5rem; border-radius: 8px; text-align: center;
                 margin-bottom: 0.3rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
-        <h4 style='margin: 0; font-size: 0.9rem;'>🍊 Bagacinho</h4>
+        <h4 style='margin: 0; font-size: 0.9rem;'>🍊 Bagacinho IA</h4>
         <p style='margin: 0.1rem 0 0 0; font-size: 0.65rem; opacity: 0.95;'>
             Assistente de biogás CP2B
         </p>
     </div>
     """, unsafe_allow_html=True)
-    
+
     # AI Provider - Auto-detect silently (no UI clutter)
     if 'ai_provider_sidebar' not in st.session_state:
         st.session_state.ai_provider_sidebar = "auto"
-    
+
     # Check connection silently
     is_connected, status_msg, active_provider = check_ai_connection(st.session_state.ai_provider_sidebar)
-    
+
     if not is_connected:
         st.error("❌ Assistente indisponível. Configure Gemini API ou inicie Ollama.")
         return
-    
+
     # Model selection (only for Ollama)
     selected_model = "llama3.1"  # Default
     if active_provider == "ollama":
         available_models = get_available_models()
-        
+
         # Prioritize bagacinho if available
         default_model = "bagacinho" if "bagacinho" in available_models else (available_models[0] if available_models else "llama3.1")
-        
+
         if 'selected_model_sidebar' not in st.session_state:
             st.session_state.selected_model_sidebar = default_model
-        
+
         selected_model = st.selectbox(
             "🤖 Modelo Ollama",
             options=available_models if available_models else ["llama3.1"],
@@ -524,13 +524,13 @@ def render_chatbot_sidebar():
             key="model_selector_sidebar",
             help="Escolha o modelo LLM (recomendado: bagacinho se disponível)"
         )
-        
+
         st.session_state.selected_model_sidebar = selected_model
-        
+
     # Initialize chat history with greeting message
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
-        # Add initial greeting from Bagacinho
+        # Add initial greeting from Bagacinho IA
         st.session_state.chat_history.append({
             "role": "assistant",
             "content": "Olá! Vamos falar sobre a Cana?"
@@ -550,9 +550,9 @@ def render_chatbot_sidebar():
 
     /* Fixed-size chat container */
     #chat-container {
-        height: 250px !important;
-        max-height: 250px !important;
-        min-height: 250px !important;
+        height: 150px !important;
+        max-height: 150px !important;
+        min-height: 150px !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
         padding-right: 0.5rem;
@@ -678,9 +678,9 @@ def render_chatbot_fullpage():
     <div style='background: linear-gradient(135deg, #2E8B57 0%, #32CD32 100%); 
                 color: white; padding: 2rem; border-radius: 15px; text-align: center;
                 margin-bottom: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.15);'>
-        <h1 style='margin: 0; font-size: 2.5rem;'>🍊 Bagacinho</h1>
+        <h1 style='margin: 0; font-size: 2.5rem;'>🍊 Bagacinho IA</h1>
         <p style='margin: 0.8rem 0 0 0; font-size: 1.2rem; opacity: 0.95;'>
-            Especialista em Biogás do CP2B Maps
+            Assistente IA Especialista em Biogás do CP2B Maps
         </p>
         <p style='margin: 0.4rem 0 0 0; font-size: 0.9rem; opacity: 0.85;'>
             Análise geoespacial • MapBIOMAS • MCDA • 645 municípios de SP
@@ -768,7 +768,7 @@ def render_chatbot_fullpage():
                                 border-radius: 18px 18px 18px 4px; max-width: 70%; 
                                 box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 1rem;
                                 border: 1px solid #E5E5EA; word-wrap: break-word; line-height: 1.5;'>
-                        <strong style='color: #FF8C00; font-size: 1.1rem;'>🍊 Bagacinho:</strong><br><br>
+                        <strong style='color: #FF8C00; font-size: 1.1rem;'>🍊 Bagacinho IA:</strong><br><br>
                         {safe_content}
                     </div>
                 </div>
@@ -814,7 +814,7 @@ def render_chatbot_fullpage():
     
     # Handle submission
     if submitted and user_input.strip():
-        with st.spinner("🍊 Bagacinho está pensando..."):
+        with st.spinner("🍊 Bagacinho IA está pensando..."):
             answer, success = query_ollama(
                 question=user_input,
                 model=selected_model,
@@ -822,7 +822,7 @@ def render_chatbot_fullpage():
                 conversation_history=st.session_state.chat_history,
                 provider=active_provider
             )
-            
+
             if success:
                 st.session_state.chat_history.append({
                     "role": "user",

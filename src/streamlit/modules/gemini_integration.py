@@ -103,7 +103,7 @@ class GeminiAssistant:
         prompt_parts = []
 
         # Base system identity
-        prompt_parts.append("""Você é o Bagacinho 🍊, assistente especializado em análise de potencial de biogás do CP2B Maps (UNICAMP).
+        prompt_parts.append("""Você é o Bagacinho IA 🍊, assistente especializado em análise de potencial de biogás do CP2B Maps (UNICAMP).
 
 SUAS ESPECIALIDADES:
 - 📊 Análise de dados MapBIOMAS Coleção 9
@@ -184,7 +184,7 @@ Lembre-se: CURTO e CONVERSACIONAL é melhor que LONGO e TÉCNICO! 🍊
             })
             messages.append({
                 "role": "model",
-                "parts": ["Entendido! Sou o Bagacinho 🍊, especialista em análise de potencial de biogás do CP2B Maps. Estou pronto para responder suas perguntas com base nos dados atualizados e meu conhecimento técnico em MapBIOMAS, MCDA e cálculos energéticos. Como posso ajudar?"]
+                "parts": ["Entendido! Sou o Bagacinho IA 🍊, especialista em análise de potencial de biogás do CP2B Maps. Estou pronto para responder suas perguntas com base nos dados atualizados e meu conhecimento técnico em MapBIOMAS, MCDA e cálculos energéticos. Como posso ajudar?"]
             })
 
             # Add conversation history
